@@ -32,8 +32,10 @@ initializeSocket(server);
 
 app.use(cors({
   credentials: true,
-  origin: ['http://localhost:4200', 'https://master.d1ee9rxmukt8sl.amplifyapp.com/', 
-    'https://www.eventdiva.online/', 'https://eventdiva.online/'],
+  origin: ['http://localhost:4200', 
+    'https://master.d1ee9rxmukt8sl.amplifyapp.com', 
+    'https://www.eventdiva.online', 
+    'https://eventdiva.online'],
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT']
 }));
 
