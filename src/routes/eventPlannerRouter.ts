@@ -1,7 +1,7 @@
 
 import express, { Router } from 'express';
 import { authMiddleware, isUser } from '../middlewares/authMiddleware';
-import { getEventPlannerDashboard, getEventPlannerProfile, 
+import { getEventPlannerDashboard, 
     getEventPlannerService, registerEventPlannerService,
     getAllPlannerBookings, getPlannerBookingDetails,
     changeBookingStatus, generateAdvancePayment , getAvailabilityInfo,
@@ -17,7 +17,6 @@ const router: Router = express.Router();
 
 
 router.get('/dashboard', authMiddleware, isUser, getEventPlannerDashboard);
-router.get('/profile', authMiddleware, isUser, getEventPlannerProfile);
 router.get('/service', authMiddleware, isUser, getEventPlannerService);
 router.post('/planner-register', authMiddleware, isUser, upload, ValidateEventPlanner, registerEventPlannerService);
 router.get('/bookings', authMiddleware, isUser, getAllPlannerBookings);

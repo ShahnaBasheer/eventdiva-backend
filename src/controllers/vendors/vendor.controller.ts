@@ -99,6 +99,22 @@ const deleteNotification = asyncHandler(async(req: CustomRequest, res: Response)
 });
 
 
+const getVendorProfile = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
+    const vendorDetail = await vendorService.getVendor(req?.user?.id, req.user.vendorType);
+    createSuccessResponse(200, { vendorDetail } , "successfull", res, req);
+});
+
+
+const updateVendorProfile = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
+    const { firstName, lastName, email, mobile} = req.body;
+    const data = {firstName, lastName, email, mobile };
+    const vendorDetail = await vendorService.updateVendor(req?.user?.id, data);
+    console.log(vendorDetail, "ijdjj")
+    createSuccessResponse(200, { vendorDetail } , "successfull", res, req);
+});
+
+
+
 export {
     signupVendor,
     verifyOtp,
@@ -107,8 +123,9 @@ export {
     logout,
     getNotifications,
     deleteNotification,
-    changeReadStatus
-
+    changeReadStatus,
+    updateVendorProfile,
+    getVendorProfile
 };
 
 

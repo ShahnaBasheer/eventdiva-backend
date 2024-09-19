@@ -29,5 +29,17 @@ class EventPlannerRepository extends base_repository_1.default {
             return yield eventPlannerModel_1.default.findOne(Object.assign({}, filter)).populate('address').exec();
         });
     }
+    getAggregateData(pipeline) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const data = yield eventPlannerModel_1.default.aggregate(pipeline);
+                return data;
+            }
+            catch (error) {
+                console.error('Error performing aggregation:', error);
+                return null;
+            }
+        });
+    }
 }
 exports.default = EventPlannerRepository;

@@ -152,5 +152,15 @@ class VendorService {
             return yield this._vendorRepository.unblock(id);
         });
     }
+    // async getNotifications(userId: string): Promise<INotification[] | null>{
+    //     const notifications = await this._notificationrepository.getAllByFilter({ userId });
+    //     return notifications;
+    // }
+    updateVendor(vendorId, data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const updatedData = yield this._vendorRepository.update({ _id: vendorId }, data);
+            return updatedData;
+        });
+    }
 }
 exports.default = VendorService;

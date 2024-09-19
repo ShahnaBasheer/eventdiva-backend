@@ -121,7 +121,6 @@ const authenticateSocket = async (socket: CustomSocket, next: (err?: any) => voi
 
     try {
         const token = socket.handshake.auth.token || socket.handshake.query.token;
-        console.log(token, "i am here in authenticateSocket");
 
         if (!token) {
             return next(new UnauthorizedError('Not authorized: no token provided'));
@@ -142,7 +141,6 @@ const authenticateSocket = async (socket: CustomSocket, next: (err?: any) => voi
             tokenKey = role === UserRole.Customer ? process.env.CUSTOMER_REFRESH : process.env.VENDOR_REFRESH;
 
             const refreshToken = socket.handshake.headers.cookie?.split('; ').find(cookie => cookie.startsWith(tokenKey!))?.split('=')[1];
-            console.log(refreshToken)
             if (!refreshToken) return next(new UnauthorizedError('Refresh token not found!'));
 
             try {

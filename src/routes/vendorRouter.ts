@@ -5,8 +5,9 @@ import { validateLogin, validateVendorSignup } from '../middlewares/validateForm
 import { loginVendor, logout, resendOtp, 
        signupVendor, verifyOtp, 
        getNotifications, changeReadStatus, 
-       deleteNotification
-     } from '../controllers/customers/vendor.controller';
+       deleteNotification,
+       getVendorProfile, updateVendorProfile
+     } from '../controllers/vendors/vendor.controller';
 import resendOtpLimiter from '../middlewares/rateLimit';
 import { getJoinCall, getOrCreateChatRoom, getAllChatRooms,
     getUnreadAllMessages
@@ -29,6 +30,9 @@ router.get('/notifications', authMiddleware, isUser, getNotifications);
 router.get('/unread-messages', authMiddleware, isUser, getUnreadAllMessages);
 router.patch('/notifications/read', authMiddleware, isUser, changeReadStatus);
 router.delete('/notifications/delete/:id', authMiddleware, isUser, deleteNotification);
+router.get('/profile', authMiddleware, isUser, getVendorProfile);
+router.patch('/profile/update', authMiddleware, isUser, updateVendorProfile);
+
 
 
 export default router

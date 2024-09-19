@@ -15,14 +15,11 @@ const vendorService =  new VendorService();
 
 
 const getEventPlannerDashboard = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
-    console.log("i am here in eventplanner dashboard");
-    createSuccessResponse(200, null , "successfull", res, req)
+    const eventPlannerData = await eventPlannerService.getDashboardData(req.user?.id);
+    console.log("i am here in eventplanner dashboard", eventPlannerData);
+    createSuccessResponse(200, { ...eventPlannerData } , "successfull", res, req)
 });
 
-const getEventPlannerProfile = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
-    const vendorDetail = await vendorService.getVendor(req?.user?.id, "event-planner");
-    createSuccessResponse(200, { vendorDetail } , "successfull", res, req);
-});
 
 const getEventPlannerService = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
     const eventPlannerData = await eventPlannerService.getEventPlanner({ vendorId: req.user?.id });
@@ -101,9 +98,9 @@ const addNewEvent = asyncHandler( async(req: CustomRequest, res: Response): Prom
     createSuccessResponse(200, null , "Holiday added successfully", res, req);
 });
 
+
 export {
     getEventPlannerDashboard,
-    getEventPlannerProfile,
     getEventPlannerService,
     registerEventPlannerService,
     getAllPlannerBookings,

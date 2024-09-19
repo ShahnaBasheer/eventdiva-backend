@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const authMiddleware_1 = require("../middlewares/authMiddleware");
 const validateForm_1 = require("../middlewares/validateForm");
-const vendor_controller_1 = require("../controllers/customers/vendor.controller");
+const vendor_controller_1 = require("../controllers/vendors/vendor.controller");
 const rateLimit_1 = __importDefault(require("../middlewares/rateLimit"));
 const socket_controller_1 = require("../controllers/common/socket.controller");
 const router = express_1.default.Router();
@@ -22,4 +22,6 @@ router.get('/notifications', authMiddleware_1.authMiddleware, authMiddleware_1.i
 router.get('/unread-messages', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, socket_controller_1.getUnreadAllMessages);
 router.patch('/notifications/read', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, vendor_controller_1.changeReadStatus);
 router.delete('/notifications/delete/:id', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, vendor_controller_1.deleteNotification);
+router.get('/profile', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, vendor_controller_1.getVendorProfile);
+router.patch('/profile/update', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, vendor_controller_1.updateVendorProfile);
 exports.default = router;

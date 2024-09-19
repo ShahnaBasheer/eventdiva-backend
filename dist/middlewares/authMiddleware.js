@@ -120,7 +120,6 @@ const authenticateSocket = (socket, next) => __awaiter(void 0, void 0, void 0, f
     let role;
     try {
         const token = socket.handshake.auth.token || socket.handshake.query.token;
-        console.log(token, "i am here in authenticateSocket");
         if (!token) {
             return next(new customError_1.UnauthorizedError('Not authorized: no token provided'));
         }
@@ -137,7 +136,6 @@ const authenticateSocket = (socket, next) => __awaiter(void 0, void 0, void 0, f
             // Handle token expiration based on role
             tokenKey = role === important_variables_1.UserRole.Customer ? process.env.CUSTOMER_REFRESH : process.env.VENDOR_REFRESH;
             const refreshToken = (_c = (_b = socket.handshake.headers.cookie) === null || _b === void 0 ? void 0 : _b.split('; ').find(cookie => cookie.startsWith(tokenKey))) === null || _c === void 0 ? void 0 : _c.split('=')[1];
-            console.log(refreshToken);
             if (!refreshToken)
                 return next(new customError_1.UnauthorizedError('Refresh token not found!'));
             try {

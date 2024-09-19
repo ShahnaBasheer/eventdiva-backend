@@ -158,6 +158,12 @@ class VendorService {
     //     const notifications = await this._notificationrepository.getAllByFilter({ userId });
     //     return notifications;
     // }
+
+    async updateVendor(vendorId: string, data: any){
+
+        const updatedData = await this._vendorRepository.update({ _id: vendorId }, data);
+        return updatedData;
+    }
     
 }
 

@@ -50,6 +50,16 @@ class PlannerBookingRepository extends BaseRepository<IEventPlannerBookingDocume
            .populate('customerId')
            .exec();
     }
+
+    async getAggregateData(pipeline: any[]){
+        try {
+            const data = await EventPlannerBooking.aggregate(pipeline);
+            return data;
+        } catch (error) {
+            console.error('Error performing aggregation:', error);
+            return null;
+        }
+    }
     
 }
 

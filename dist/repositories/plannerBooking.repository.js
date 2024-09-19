@@ -63,5 +63,17 @@ class PlannerBookingRepository extends base_repository_1.default {
                 .exec();
         });
     }
+    getAggregateData(pipeline) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const data = yield eventPlannerBookingModel_1.default.aggregate(pipeline);
+                return data;
+            }
+            catch (error) {
+                console.error('Error performing aggregation:', error);
+                return null;
+            }
+        });
+    }
 }
 exports.default = PlannerBookingRepository;

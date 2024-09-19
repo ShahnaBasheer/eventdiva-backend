@@ -167,7 +167,6 @@ class EventPlannerService {
     
 
     async getEventPlanner(filter: Filter){
-        console.log(filter)
         return this._eventPlannerRepository.getPlannerDetail({ ...filter })
     }
 
@@ -446,7 +445,7 @@ class EventPlannerService {
             }
         } catch (error) {
             console.error('Error checking availability:', error);
-            throw new BadRequestError('Failed to check availability. Please try again later.')
+            throw error;
         }
     }
 
@@ -549,7 +548,77 @@ class EventPlannerService {
             throw new Error('Failed to add new external event');
         }
     }
- 
+
+    async getDashboardData(vendorId: string){
+        const eventPlanner = await this.getEventPlanner({ vendorId }) as IEventPlannerDocument;
+
+        if(!eventPlanner) throw new BadRequestError('Event Planner is not found');
+        const totalReveneuePipeline = [
+            { $match: { eventPlannerId: eventPlanner._id } },
+            { $group: { _id: null, totalRevenue: { $sum: "$totalCost" } } }
+        ]
+
+        const totalBookingsPipeline = [
+            { $match: { eventPlannerId: eventPlanner._id, status: { $in: [Status.Pending, Status.Confirmed, Status.Completed] } } },
+            { $count: "totalBookings" }
+        ]
+
+        const bookingStatusPipeline = [
+            { $match: { eventPlannerId: eventPlanner._id } },
+            {
+                $group: {
+                    _id: "$status",
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $project: {
+                  _id: 0, 
+                  status: "$_id",        // Project the status field from _id
+                  count: 1               // Include the count field
+                }
+              }
+        ];
+        const currentYear = new Date().getFullYear();
+        const revenueOverTimePipeline = [
+            {
+                $match: {
+                    eventPlannerId: eventPlanner._id,
+                    updatedAt: {
+                        $gte: new Date(`${currentYear}-01-01`), // From the start of the current year
+                        $lt: new Date(`${currentYear + 1}-01-01`) // Before the start of the next year
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        year: { $year: "$updatedAt" },   // Group by year
+                        month: { $month: "$updatedAt" }  // Group by month
+                    },
+                    monthlyRevenue: { $sum: "$totalCost" }
+                }
+            },
+            {
+                $sort: { "_id.year": 1, "_id.month": 1 } // Sort by year and month
+            },
+            {
+                $project: {
+                    _id: 0,
+                    month: "$_id.month",
+                    year: "$_id.year",
+                    revenue: "$monthlyRevenue"
+                }
+            }
+        ];
+        
+        const revenueOverTime = await this._plannerBookingrepository.getAggregateData(revenueOverTimePipeline);
+        const totalRevenue = await this._plannerBookingrepository.getAggregateData(totalReveneuePipeline);
+        const totalBookings = await this._plannerBookingrepository.getAggregateData(totalBookingsPipeline);
+        const AllBookings = await this._plannerBookingrepository.getAggregateData(bookingStatusPipeline);
+
+        return  { totalRevenue, totalBookings,  AllBookings, revenueOverTime}
+    }
 }
 
 export default EventPlannerService;

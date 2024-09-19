@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addNewEvent = exports.addHoliday = exports.getAvailabilityInfo = exports.generateAdvancePayment = exports.changeBookingStatus = exports.getPlannerBookingDetails = exports.getAllPlannerBookings = exports.registerEventPlannerService = exports.getEventPlannerService = exports.getEventPlannerProfile = exports.getEventPlannerDashboard = void 0;
+exports.addNewEvent = exports.addHoliday = exports.getAvailabilityInfo = exports.generateAdvancePayment = exports.changeBookingStatus = exports.getPlannerBookingDetails = exports.getAllPlannerBookings = exports.registerEventPlannerService = exports.getEventPlannerService = exports.getEventPlannerDashboard = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const responseFormatter_1 = __importDefault(require("../../utils/responseFormatter"));
 const eventPlanner_service_1 = __importDefault(require("../../services/eventPlanner.service"));
@@ -22,16 +22,12 @@ const customError_1 = require("../../errors/customError");
 const eventPlannerService = new eventPlanner_service_1.default();
 const vendorService = new vendor_service_1.default();
 const getEventPlannerDashboard = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("i am here in eventplanner dashboard");
-    (0, responseFormatter_1.default)(200, null, "successfull", res, req);
+    var _a;
+    const eventPlannerData = yield eventPlannerService.getDashboardData((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
+    console.log("i am here in eventplanner dashboard", eventPlannerData);
+    (0, responseFormatter_1.default)(200, Object.assign({}, eventPlannerData), "successfull", res, req);
 }));
 exports.getEventPlannerDashboard = getEventPlannerDashboard;
-const getEventPlannerProfile = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
-    const vendorDetail = yield vendorService.getVendor((_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.id, "event-planner");
-    (0, responseFormatter_1.default)(200, { vendorDetail }, "successfull", res, req);
-}));
-exports.getEventPlannerProfile = getEventPlannerProfile;
 const getEventPlannerService = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _b;
     const eventPlannerData = yield eventPlannerService.getEventPlanner({ vendorId: (_b = req.user) === null || _b === void 0 ? void 0 : _b.id });

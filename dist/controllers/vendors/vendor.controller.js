@@ -12,13 +12,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.logout = exports.loginVendor = exports.resendOtp = exports.verifyOtp = exports.signupVendor = void 0;
+exports.getVendorProfile = exports.updateVendorProfile = exports.changeReadStatus = exports.deleteNotification = exports.getNotifications = exports.logout = exports.loginVendor = exports.resendOtp = exports.verifyOtp = exports.signupVendor = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const express_validator_1 = require("express-validator");
 const customError_1 = require("../../errors/customError");
 const responseFormatter_1 = __importDefault(require("../../utils/responseFormatter"));
 const vendor_service_1 = __importDefault(require("../../services/vendor.service"));
+const notification_service_1 = __importDefault(require("../../services/notification.service"));
 const vendorService = new vendor_service_1.default();
+const notificationService = new notification_service_1.default();
 const signupVendor = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const errors = (0, express_validator_1.validationResult)(req);
     if (!errors.isEmpty()) {
@@ -79,3 +81,35 @@ const logout = (0, express_async_handler_1.default)((req, res) => __awaiter(void
     (0, responseFormatter_1.default)(200, null, 'Successfully Logout!', res);
 }));
 exports.logout = logout;
+const getNotifications = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    const data = yield notificationService.getNotifications((_a = req.user) === null || _a === void 0 ? void 0 : _a.id, (_b = req.user) === null || _b === void 0 ? void 0 : _b.role);
+    (0, responseFormatter_1.default)(200, { notifications: data.notifications, readCount: data.readCount }, "successfull", res, req);
+}));
+exports.getNotifications = getNotifications;
+const changeReadStatus = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const notification = yield notificationService.updateReadStatus(req.body.id);
+    (0, responseFormatter_1.default)(200, { notification }, "successfull", res, req);
+}));
+exports.changeReadStatus = changeReadStatus;
+const deleteNotification = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log(req.params, "njjjcxnd");
+    const notification = yield notificationService.deleteNotification(req.params.id);
+    (0, responseFormatter_1.default)(200, { notification }, "successfull", res, req);
+}));
+exports.deleteNotification = deleteNotification;
+const getVendorProfile = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _c;
+    const vendorDetail = yield vendorService.getVendor((_c = req === null || req === void 0 ? void 0 : req.user) === null || _c === void 0 ? void 0 : _c.id, req.user.vendorType);
+    (0, responseFormatter_1.default)(200, { vendorDetail }, "successfull", res, req);
+}));
+exports.getVendorProfile = getVendorProfile;
+const updateVendorProfile = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _d;
+    const { firstName, lastName, email, mobile } = req.body;
+    const data = { firstName, lastName, email, mobile };
+    const vendorDetail = yield vendorService.updateVendor((_d = req === null || req === void 0 ? void 0 : req.user) === null || _d === void 0 ? void 0 : _d.id, data);
+    console.log(vendorDetail, "ijdjj");
+    (0, responseFormatter_1.default)(200, { vendorDetail }, "successfull", res, req);
+}));
+exports.updateVendorProfile = updateVendorProfile;

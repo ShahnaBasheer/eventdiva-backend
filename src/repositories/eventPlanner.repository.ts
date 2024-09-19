@@ -20,6 +20,16 @@ class EventPlannerRepository extends BaseRepository<IEventPlannerDocument> {
     async getPlanner(filter: Filter): Promise<IEventPlanner | null>{
         return await EventPlanner.findOne({ ...filter }).populate('address').exec()
     }
+
+    async getAggregateData(pipeline: any[]){
+        try {
+            const data = await EventPlanner.aggregate(pipeline);
+            return data;
+        } catch (error) {
+            console.error('Error performing aggregation:', error);
+            return null;
+        }
+    }
     
 }
 
