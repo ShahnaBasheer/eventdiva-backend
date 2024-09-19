@@ -32,7 +32,8 @@ initializeSocket(server);
 
 app.use(cors({
   credentials: true,
-  origin: ['http://localhost:4200']
+  origin: ['http://localhost:4200', 'https://master.d1ee9rxmukt8sl.amplifyapp.com/'],
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT']
 }));
 
 // Middleware setup

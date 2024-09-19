@@ -30,7 +30,8 @@ const server = http_1.default.createServer(app);
 (0, socketIo_1.initializeSocket)(server);
 app.use((0, cors_1.default)({
     credentials: true,
-    origin: ['http://localhost:4200']
+    origin: ['http://localhost:4200', 'https://master.d1ee9rxmukt8sl.amplifyapp.com/'],
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT']
 }));
 // Middleware setup
 app.use((0, cookie_parser_1.default)());
