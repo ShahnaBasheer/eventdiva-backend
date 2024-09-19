@@ -27,8 +27,11 @@ const customers = {};
 const initializeSocket = (server) => {
     io = new socket_io_1.Server(server, {
         cors: {
-            origin: "http://localhost:4200",
-            methods: ["GET", "POST"],
+            origin: ['http://localhost:4200', 
+                'https://master.d1ee9rxmukt8sl.amplifyapp.com', 
+                'https://www.eventdiva.online', 
+                'https://eventdiva.online'],
+            methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
             allowedHeaders: ["authorization"],
             credentials: true,
         }
