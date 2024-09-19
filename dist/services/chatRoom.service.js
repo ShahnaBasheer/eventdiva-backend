@@ -18,6 +18,7 @@ const chatRoom_repository_1 = __importDefault(require("../repositories/chatRoom.
 const mongoose_1 = __importDefault(require("mongoose"));
 const customer_repository_1 = __importDefault(require("../repositories/customer.repository"));
 const vendor_repository_1 = __importDefault(require("../repositories/vendor.repository"));
+const important_variables_1 = require("../utils/important-variables");
 class ChatRoomService {
     constructor() {
         this._chatroomrepository = new chatRoom_repository_1.default();
@@ -29,7 +30,7 @@ class ChatRoomService {
             try {
                 let customerId = '';
                 let vendorId = '';
-                if ((user === null || user === void 0 ? void 0 : user.role) === "customer") {
+                if ((user === null || user === void 0 ? void 0 : user.role) === important_variables_1.UserRole.Customer) {
                     customerId = user.id;
                     let vendor = yield this._vendorepository.getById(receiverId);
                     if (vendor) {
@@ -39,7 +40,7 @@ class ChatRoomService {
                         throw new customError_1.BadRequestError('Vendor is not exist');
                     }
                 }
-                else if ((user === null || user === void 0 ? void 0 : user.role) === 'vendor') {
+                else if ((user === null || user === void 0 ? void 0 : user.role) === important_variables_1.UserRole.Vendor) {
                     vendorId = user.id;
                     console.log(receiverId);
                     let customer = yield this._customerepository.getById(receiverId);

@@ -8,6 +8,7 @@ import { NotificationType } from '../utils/eventsVariables';
 import { authenticateSocket, validateSocketUser } from '../middlewares/authMiddleware';
 import { Icustomer, IcustomerDocument } from '../interfaces/user.interface';
 import { IVendorDocument } from '../interfaces/vendor.interface';
+import { UserRole } from '../utils/important-variables';
 
 const chatroomService =  new ChatRoomService();
 
@@ -190,11 +191,12 @@ const initializeSocket = (server: http.Server) => {
         // Handle message sending
         socket.on('send-message', async (data) => {
             try {
-                const { chatRoomId, message } = data;
+                const { chatRoomId, message, name } = data;
                 const userRole = socket.user?.role || '';
+              
                 
-                if (socket.rooms.has(chatRoomId) && socket.userId) {
-                    const chat = await chatroomService.addNewMessage(socket.userId, message, userRole, chatRoomId);
+                if (socket.rooms.has(chatRoomId) && socket.user) {
+                    const chat = await chatroomService.addNewMessage(socket.user.id, message, userRole, chatRoomId);
                     if (chat) {
                         const connectedSockets = io.sockets.adapter.rooms.get(chatRoomId);
                         if (connectedSockets && connectedSockets.size > 1) {
@@ -212,7 +214,8 @@ const initializeSocket = (server: http.Server) => {
 
                             if (receiverSocket) {
                                 const notification = await handleNotification({ 
-                                    ...data, userId: receiverId, role: userRole === 'vendor' ? 'customer' : 'vendor', 
+                                    ...data, userId: receiverId,
+                                    role: userRole === UserRole.Vendor ? UserRole.Customer : UserRole.Vendor, 
                                     type: NotificationType.MESSAGE, name: data.name 
                                 });
                                 receiverSocket.emit('loaded-notification', { notification });

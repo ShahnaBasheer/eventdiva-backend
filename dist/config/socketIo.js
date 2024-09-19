@@ -19,6 +19,7 @@ const chatRoom_service_1 = __importDefault(require("../services/chatRoom.service
 const helperFunctions_1 = require("../utils/helperFunctions");
 const eventsVariables_1 = require("../utils/eventsVariables");
 const authMiddleware_1 = require("../middlewares/authMiddleware");
+const important_variables_1 = require("../utils/important-variables");
 const chatroomService = new chatRoom_service_1.default();
 let io;
 const vendors = {}; // Mapping vendor IDs to their respective socket connections
@@ -190,10 +191,10 @@ const initializeSocket = (server) => {
         socket.on('send-message', (data) => __awaiter(void 0, void 0, void 0, function* () {
             var _c;
             try {
-                const { chatRoomId, message } = data;
+                const { chatRoomId, message, name } = data;
                 const userRole = ((_c = socket.user) === null || _c === void 0 ? void 0 : _c.role) || '';
-                if (socket.rooms.has(chatRoomId) && socket.userId) {
-                    const chat = yield chatroomService.addNewMessage(socket.userId, message, userRole, chatRoomId);
+                if (socket.rooms.has(chatRoomId) && socket.user) {
+                    const chat = yield chatroomService.addNewMessage(socket.user.id, message, userRole, chatRoomId);
                     if (chat) {
                         const connectedSockets = io.sockets.adapter.rooms.get(chatRoomId);
                         if (connectedSockets && connectedSockets.size > 1) {
@@ -211,7 +212,7 @@ const initializeSocket = (server) => {
                                 receiverSocket = vendors[receiverId];
                             }
                             if (receiverSocket) {
-                                const notification = yield (0, helperFunctions_1.handleNotification)(Object.assign(Object.assign({}, data), { userId: receiverId, role: userRole === 'vendor' ? 'customer' : 'vendor', type: eventsVariables_1.NotificationType.MESSAGE, name: data.name }));
+                                const notification = yield (0, helperFunctions_1.handleNotification)(Object.assign(Object.assign({}, data), { userId: receiverId, role: userRole === important_variables_1.UserRole.Vendor ? important_variables_1.UserRole.Customer : important_variables_1.UserRole.Vendor, type: eventsVariables_1.NotificationType.MESSAGE, name: data.name }));
                                 receiverSocket.emit('loaded-notification', { notification });
                             }
                         }

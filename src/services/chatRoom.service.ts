@@ -1,5 +1,4 @@
 
-
 // src/services/VideoCallService.ts
 
 import { IcustomerDocument } from "../interfaces/user.interface";
@@ -10,6 +9,7 @@ import { IChatroom, IChatroomDocument, IMessage } from "../interfaces/chatRoom.i
 import mongoose from 'mongoose';
 import CustomerRepository from "../repositories/customer.repository";
 import VendorRepository from "../repositories/vendor.repository";
+import { UserRole } from '../utils/important-variables';
 
 
 
@@ -29,7 +29,7 @@ class ChatRoomService {
         try {
             let customerId = '';
             let vendorId = '';
-            if(user?.role === "customer"){
+            if(user?.role === UserRole.Customer){
                 customerId = user.id;
                 let vendor = await this._vendorepository.getById(receiverId);
                 if(vendor){
@@ -37,7 +37,7 @@ class ChatRoomService {
                 } else {
                     throw new BadRequestError('Vendor is not exist')
                 }
-            } else if(user?.role === 'vendor'){
+            } else if(user?.role === UserRole.Vendor){
                 vendorId = user.id;
                 console.log(receiverId)
                 let customer = await this._customerepository.getById(receiverId);
