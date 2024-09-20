@@ -25,6 +25,9 @@ const status_options_1 = require("../utils/status-options");
 const availability_repository_1 = __importDefault(require("../repositories/availability.repository"));
 const notification_repository_1 = __importDefault(require("../repositories/notification.repository"));
 const socketIo_1 = require("../config/socketIo");
+const cloudinary_config_1 = __importDefault(require("../config/cloudinary.config"));
+const stream_1 = require("stream");
+const sharp_1 = __importDefault(require("sharp"));
 class EventPlannerService {
     constructor() {
         this._eventPlannerRepository = new eventPlanner_repository_1.default();
@@ -54,6 +57,12 @@ class EventPlannerService {
             const coverPicPath = yield this.fileStore(files === null || files === void 0 ? void 0 : files.coverPic, process.env.EP_COVERPIC, "EP_coverPic");
             const docPath = yield this.fileStore(files === null || files === void 0 ? void 0 : files.document, process.env.EP_DOCUMENTS, "EP_doc");
             const portPath = yield this.fileStore(files === null || files === void 0 ? void 0 : files.portfolios, process.env.EP_PORTFOLIOS, "EP_portfolio");
+            // const coverPicPath = await this.CloudinaryfileStore(files?.coverPic, 'Event_Planners/CoverPics',"EP_coverPic");
+            // const docPath = await this.CloudinaryfileStore(files?.document, 'Event_Planners/DocumentS',"EP_doc");
+            // const portPath = await this.CloudinaryfileStore(files?.portfolios, "Event_Planners/Portfolios","EP_portfolio");
+            // console.log(coverPicPath,"coverPicPath");
+            // console.log(docPath, "docPath");
+            // console.log(portPath, "portPath");
             // Check if the company name is unique
             const existingEventPlanner = yield this._eventPlannerRepository.getOneByFilter({ company: userInfo.company });
             if (existingEventPlanner) {
@@ -110,7 +119,6 @@ class EventPlannerService {
                     //         notificationType: 'service_registered' 
                     //     }
                     // )  
-                    console.log("heyyy you are here");
                     const notification = {
                         userId: userInfo.user._id,
                         role: 'Vendor',
@@ -123,6 +131,71 @@ class EventPlannerService {
                 return userDoc;
             }
             return null;
+        });
+    }
+    CloudinaryfileStore(files, folderName, fName) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!files || !folderName || !fName) {
+                throw new Error('Invalid input');
+            }
+            const processedImages = [];
+            const uploadPromises = files.map((file) => {
+                return new Promise((resolve, reject) => {
+                    const optimizedBuffer = (0, sharp_1.default)(file.buffer)
+                        .resize({ width: 800 })
+                        .toBuffer((err, buffer) => {
+                        if (err) {
+                            reject(err);
+                        }
+                        else {
+                            const uploadStream = cloudinary_config_1.default.uploader.upload_stream({
+                                folder: folderName,
+                                public_id: `${fName}_${Date.now()}`,
+                                resource_type: 'auto',
+                            }, (error, result) => {
+                                if (error) {
+                                    reject(error);
+                                }
+                                else {
+                                    resolve(result === null || result === void 0 ? void 0 : result.secure_url);
+                                }
+                            });
+                            const bufferStream = stream_1.Readable.from(buffer);
+                            bufferStream.pipe(uploadStream).on('error', (streamError) => {
+                                reject(streamError);
+                            });
+                        }
+                    });
+                });
+            });
+            return Promise.all(uploadPromises);
+        });
+    }
+    // Function to get all URLs from a specific folder
+    getAllUrlsInFolder(folderName) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            try {
+                const fullPath = `${folderName}`;
+                const { resources } = yield cloudinary_config_1.default.api.resources({
+                    type: 'upload',
+                    prefix: fullPath,
+                    max_results: 500,
+                    resource_type: 'auto',
+                });
+                return resources.map((resource) => resource.secure_url);
+            }
+            catch (error) {
+                if (error.error.http_code === 404) {
+                    console.log(`Folder not found: ${folderName}`);
+                    return [];
+                }
+                else {
+                    console.error("Error fetching resources from Cloudinary:", error);
+                    const message = ((_a = error === null || error === void 0 ? void 0 : error.error) === null || _a === void 0 ? void 0 : _a.message) || "Unknown error";
+                    throw new Error(`Failed to retrieve URLs from folder: ${message}`);
+                }
+            }
         });
     }
     fileStore(files, directory, fName) {

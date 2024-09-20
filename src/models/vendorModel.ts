@@ -41,6 +41,12 @@ const vendorSchema: Schema = new Schema(
         otpTimestamp: {
             type: Date
         },
+        newotp: {
+            type: String
+        },
+        newotpTimestamp: {
+            type: Date
+        },
         isVerified: {
             type: Boolean,
             default: false,

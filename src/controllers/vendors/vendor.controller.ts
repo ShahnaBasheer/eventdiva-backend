@@ -106,13 +106,32 @@ const getVendorProfile = asyncHandler(async(req: CustomRequest, res: Response): 
 
 
 const updateVendorProfile = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
-    const { firstName, lastName, email, mobile} = req.body;
-    const data = {firstName, lastName, email, mobile };
+    const { firstName, lastName, mobile} = req.body;
+    const data = {firstName, lastName,  mobile };
     const vendorDetail = await vendorService.updateVendor(req?.user?.id, data);
     console.log(vendorDetail, "ijdjj")
     createSuccessResponse(200, { vendorDetail } , "successfull", res, req);
 });
 
+const updateEmailProfile = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
+    const { email} = req.body;
+    const vendorDetail = await vendorService.otpSendForUpdateEmail(req?.user, email);
+    createSuccessResponse(200, null , "OTP has been Sent Successfully!", res, req);
+});
+
+
+const verifyEmailProfile = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
+    const formValue = req.body.formValue;
+    const vendorDetail = await vendorService.otpVerifyForEmail(req?.user, formValue);
+    console.log(vendorDetail, "ijdjj", formValue);
+    createSuccessResponse(200, { vendorDetail } , "OTP has been Sent Successfully!", res, req);
+});
+
+const passWordChangeProfile = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
+    const formValue = req.body.formValue;
+    const vendorDetail = await vendorService.passwordChange(req?.user, formValue);
+    createSuccessResponse(200, null , "Paasword has been Change Successfully!", res, req);
+});
 
 
 export {
@@ -125,7 +144,10 @@ export {
     deleteNotification,
     changeReadStatus,
     updateVendorProfile,
-    getVendorProfile
+    getVendorProfile,
+    updateEmailProfile,
+    verifyEmailProfile,
+    passWordChangeProfile
 };
 
 

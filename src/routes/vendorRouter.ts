@@ -6,7 +6,9 @@ import { loginVendor, logout, resendOtp,
        signupVendor, verifyOtp, 
        getNotifications, changeReadStatus, 
        deleteNotification,
-       getVendorProfile, updateVendorProfile
+       getVendorProfile, updateVendorProfile,
+       updateEmailProfile, verifyEmailProfile,
+       passWordChangeProfile
      } from '../controllers/vendors/vendor.controller';
 import resendOtpLimiter from '../middlewares/rateLimit';
 import { getJoinCall, getOrCreateChatRoom, getAllChatRooms,
@@ -32,8 +34,9 @@ router.patch('/notifications/read', authMiddleware, isUser, changeReadStatus);
 router.delete('/notifications/delete/:id', authMiddleware, isUser, deleteNotification);
 router.get('/profile', authMiddleware, isUser, getVendorProfile);
 router.patch('/profile/update', authMiddleware, isUser, updateVendorProfile);
-
-
+router.patch('/profile/email/', authMiddleware, isUser, updateEmailProfile);
+router.patch('/profile/email-update', authMiddleware, isUser, verifyEmailProfile);
+router.patch('/profile/password-change', authMiddleware, isUser, passWordChangeProfile);
 
 export default router
 

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getVendorProfile = exports.updateVendorProfile = exports.changeReadStatus = exports.deleteNotification = exports.getNotifications = exports.logout = exports.loginVendor = exports.resendOtp = exports.verifyOtp = exports.signupVendor = void 0;
+exports.passWordChangeProfile = exports.verifyEmailProfile = exports.updateEmailProfile = exports.getVendorProfile = exports.updateVendorProfile = exports.changeReadStatus = exports.deleteNotification = exports.getNotifications = exports.logout = exports.loginVendor = exports.resendOtp = exports.verifyOtp = exports.signupVendor = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const express_validator_1 = require("express-validator");
 const customError_1 = require("../../errors/customError");
@@ -106,10 +106,29 @@ const getVendorProfile = (0, express_async_handler_1.default)((req, res) => __aw
 exports.getVendorProfile = getVendorProfile;
 const updateVendorProfile = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _d;
-    const { firstName, lastName, email, mobile } = req.body;
-    const data = { firstName, lastName, email, mobile };
+    const { firstName, lastName, mobile } = req.body;
+    const data = { firstName, lastName, mobile };
     const vendorDetail = yield vendorService.updateVendor((_d = req === null || req === void 0 ? void 0 : req.user) === null || _d === void 0 ? void 0 : _d.id, data);
     console.log(vendorDetail, "ijdjj");
     (0, responseFormatter_1.default)(200, { vendorDetail }, "successfull", res, req);
 }));
 exports.updateVendorProfile = updateVendorProfile;
+const updateEmailProfile = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email } = req.body;
+    const vendorDetail = yield vendorService.otpSendForUpdateEmail(req === null || req === void 0 ? void 0 : req.user, email);
+    (0, responseFormatter_1.default)(200, null, "OTP has been Sent Successfully!", res, req);
+}));
+exports.updateEmailProfile = updateEmailProfile;
+const verifyEmailProfile = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const formValue = req.body.formValue;
+    const vendorDetail = yield vendorService.otpVerifyForEmail(req === null || req === void 0 ? void 0 : req.user, formValue);
+    console.log(vendorDetail, "ijdjj", formValue);
+    (0, responseFormatter_1.default)(200, { vendorDetail }, "OTP has been Sent Successfully!", res, req);
+}));
+exports.verifyEmailProfile = verifyEmailProfile;
+const passWordChangeProfile = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const formValue = req.body.formValue;
+    const vendorDetail = yield vendorService.passwordChange(req === null || req === void 0 ? void 0 : req.user, formValue);
+    (0, responseFormatter_1.default)(200, null, "Paasword has been Change Successfully!", res, req);
+}));
+exports.passWordChangeProfile = passWordChangeProfile;

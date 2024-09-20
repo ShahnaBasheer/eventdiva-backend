@@ -10,7 +10,6 @@ const multer_1 = require("../middlewares/multer");
 const validateForm_1 = require("../middlewares/validateForm");
 const router = express_1.default.Router();
 router.get('/dashboard', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, venue_vendor_controller_1.getVenueVendorDashboard);
-router.get('/profile', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, venue_vendor_controller_1.getVenueVendorProfile);
 router.get('/service', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, venue_vendor_controller_1.getVenueVendorService);
 router.post('/venue-register', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, multer_1.upload, validateForm_1.ValidateVenue, venue_vendor_controller_1.registerVenueVendorService);
 router.get('/bookings', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, venue_vendor_controller_1.getAllVenueBookings);

@@ -58,7 +58,6 @@ class BaseRepository {
     }
     getOneByFilter(filter) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log(filter, "herw", yield this.model.findOne(Object.assign(Object.assign({}, filter), { isDeleted: false, isVerified: true })).exec());
             return yield this.model.findOne(Object.assign(Object.assign({}, filter), { isDeleted: false, isVerified: true })).exec();
         });
     }
@@ -85,6 +84,23 @@ class BaseRepository {
     getAllVendors(filter) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.model.find(Object.assign({}, filter)).populate('address').exec();
+        });
+    }
+    getAggregateData(pipeline) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const data = yield this.model.aggregate(pipeline);
+                return data;
+            }
+            catch (error) {
+                console.error('Error performing aggregation:', error);
+                return null;
+            }
+        });
+    }
+    getCount() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.model.countDocuments();
         });
     }
 }

@@ -23,27 +23,30 @@ const venueVendorService = new venueVendor_service_1.default();
 const vendorService = new vendor_service_1.default();
 const venueService = new venueVendor_service_1.default();
 const getVenueVendorDashboard = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     console.log("i am here in venue vendorr dashboard");
-    (0, responseFormatter_1.default)(200, null, "successfull", res, req);
+    const veneueVendorData = yield venueVendorService.getDashboardData((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
+    console.log(veneueVendorData);
+    (0, responseFormatter_1.default)(200, Object.assign({}, veneueVendorData), "successfull", res, req);
 }));
 exports.getVenueVendorDashboard = getVenueVendorDashboard;
 const getVenueVendorProfile = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
-    const vendorDetail = yield vendorService.getVendor((_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.id, "venue-vendor");
+    var _b;
+    const vendorDetail = yield vendorService.getVendor((_b = req === null || req === void 0 ? void 0 : req.user) === null || _b === void 0 ? void 0 : _b.id, "venue-vendor");
     (0, responseFormatter_1.default)(200, { vendorDetail }, "successfull", res, req);
 }));
 exports.getVenueVendorProfile = getVenueVendorProfile;
 const getVenueVendorService = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b;
-    const venueVendorData = yield venueVendorService.getVenue({ vendorId: (_b = req.user) === null || _b === void 0 ? void 0 : _b.id });
+    var _c;
+    const venueVendorData = yield venueVendorService.getVenue({ vendorId: (_c = req.user) === null || _c === void 0 ? void 0 : _c.id });
     (0, responseFormatter_1.default)(200, { venueVendorData }, "successfull", res, req);
 }));
 exports.getVenueVendorService = getVenueVendorService;
 const registerVenueVendorService = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _c, _d, _e;
-    const venueInfo = (_c = req.body) === null || _c === void 0 ? void 0 : _c.venueInfo;
-    const addressInfo = (_d = req.body) === null || _d === void 0 ? void 0 : _d.addressInfo;
-    const priceInfo = (_e = req.body) === null || _e === void 0 ? void 0 : _e.priceInfo;
+    var _d, _e, _f;
+    const venueInfo = (_d = req.body) === null || _d === void 0 ? void 0 : _d.venueInfo;
+    const addressInfo = (_e = req.body) === null || _e === void 0 ? void 0 : _e.addressInfo;
+    const priceInfo = (_f = req.body) === null || _f === void 0 ? void 0 : _f.priceInfo;
     const description = req.body.description;
     const services = req.body.services;
     const amenities = req.body.amenities;
@@ -72,32 +75,32 @@ const getVenueBookingDetails = (0, express_async_handler_1.default)((req, res) =
 }));
 exports.getVenueBookingDetails = getVenueBookingDetails;
 const changeBookingStatus = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _f;
+    var _g;
     const { bookingId } = req.params;
     const { status } = req.body;
-    const bookingData = yield venueService.changeBookingStatus(bookingId, status, (_f = req === null || req === void 0 ? void 0 : req.user) === null || _f === void 0 ? void 0 : _f.id);
+    const bookingData = yield venueService.changeBookingStatus(bookingId, status, (_g = req === null || req === void 0 ? void 0 : req.user) === null || _g === void 0 ? void 0 : _g.id);
     (0, responseFormatter_1.default)(200, { bookingData }, "successfull", res, req);
 }));
 exports.changeBookingStatus = changeBookingStatus;
 const generateAdvancePayment = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _g;
-    const { advancePayment, bookingId } = (_g = req.body) === null || _g === void 0 ? void 0 : _g.formValue;
+    var _h;
+    const { advancePayment, bookingId } = (_h = req.body) === null || _h === void 0 ? void 0 : _h.formValue;
     const bookingData = yield venueService.generateAdvancePayment(bookingId, advancePayment);
     console.log(bookingData);
     (0, responseFormatter_1.default)(200, { bookingData }, "successfull", res, req);
 }));
 exports.generateAdvancePayment = generateAdvancePayment;
 const getAvailabilityInfo = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _h;
-    const availabilityData = yield venueService.getAvailabilityInfo((_h = req === null || req === void 0 ? void 0 : req.user) === null || _h === void 0 ? void 0 : _h.id);
+    var _j;
+    const availabilityData = yield venueService.getAvailabilityInfo((_j = req === null || req === void 0 ? void 0 : req.user) === null || _j === void 0 ? void 0 : _j.id);
     console.log(availabilityData);
     (0, responseFormatter_1.default)(200, { availabilityData }, "successfull", res, req);
 }));
 exports.getAvailabilityInfo = getAvailabilityInfo;
 const addHoliday = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _j;
+    var _k;
     const { date } = req.body;
-    const holiday = yield venueService.addHoliday((_j = req.user) === null || _j === void 0 ? void 0 : _j.id, date);
+    const holiday = yield venueService.addHoliday((_k = req.user) === null || _k === void 0 ? void 0 : _k.id, date);
     (0, responseFormatter_1.default)(200, null, "Holiday added successfully", res, req);
 }));
 exports.addHoliday = addHoliday;

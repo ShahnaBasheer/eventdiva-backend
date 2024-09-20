@@ -15,7 +15,9 @@ const venueService = new VenueVendorService();
 
 const getVenueVendorDashboard = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
     console.log("i am here in venue vendorr dashboard");
-    createSuccessResponse(200, null , "successfull", res, req)
+    const veneueVendorData = await venueVendorService.getDashboardData(req.user?.id);
+    console.log(veneueVendorData);
+    createSuccessResponse(200, { ...veneueVendorData } , "successfull", res, req)
 });
 
 const getVenueVendorProfile = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {

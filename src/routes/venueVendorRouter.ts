@@ -14,7 +14,6 @@ const router: Router = express.Router();
 
 
 router.get('/dashboard', authMiddleware, isUser, getVenueVendorDashboard);
-router.get('/profile', authMiddleware, isUser, getVenueVendorProfile);
 router.get('/service', authMiddleware, isUser, getVenueVendorService);
 router.post('/venue-register', authMiddleware, isUser, upload, ValidateVenue, registerVenueVendorService);
 router.get('/bookings', authMiddleware, isUser, getAllVenueBookings);

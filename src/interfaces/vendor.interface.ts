@@ -13,6 +13,8 @@ interface IVendor {
     serviceName?: string;
     otp?: string;
     otpTimestamp?: Date;
+    newotp?: string;
+    newotpTimestamp?: Date;
     isVerified?: boolean;
     isDeleted?: boolean;
     isBlocked?: boolean;

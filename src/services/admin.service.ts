@@ -1,17 +1,29 @@
 import bcrypt from 'bcrypt';
-import { ConflictError, UnauthorizedError } from "../errors/customError";
+import { BadRequestError, ConflictError, UnauthorizedError } from "../errors/customError";
 import { generateAdminToken, generateRefreshAdminToken } from "../config/jwToken";
 import { IAdmin, IAdminDocument} from "../interfaces/admin.interface";
 import AdminRepository from "../repositories/admin.repository";
-import Admin from '../models/adminModel';
+import CustomerRepository from '../repositories/customer.repository';
+import VendorRepository from '../repositories/vendor.repository';
+import PlannerBookingRepository from '../repositories/plannerBooking.repository';
+import VenueBookingRepository from '../repositories/venueBooking.repository';
 
 
 
 class AdminService {
     private adminRepository!: AdminRepository;
+    private customerRepository!: CustomerRepository;
+    private vendorRepository!: VendorRepository;
+    private _plannerBookingrepository: PlannerBookingRepository;
+    private _venueBookingrepository: VenueBookingRepository;
+    
 
     constructor() {
         this.adminRepository = new AdminRepository();
+        this.customerRepository = new CustomerRepository();
+        this.vendorRepository = new VendorRepository();
+        this._plannerBookingrepository = new PlannerBookingRepository();
+        this._venueBookingrepository = new VenueBookingRepository();
     }
 
     private async createUser(user: IAdmin): Promise<IAdmin> {
@@ -60,6 +72,62 @@ class AdminService {
             role: user.role,
         };
         return extracted;
+    }
+
+    async getDashboardData(): Promise<any>{
+        try {
+            const totalUsers = await this.customerRepository.getCount();
+            const totalVendors = await this.vendorRepository.getCount();
+            const totalPlannerBookings = await this._plannerBookingrepository.getCount();
+            const totalVenueBookings = await this._venueBookingrepository.getCount();
+            // const allPlannerBookings = await this._plannerBookingrepository.find({ type: 'planner' });
+            // const allVenueBookings = await this._venueBookingrepository.find({ type: 'venue' });
+        
+
+            const venuebookingStatusPipeline = [
+                {
+                    $group: {
+                        _id: "$status",
+                        count: { $sum: 1 }
+                    }
+                },
+                {
+                    $project: {
+                      _id: 0, 
+                      status: "$_id",        // Project the status field from _id
+                      count: 1               // Include the count field
+                    }
+                  }
+            ];
+
+            const plannerbookingStatusPipeline = [
+                {
+                    $group: {
+                        _id: "$status",
+                        count: { $sum: 1 }
+                    }
+                },
+                {
+                    $project: {
+                      _id: 0, 
+                      status: "$_id",        // Project the status field from _id
+                      count: 1               // Include the count field
+                    }
+                  }
+            ];
+
+            const allVenueBookings = await this._venueBookingrepository.getAggregateData(venuebookingStatusPipeline);
+            const allPlannerBookings = await this._plannerBookingrepository.getAggregateData(plannerbookingStatusPipeline);
+
+            return ({
+                totalUsers, totalVendors,
+                totalPlannerBookings, totalVenueBookings,
+                allPlannerBookings, allVenueBookings,
+            });
+          } catch (error) {
+            console.error('Error fetching dashboard data:', error);
+            throw new BadRequestError('Failed to Fetch Dashboard Details! Try again Later!')
+          }
     }
     
 }

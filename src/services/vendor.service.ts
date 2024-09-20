@@ -164,6 +164,110 @@ class VendorService {
         const updatedData = await this._vendorRepository.update({ _id: vendorId }, data);
         return updatedData;
     }
+
+    async otpSendForUpdateEmail(user: IVendorDocument, email: string){
+        try {
+            // 1. Validate the new email
+            const existingVendor = await this._vendorRepository.getOneByFilter({ email });
+            if (existingVendor) {
+                throw new ConflictError('Email already in use');
+            }
+    
+            // 3. Generate OTPs
+            const oldEmailOtp =  await sendOtpByEmail(user?.email);
+            const newEmailOtp = await sendOtpByEmail(email);
+            
+            await this._vendorRepository.update({ _id: user.id }, 
+                { otp: oldEmailOtp, otpTimestamp: new Date(),
+                  newotp: newEmailOtp, newotpTimestamp: new Date()
+                });
+                
+            return true;
+        } catch (error) {
+            console.error('Error updating vendor email:', error);
+            throw new BadRequestError('Failed to send OTP! Try again later');
+        }
+    }
+
+    async otpVerifyForEmail(user: IVendorDocument, formValue: { otpOld: string, otpNew: string, email: string }) {
+        try {
+            const currentTime = new Date();
+    
+            // Validate old OTP
+            if (!user?.otp || !user?.otpTimestamp || user?.otp !== formValue.otpOld) {
+                throw new BadRequestError(`Invalid OTP for ${user.email}`);
+            }
+    
+            // Check if old OTP is expired
+            const otpTimestamp = new Date(user?.otpTimestamp);
+            const oldtimeDifferenceInMinutes = (currentTime.getTime() - otpTimestamp.getTime()) / (1000 * 60);
+            if (oldtimeDifferenceInMinutes > 2) {
+                throw new BadRequestError(`OTP is Expired for ${user.email}`);
+            }
+    
+            // Validate new OTP
+            if (!user?.newotp || !user?.newotpTimestamp || user?.newotp !== formValue.otpNew) {
+                throw new BadRequestError(`Invalid OTP for ${formValue.email}`);
+            }
+    
+            // Check if new OTP is expired
+            const newotpTimestamp = new Date(user?.newotpTimestamp);
+            const newtimeDifferenceInMinutes = (currentTime.getTime() - newotpTimestamp.getTime()) / (1000 * 60);
+            if (newtimeDifferenceInMinutes > 2) {
+                throw new BadRequestError(`OTP is Expired for ${formValue.email}`);
+            }
+    
+            // Update user in the database
+            const detail = await this._vendorRepository.update({ email: user.email }, {
+                $set: { email: formValue.email },
+                $unset: { otpTimestamp: '', otp: '', newotpTimestamp: '', newotp: '' }
+            });
+    
+            return detail; // Return success response
+    
+        } catch (error) {
+            console.error("Error during OTP verification for email change:", error);
+            throw error;
+        }
+    }
+
+    async passwordChange(user: IVendorDocument, formValue: any) {
+        try {
+            if(user.password){
+                const isMatch = await bcrypt.compare(formValue.currentPassword, user.password);
+                if (!isMatch) {
+                  throw new BadRequestError("Current password is incorrect.");
+                }
+          
+                // Step 2: Ensure the new password and confirm new password match
+                if (formValue.newPassword !== formValue.confirmNewPassword) {
+                  throw new BadRequestError("New password and confirm password do not match.");
+                } 
+            }
+
+            // Step 3: Hash the new password
+            const salt = await bcrypt.genSalt(10);
+            const hashedNewPassword = await bcrypt.hash(formValue.newPassword, salt);
+      
+            // Step 4: Update the password in the database
+            const details = await this._vendorRepository.update({ _id: user._id }, {
+              $set: { password: hashedNewPassword }
+            });
+      
+
+            // Step 5: Return success message
+            return details;
+          
+        } catch (error) {
+          console.error("Error changing password:", error);
+          if(error instanceof BadRequestError) throw error;
+          else throw new BadRequestError("Failed to change password. Please try again.");
+          
+        }
+      }
+    
+
+   
     
 }
 

@@ -60,6 +60,12 @@ const vendorSchema = new mongoose_1.Schema({
     otpTimestamp: {
         type: Date
     },
+    newotp: {
+        type: String
+    },
+    newotpTimestamp: {
+        type: Date
+    },
     isVerified: {
         type: Boolean,
         default: false,

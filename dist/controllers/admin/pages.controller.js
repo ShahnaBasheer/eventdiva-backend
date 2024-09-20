@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.plannerStatusApproval = exports.venueStatusApproval = exports.getEventPlannerDetail = exports.getVenueDetail = exports.getAllPlannersBookings = exports.getAllVenuesBookings = exports.getAllPlanners = exports.getAllVenues = exports.getAllVendors = exports.getAllCustomers = exports.getAdminDashBoard = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const responseFormatter_1 = __importDefault(require("../../utils/responseFormatter"));
+const admin_service_1 = __importDefault(require("../../services/admin.service"));
 const customer_service_1 = __importDefault(require("../../services/customer.service"));
 const vendor_service_1 = __importDefault(require("../../services/vendor.service"));
 const venueVendor_service_1 = __importDefault(require("../../services/venueVendor.service"));
@@ -23,8 +24,11 @@ const customerService = new customer_service_1.default();
 const vendorService = new vendor_service_1.default();
 const venueService = new venueVendor_service_1.default();
 const eventPlannerService = new eventPlanner_service_1.default();
+const adminService = new admin_service_1.default();
 const getAdminDashBoard = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    (0, responseFormatter_1.default)(200, null, "successfull", res, req);
+    const data = yield adminService.getDashboardData();
+    console.log(data, "all data");
+    (0, responseFormatter_1.default)(200, Object.assign({}, data), "successfull", res, req);
 }));
 exports.getAdminDashBoard = getAdminDashBoard;
 const getAllCustomers = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {

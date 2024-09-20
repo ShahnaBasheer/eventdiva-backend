@@ -16,9 +16,17 @@ const bcrypt_1 = __importDefault(require("bcrypt"));
 const customError_1 = require("../errors/customError");
 const jwToken_1 = require("../config/jwToken");
 const admin_repository_1 = __importDefault(require("../repositories/admin.repository"));
+const customer_repository_1 = __importDefault(require("../repositories/customer.repository"));
+const vendor_repository_1 = __importDefault(require("../repositories/vendor.repository"));
+const plannerBooking_repository_1 = __importDefault(require("../repositories/plannerBooking.repository"));
+const venueBooking_repository_1 = __importDefault(require("../repositories/venueBooking.repository"));
 class AdminService {
     constructor() {
         this.adminRepository = new admin_repository_1.default();
+        this.customerRepository = new customer_repository_1.default();
+        this.vendorRepository = new vendor_repository_1.default();
+        this._plannerBookingrepository = new plannerBooking_repository_1.default();
+        this._venueBookingrepository = new venueBooking_repository_1.default();
     }
     createUser(user) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -70,6 +78,59 @@ class AdminService {
             role: user.role,
         };
         return extracted;
+    }
+    getDashboardData() {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const totalUsers = yield this.customerRepository.getCount();
+                const totalVendors = yield this.vendorRepository.getCount();
+                const totalPlannerBookings = yield this._plannerBookingrepository.getCount();
+                const totalVenueBookings = yield this._venueBookingrepository.getCount();
+                // const allPlannerBookings = await this._plannerBookingrepository.find({ type: 'planner' });
+                // const allVenueBookings = await this._venueBookingrepository.find({ type: 'venue' });
+                const venuebookingStatusPipeline = [
+                    {
+                        $group: {
+                            _id: "$status",
+                            count: { $sum: 1 }
+                        }
+                    },
+                    {
+                        $project: {
+                            _id: 0,
+                            status: "$_id", // Project the status field from _id
+                            count: 1 // Include the count field
+                        }
+                    }
+                ];
+                const plannerbookingStatusPipeline = [
+                    {
+                        $group: {
+                            _id: "$status",
+                            count: { $sum: 1 }
+                        }
+                    },
+                    {
+                        $project: {
+                            _id: 0,
+                            status: "$_id", // Project the status field from _id
+                            count: 1 // Include the count field
+                        }
+                    }
+                ];
+                const allVenueBookings = yield this._venueBookingrepository.getAggregateData(venuebookingStatusPipeline);
+                const allPlannerBookings = yield this._plannerBookingrepository.getAggregateData(plannerbookingStatusPipeline);
+                return ({
+                    totalUsers, totalVendors,
+                    totalPlannerBookings, totalVenueBookings,
+                    allPlannerBookings, allVenueBookings,
+                });
+            }
+            catch (error) {
+                console.error('Error fetching dashboard data:', error);
+                throw new customError_1.BadRequestError('Failed to Fetch Dashboard Details! Try again Later!');
+            }
+        });
     }
 }
 exports.default = AdminService;

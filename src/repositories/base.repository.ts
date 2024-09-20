@@ -52,7 +52,6 @@ class BaseRepository<T extends Document> implements IBaseRepository<T> {
     }
     
     async getOneByFilter(filter: FilterQuery<T>): Promise<T | null> {
-        console.log(filter,"herw", await this.model.findOne({ ...filter, isDeleted: false, isVerified: true }).exec())
         return await this.model.findOne({ ...filter, isDeleted: false, isVerified: true }).exec();
     }
 
@@ -76,6 +75,22 @@ class BaseRepository<T extends Document> implements IBaseRepository<T> {
     async getAllVendors(filter: FilterQuery<T>): Promise<T [] | null> {
         return await this.model.find({ ...filter }).populate('address').exec();
     } 
+
+
+
+    async getAggregateData(pipeline: any[]){
+        try {
+            const data = await this.model.aggregate(pipeline);
+            return data;
+        } catch (error) {
+            console.error('Error performing aggregation:', error);
+            return null;
+        }
+    }
+
+    async getCount(){
+        return this.model.countDocuments();
+    }
 }
 
 export default BaseRepository;

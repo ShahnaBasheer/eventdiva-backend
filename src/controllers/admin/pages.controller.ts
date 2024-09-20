@@ -14,10 +14,13 @@ const customerService = new CustomerService();
 const vendorService = new VendorService();
 const venueService = new VenueVendorService();
 const eventPlannerService = new EventPlannerService();
+const adminService = new AdminService();
 
 
 const getAdminDashBoard = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
-    createSuccessResponse(200, null , "successfull", res, req);
+    const data = await adminService.getDashboardData();
+    console.log(data, "all data")
+    createSuccessResponse(200,  { ...data  } , "successfull", res, req);
 });
 
 

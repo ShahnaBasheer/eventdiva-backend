@@ -422,5 +422,73 @@ class VenueVendorService {
             }
         });
     }
+    getDashboardData(vendorId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const venuevendor = yield this.getVenue({ vendorId });
+            if (!venuevendor)
+                throw new customError_1.BadRequestError('Venue Vendor is not found');
+            const totalReveneuePipeline = [
+                { $match: { venueId: venuevendor._id } },
+                { $group: { _id: null, totalRevenue: { $sum: "$totalCost" } } }
+            ];
+            const totalBookingsPipeline = [
+                { $match: { venueId: venuevendor._id, status: { $in: [status_options_1.Status.Pending, status_options_1.Status.Confirmed, status_options_1.Status.Completed] } } },
+                { $count: "totalBookings" }
+            ];
+            const bookingStatusPipeline = [
+                { $match: { venueId: venuevendor._id } },
+                {
+                    $group: {
+                        _id: "$status",
+                        count: { $sum: 1 }
+                    }
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        status: "$_id", // Project the status field from _id
+                        count: 1 // Include the count field
+                    }
+                }
+            ];
+            const currentYear = new Date().getFullYear();
+            const revenueOverTimePipeline = [
+                {
+                    $match: {
+                        venueId: venuevendor._id,
+                        updatedAt: {
+                            $gte: new Date(`${currentYear}-01-01`), // From the start of the current year
+                            $lt: new Date(`${currentYear + 1}-01-01`) // Before the start of the next year
+                        }
+                    }
+                },
+                {
+                    $group: {
+                        _id: {
+                            year: { $year: "$updatedAt" }, // Group by year
+                            month: { $month: "$updatedAt" } // Group by month
+                        },
+                        monthlyRevenue: { $sum: "$totalCost" }
+                    }
+                },
+                {
+                    $sort: { "_id.year": 1, "_id.month": 1 } // Sort by year and month
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        month: "$_id.month",
+                        year: "$_id.year",
+                        revenue: "$monthlyRevenue"
+                    }
+                }
+            ];
+            const revenueOverTime = yield this._venueBookingrepository.getAggregateData(revenueOverTimePipeline);
+            const totalRevenue = yield this._venueBookingrepository.getAggregateData(totalReveneuePipeline);
+            const totalBookings = yield this._venueBookingrepository.getAggregateData(totalBookingsPipeline);
+            const AllBookings = yield this._venueBookingrepository.getAggregateData(bookingStatusPipeline);
+            return { totalRevenue, totalBookings, AllBookings, revenueOverTime };
+        });
+    }
 }
 exports.default = VenueVendorService;
