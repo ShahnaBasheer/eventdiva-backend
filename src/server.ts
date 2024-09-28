@@ -38,6 +38,9 @@ app.use(cors({
     'https://eventdiva.online',
     'https://backend.eventdiva.online',
     'https://www.backend.eventdiva.online',
+    'https://www.eventdiva.online/', 
+    'https://eventdiva.online/',
+    
     ],
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT']
 }));
@@ -68,7 +71,7 @@ app.use(errorHandler)
 // Start server
 const port = process.env.PORT || 3000;
 server.listen(port, () => {
-  console.log(`Server is running on port ${port}...`);
+  console.log(`Server is running on port successfully ${port}...`);
 });
 
 export default app;
