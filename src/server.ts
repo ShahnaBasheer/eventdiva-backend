@@ -35,7 +35,10 @@ app.use(cors({
   origin: ['http://localhost:4200', 
     'https://master.d1ee9rxmukt8sl.amplifyapp.com', 
     'https://www.eventdiva.online', 
-    'https://eventdiva.online'],
+    'https://eventdiva.online',
+    'https://backend.eventdiva.online',
+    'https://www.backend.eventdiva.online',
+    ],
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT']
 }));
 
