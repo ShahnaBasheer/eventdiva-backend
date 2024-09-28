@@ -84,6 +84,7 @@ exports.logout = logout;
 const getNotifications = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     const data = yield notificationService.getNotifications((_a = req.user) === null || _a === void 0 ? void 0 : _a.id, (_b = req.user) === null || _b === void 0 ? void 0 : _b.role);
+    console.log(data, "notfication");
     (0, responseFormatter_1.default)(200, { notifications: data.notifications, readCount: data.readCount }, "successfull", res, req);
 }));
 exports.getNotifications = getNotifications;

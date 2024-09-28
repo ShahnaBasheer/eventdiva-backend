@@ -11,7 +11,6 @@ class EventPlannerRepository extends BaseRepository<IEventPlannerDocument> {
         super(EventPlanner);
     }
 
-
     async getPlannerDetail(filter: Filter): Promise<IEventPlanner | null> {
         return await EventPlanner.findOne({ ...filter, isDeleted: false })
         .populate('address').exec();

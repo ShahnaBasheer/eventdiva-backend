@@ -25,6 +25,9 @@ const helperFunctions_1 = require("../utils/helperFunctions");
 const status_options_1 = require("../utils/status-options");
 const availability_repository_1 = __importDefault(require("../repositories/availability.repository"));
 const notification_repository_1 = __importDefault(require("../repositories/notification.repository"));
+const cloudinary_config_1 = __importDefault(require("../config/cloudinary.config"));
+const sharp_1 = __importDefault(require("sharp"));
+const stream_1 = require("stream");
 class VenueVendorService {
     constructor() {
         this._venueVendorRepository = new venueVendor_repository_1.default();
@@ -47,13 +50,17 @@ class VenueVendorService {
                 delete userInfo.addressInfo.town;
             if (!userInfo.addressInfo.landmark)
                 delete userInfo.addressInfo.landmark;
+            // const coverPicPath = await this.fileStore(files?.coverPic, process.env.VV_COVERPIC,"VV_coverPic");
+            // const docPath = await this.fileStore(files?.document, process.env.VV_DOCUMENTS,"VV_doc");
+            // const portPath = await this.fileStore(files?.portfolios, process.env.VV_PORTFOLIOS,"VV_portfolio");
+            console.log('createEventPlanner called');
+            const coverPicPath = yield this.CloudinaryfileStore(files === null || files === void 0 ? void 0 : files.coverPic, "/Venues/CoverPics", "VV_coverpic");
+            const docPath = yield this.CloudinaryfileStore(files === null || files === void 0 ? void 0 : files.document, "/Venues/DocumentS", "VV_doc");
+            const portPath = yield this.CloudinaryfileStore(files === null || files === void 0 ? void 0 : files.portfolios, "/venues/Portfolios", "VV_portfolio");
             const address = yield this._addressRepository.create(Object.assign({}, userInfo.addressInfo));
             if (!address) {
                 throw new customError_1.BadRequestError("Address creation failed. Please check the provided information!");
             }
-            const coverPicPath = yield this.fileStore(files === null || files === void 0 ? void 0 : files.coverPic, process.env.VV_COVERPIC, "VV_coverPic");
-            const docPath = yield this.fileStore(files === null || files === void 0 ? void 0 : files.document, process.env.VV_DOCUMENTS, "VV_doc");
-            const portPath = yield this.fileStore(files === null || files === void 0 ? void 0 : files.portfolios, process.env.VV_PORTFOLIOS, "VV_portfolio");
             // Check if the company name is unique
             const existingVenue = yield this._venueVendorRepository.getOneByFilter({ company: userInfo.company });
             if (existingVenue) {
@@ -97,6 +104,77 @@ class VenueVendorService {
                 });
             }
             return userDoc;
+        });
+    }
+    CloudinaryfileStore(files, folderName, fName) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!files || !folderName || !fName) {
+                throw new Error('Invalid input');
+            }
+            const processedImages = [];
+            console.log(files.length, folderName);
+            const uploadPromises = files.map((file) => {
+                return new Promise((resolve, reject) => {
+                    (0, sharp_1.default)(file.buffer, { failOnError: false })
+                        .resize({ width: 800 })
+                        .toBuffer()
+                        .then((buffer) => {
+                        const uploadStream = cloudinary_config_1.default.uploader.upload_stream({
+                            folder: folderName,
+                            public_id: `${fName}_${Date.now()}`,
+                            resource_type: 'auto',
+                        }, (error, result) => {
+                            if (error) {
+                                reject(error);
+                            }
+                            else {
+                                resolve(result === null || result === void 0 ? void 0 : result.secure_url);
+                            }
+                        });
+                        // Convert the optimized buffer into a stream and upload it
+                        const bufferStream = stream_1.Readable.from(buffer);
+                        bufferStream.pipe(uploadStream).on('error', (streamError) => {
+                            reject(streamError);
+                        });
+                    })
+                        .catch((err) => {
+                        console.log(err);
+                        console.error(`Sharp processing error: ${err.message}`);
+                        // Skip the problematic file and resolve with null or a placeholder
+                        resolve(null);
+                    });
+                });
+            });
+            // Filter out any null values (from skipped files)
+            const results = yield Promise.all(uploadPromises);
+            return results.filter(url => url !== null); // Only return successful uploads
+        });
+    }
+    // Function to get all URLs from a specific folder
+    getAllUrlsInFolder(folderName) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            try {
+                const fullPath = `${folderName}`;
+                const { resources } = yield cloudinary_config_1.default.api.resources({
+                    type: 'upload',
+                    prefix: fullPath,
+                    max_results: 500,
+                    resource_type: 'auto',
+                });
+                return resources.map((resource) => resource.secure_url);
+            }
+            catch (error) {
+                if (error.error.http_code === 404) {
+                    console.log(`Folder not found: ${folderName}`);
+                    return [];
+                }
+                else {
+                    console.error("Error fetching resources from Cloudinary:", error);
+                    const message = ((_a = error === null || error === void 0 ? void 0 : error.error) === null || _a === void 0 ? void 0 : _a.message) || "Unknown error";
+                    throw new Error(`Failed to retrieve URLs from folder: ${message}`);
+                }
+            }
         });
     }
     fileStore(files, directory, fName) {
@@ -488,6 +566,130 @@ class VenueVendorService {
             const totalBookings = yield this._venueBookingrepository.getAggregateData(totalBookingsPipeline);
             const AllBookings = yield this._venueBookingrepository.getAggregateData(bookingStatusPipeline);
             return { totalRevenue, totalBookings, AllBookings, revenueOverTime };
+        });
+    }
+    payAdvancepayment(bookingId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            // Step 1: Fetch booking details
+            const bookingDetail = yield this._venueBookingrepository.getOne({ bookingId });
+            if (!bookingDetail) {
+                throw new customError_1.BadRequestError('No Booking Detail Found!');
+            }
+            const advance = ((_a = bookingDetail.charges) === null || _a === void 0 ? void 0 : _a.advancePayments) || 0;
+            // Step 2: If advance payment exists, proceed with Razorpay order creation
+            let razorpayOrderData;
+            if (advance) {
+                const options = {
+                    amount: advance * 100, // Razorpay expects amount in paise (1 INR = 100 paise)
+                    currency: 'INR',
+                };
+                const razorpayInstance = new razorpay_1.default({
+                    key_id: process.env.RAZOR_KEY_ID || '',
+                    key_secret: process.env.RAZOR_KEY_SECRET || '',
+                });
+                // Create Razorpay order
+                razorpayOrderData = yield razorpayInstance.orders.create(options);
+                razorpayOrderData.amount_paid = advance;
+                // Step 3: If Razorpay order was created, update booking details
+                let updatedBooking;
+                if (razorpayOrderData) {
+                    // Update the booking information
+                    const updatedBookingInfo = {
+                        $set: {
+                            totalCost: (bookingDetail === null || bookingDetail === void 0 ? void 0 : bookingDetail.totalCost) + advance, // Update totalCost
+                        },
+                        $push: {
+                            payments: {
+                                type: 'Advance Payment',
+                                amount: advance, // Payment amount (advance)
+                                mode: 'Razorpay', // Payment mode
+                                paymentInfo: razorpayOrderData, // Razorpay order data
+                                status: status_options_1.Status.Pending,
+                            },
+                        },
+                    }, 
+                    // Step 4: Save the updated booking
+                    updatedBooking = yield this._venueBookingrepository.update({ bookingId }, updatedBookingInfo);
+                    return { razorpayOrderData, booking: updatedBooking };
+                }
+                console.log(updatedBooking, "jjjj");
+            }
+            return null;
+        });
+    }
+    payFullpayment(bookingId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b, _c, _d, _e;
+            // Step 1: Fetch booking details
+            const bookingDetail = yield this._venueBookingrepository.getOne({ bookingId });
+            if (!bookingDetail) {
+                throw new customError_1.BadRequestError('No Booking Detail Found!');
+            }
+            const totalServiceCharges = ((_c = (_b = (_a = bookingDetail === null || bookingDetail === void 0 ? void 0 : bookingDetail.charges) === null || _a === void 0 ? void 0 : _a.fullPayment) === null || _b === void 0 ? void 0 : _b.servicesCharges) === null || _c === void 0 ? void 0 : _c.reduce((sum, charge) => sum + charge.cost, 0)) || 0;
+            const fullpayment = (((_e = (_d = bookingDetail === null || bookingDetail === void 0 ? void 0 : bookingDetail.charges) === null || _d === void 0 ? void 0 : _d.fullPayment) === null || _e === void 0 ? void 0 : _e.venueRental) || 0) + totalServiceCharges;
+            // Step 2: If advance payment exists, proceed with Razorpay order creation
+            let razorpayOrderData;
+            if (fullpayment) {
+                const options = {
+                    amount: fullpayment * 100, // Razorpay expects amount in paise (1 INR = 100 paise)
+                    currency: 'INR',
+                };
+                const razorpayInstance = new razorpay_1.default({
+                    key_id: process.env.RAZOR_KEY_ID || '',
+                    key_secret: process.env.RAZOR_KEY_SECRET || '',
+                });
+                // Create Razorpay order
+                razorpayOrderData = yield razorpayInstance.orders.create(options);
+                razorpayOrderData.amount_paid = fullpayment;
+                // Step 3: If Razorpay order was created, update booking details
+                let updatedBooking;
+                if (razorpayOrderData) {
+                    // Update the booking information
+                    const updatedBookingInfo = {
+                        $push: {
+                            payments: {
+                                type: 'Full Payment',
+                                amount: fullpayment, // Payment amount (advance)
+                                mode: 'Razorpay', // Payment mode
+                                paymentInfo: razorpayOrderData, // Razorpay order data
+                                status: status_options_1.Status.Pending,
+                            },
+                        },
+                    }, 
+                    // Step 4: Save the updated booking
+                    updatedBooking = yield this._venueBookingrepository.update({ bookingId }, updatedBookingInfo);
+                    return { razorpayOrderData, booking: updatedBooking };
+                }
+                console.log(updatedBooking, "jjjj");
+            }
+            return null;
+        });
+    }
+    generateFullPayment(bookingId, fullPaymentCharges) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Fetch the current booking details to get the existing totalCost
+            const bookingDetail = yield this._venueBookingrepository.getOne({ bookingId });
+            if (!bookingDetail) {
+                throw new Error('Booking not found');
+            }
+            // Create serviceCharges array by mapping charges
+            const serviceCharges = fullPaymentCharges.charges.map(charge => ({
+                service: charge.chargeName,
+                cost: charge.amount,
+            }));
+            // Calculate the total sum of amounts
+            const totalServiceCharges = fullPaymentCharges.charges.reduce((sum, charge) => sum + charge.amount, 0);
+            // Add the new calculated charges to the existing totalCost
+            const updatedTotalCost = bookingDetail.totalCost + fullPaymentCharges.planningFee + totalServiceCharges;
+            // Perform the update operation
+            const bookingData = yield this._venueBookingrepository.update({ bookingId }, // Find booking by bookingId
+            {
+                'charges.fullPayment.veneuRental': fullPaymentCharges.planningFee, // Update planningFee
+                'charges.fullPayment.servicesCharges': serviceCharges, // Update servicesCharges with mapped values
+                'totalCost': updatedTotalCost // Update totalCost by adding new charges to existing totalCost
+            });
+            return { bookingData, fullPayment: fullPaymentCharges.planningFee + totalServiceCharges };
         });
     }
 }

@@ -5,7 +5,7 @@ import { getEventPlannerDashboard,
     getEventPlannerService, registerEventPlannerService,
     getAllPlannerBookings, getPlannerBookingDetails,
     changeBookingStatus, generateAdvancePayment , getAvailabilityInfo,
-    addHoliday, addNewEvent
+    addHoliday, addNewEvent, generateFullPayment
 } from '../controllers/vendors/event-planner.controller';
 
 import { upload } from '../middlewares/multer';
@@ -23,6 +23,7 @@ router.get('/bookings', authMiddleware, isUser, getAllPlannerBookings);
 router.get('/bookings/details/:bookingId', authMiddleware, isUser, getPlannerBookingDetails);
 router.patch('/bookings/details/:bookingId/change-status/', authMiddleware, isUser, changeBookingStatus);
 router.patch('/bookings/advance-payment/', authMiddleware, isUser, generateAdvancePayment);
+router.patch('/bookings/full-payment/', authMiddleware, isUser, generateFullPayment);
 router.get('/calendar', authMiddleware, isUser, getAvailabilityInfo);
 router.patch('/calendar/add-holiday/', authMiddleware, isUser, addHoliday);
 router.patch('/calendar/add-new-event/', authMiddleware, isUser, addNewEvent);

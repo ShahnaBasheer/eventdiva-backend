@@ -50,7 +50,7 @@ const verifyToken = (token, role, tokenType) => __awaiter(void 0, void 0, void 0
 });
 exports.verifyToken = verifyToken;
 const isVendorDocument = (user) => {
-    return user && typeof user.vendorType === 'string';
+    return user && typeof user.vendorType !== undefined;
 };
 exports.isVendorDocument = isVendorDocument;
 const generateNewToken = (id, role) => {
@@ -81,23 +81,23 @@ const notificationTypes = {
         link: `/messages`
     }),
     booking_created: (bookingId) => ({
-        message: `Your booking #${bookingId} has been successfully created.`,
+        message: `Your booking #${bookingId} has been successfully created`,
         link: `/bookings/${bookingId}`
     }),
     booking_confirmation: (bookingId) => ({
-        message: `Booking #${bookingId} has been confirmed.`,
+        message: `Booking #${bookingId} has been confirmed`,
         link: `/bookings/${bookingId}`
     }),
     booking_cancellation: (bookingId) => ({
-        message: `Booking #${bookingId} has been cancelled.`,
+        message: `Booking #${bookingId} has been cancelled`,
         link: `/bookings/${bookingId}/cancellation`
     }),
     advance_payment_customer: (amount, name) => ({
-        message: `Generated Advance payment of $${amount} by ${name}.`,
+        message: `Generated Advance payment of $${amount} by ${name}`,
         link: `/payments/advance`
     }),
     advance_payment_vendor: (amount) => ({
-        message: `Generated Advance payment for BookingId ${amount}.`,
+        message: `Generated Advance payment for BookingId ${amount}`,
         link: `/payments/advance`
     }),
     full_payment: (summary) => ({
@@ -105,7 +105,7 @@ const notificationTypes = {
         link: `/payments/full`
     }),
     missed_call: (name) => ({
-        message: `You got a missed call from <b>${name}</b>.`,
+        message: `You got a missed call from <b>${name}</b>`,
         link: `/calls/missed`
     }),
     rejected_call: (name) => ({
@@ -113,7 +113,10 @@ const notificationTypes = {
         link: `/calls/rejected`
     }),
     signup: () => ({
-        message: `Welcome! Your signup is successful.`,
+        message: `Welcome! Your signup is successfull`,
+    }),
+    service_register: () => ({
+        message: `Your service has been successfully registered`,
     })
 };
 const handleNotification = (data) => __awaiter(void 0, void 0, void 0, function* () {
@@ -143,6 +146,9 @@ const handleNotification = (data) => __awaiter(void 0, void 0, void 0, function*
             break;
         case eventsVariables_1.NotificationType.SIGNUP:
             notificationData = notificationTypes.signup();
+            break;
+        case eventsVariables_1.NotificationType.SERVICE_REGISTERED:
+            notificationData = notificationTypes.service_register();
             break;
         default:
             console.log('Unknown notification type:', data.type);

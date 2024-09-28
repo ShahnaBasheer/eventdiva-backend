@@ -10,7 +10,7 @@ import { Filter } from "../interfaces/utilities.interface";
 import PlannerBookingRepository from "../repositories/plannerBooking.repository";
 import { IEventPlannerBooking } from "../interfaces/eventPlannerBooking.interface";
 import { IEventPlanner, IEventPlannerDocument } from "../interfaces/eventPlanner.interface";
-import { generateOrderId } from "../utils/helperFunctions";
+import { generateOrderId, handleNotification } from "../utils/helperFunctions";
 import { Status } from "../utils/status-options";
 import AvailabilityRepository from "../repositories/availability.repository";
 import NotificationRepository from "../repositories/notification.repository";
@@ -20,6 +20,8 @@ import { IAvailability } from "../interfaces/availability.interface";
 import cloudinary from '../config/cloudinary.config';
 import { Readable } from "stream";
 import sharp from 'sharp';
+import { NotificationType } from "../utils/eventsVariables";
+import { UserRole } from "../utils/important-variables";
 
 
 class EventPlannerService {
@@ -48,25 +50,20 @@ class EventPlannerService {
         if(!userInfo.addressInfo.town) delete userInfo.addressInfo.town;
         if(!userInfo.addressInfo.landmark) delete userInfo.addressInfo.landmark;
 
-
+        // const coverPicPath = await this.fileStore(files?.coverPic, process.env.EP_COVERPIC,"EP_coverPic");
+        // const docPath = await this.fileStore(files?.document, process.env.EP_DOCUMENTS,"EP_doc");
+        // const portPath = await this.fileStore(files?.portfolios, process.env.EP_PORTFOLIOS,"EP_portfolio");
+        console.log('createEventPlanner called');
+        const coverPicPath = await this.CloudinaryfileStore(files?.coverPic, "/Event_Planners/CoverPics","EP_coverpic");
+        const docPath = await this.CloudinaryfileStore(files?.document, "/Event_Planners/DocumentS","EP_doc");
+        const portPath = await this.CloudinaryfileStore(files?.portfolios, "/Event_Planners/Portfolios","EP_portfolio");
+                
         const address = await this._addressRepository.create({ ...userInfo.addressInfo }) as IAddressDocument;
 
         if(!address){
             throw new BadRequestError("Address creation failed. Please check the provided information!")
         }
-        
-        const coverPicPath = await this.fileStore(files?.coverPic, process.env.EP_COVERPIC,"EP_coverPic");
-        const docPath = await this.fileStore(files?.document, process.env.EP_DOCUMENTS,"EP_doc");
-        const portPath = await this.fileStore(files?.portfolios, process.env.EP_PORTFOLIOS,"EP_portfolio");
 
-        // const coverPicPath = await this.CloudinaryfileStore(files?.coverPic, 'Event_Planners/CoverPics',"EP_coverPic");
-        // const docPath = await this.CloudinaryfileStore(files?.document, 'Event_Planners/DocumentS',"EP_doc");
-        // const portPath = await this.CloudinaryfileStore(files?.portfolios, "Event_Planners/Portfolios","EP_portfolio");
-        
-        // console.log(coverPicPath,"coverPicPath");
-        // console.log(docPath, "docPath");
-        // console.log(portPath, "portPath");
-        
         // Check if the company name is unique
         const existingEventPlanner = await this._eventPlannerRepository.getOneByFilter({ company: userInfo.company });
         if (existingEventPlanner) {
@@ -134,15 +131,20 @@ class EventPlannerService {
                //     }
                // )  
   
-               const notification = { 
-                   userId:  userInfo.user._id, 
-                   role: 'Vendor',
-                   message: `Your service has been successfully registered.`,
-                   type: 'service_registered' 
-               }
-   
+            //    const notification = { 
+            //        userId:  userInfo.user._id, 
+            //        role: 'Vendor',
+            //        message: `Your service has been successfully registered.`,
+            //        type: 'service_registered' 
+            //    }
+            const notification = await handleNotification(
+                { type: NotificationType.SERVICE_REGISTERED,
+                  userId: userInfo.user._id,
+                  role: UserRole.Vendor, 
+                } 
+            );
                // Emit the notification event to the relevant client using Socket.IO
-               await io.emit('save-notifications', notification);         
+               io.emit('loaded-notification', { notification });         
             }
             return userDoc; 
         }
@@ -156,37 +158,44 @@ class EventPlannerService {
         }
     
         const processedImages: string[] = [];
+        console.log(files.length, folderName);
     
         const uploadPromises = files.map((file: any) => {
             return new Promise((resolve, reject) => {
-              const optimizedBuffer = sharp(file.buffer)
-                .resize({ width: 800 })
-                .toBuffer((err, buffer) => {
-                  if (err) {
-                    reject(err);
-                  } else {
-                    const uploadStream = cloudinary.uploader.upload_stream({
-                      folder: folderName,
-                      public_id: `${fName}_${Date.now()}`,
-                      resource_type: 'auto',
-                    }, (error, result) => {
-                      if (error) {
-                        reject(error);
-                      } else {
-                        resolve(result?.secure_url);
-                      }
+                sharp(file.buffer, { failOnError: false })
+                    .resize({ width: 800 })
+                    .toBuffer()
+                    .then((buffer) => {
+                        const uploadStream = cloudinary.uploader.upload_stream({
+                            folder: folderName,
+                            public_id: `${fName}_${Date.now()}`,
+                            resource_type: 'auto',
+                        }, (error, result) => {
+                            if (error) {
+                                reject(error);
+                            } else {
+                                resolve(result?.secure_url);
+                            }
+                        });
+    
+                        // Convert the optimized buffer into a stream and upload it
+                        const bufferStream = Readable.from(buffer);
+                        bufferStream.pipe(uploadStream).on('error', (streamError) => {
+                            reject(streamError);
+                        });
+                    })
+                    .catch((err) => {
+                        console.log(err)
+                        console.error(`Sharp processing error: ${err.message}`);
+                        // Skip the problematic file and resolve with null or a placeholder
+                        resolve(null);
                     });
-        
-                    const bufferStream = Readable.from(buffer);
-                    bufferStream.pipe(uploadStream).on('error', (streamError) => {
-                      reject(streamError);
-                    });
-                  }
-                });
             });
-          });
-        
-        return Promise.all(uploadPromises);
+        });
+    
+        // Filter out any null values (from skipped files)
+        const results = await Promise.all(uploadPromises);
+        return results.filter(url => url !== null); // Only return successful uploads
     }
 
 
@@ -353,22 +362,30 @@ class EventPlannerService {
         if (!bookedData) {
             throw new BadRequestError('Booking data not found. Payment verification failed.');
         }
-    
+        
+        const index = bookedData.payments?.length-1;
         if (generatedSignature === razorpay_signature) {
-            bookedData.payments[0].status = Status.Paid;
+            
+            bookedData.payments[index].status = Status.Paid;
+
+            if(index === 1){
+                bookedData.paymentStatus = Status.Advance;
+            } else if(index === 2){
+                bookedData.paymentStatus = Status.Paid;
+            }
         } else {
-            bookedData.payments[0].status = Status.Failed;
+            bookedData.payments[index].status = Status.Failed;
             throw new BadRequestError('Invalid payment signature. Potential fraud attempt.');
         }            
         await bookedData.save();
 
-        await this._notificationrepository.create({ 
-            userId:  bookedData.customerId, 
-            userType: 'Customer',
-            message: `Your booking for ${bookedData.eventName} has been placed successfully`,
-            notificationType: 'booking_placed',
-        }
-    )  
+        // await this._notificationrepository.create({ 
+        //     userId:  bookedData.customerId, 
+        //     userType: 'Customer',
+        //     message: `Your booking for ${bookedData.eventName} has been placed successfully`,
+        //     notificationType: 'booking_placed',
+        // }
+     
         return bookedData;
     }
 
@@ -700,6 +717,166 @@ class EventPlannerService {
 
         return  { totalRevenue, totalBookings,  AllBookings, revenueOverTime}
     }
+   
+    async payAdvancepayment(bookingId: string) {
+        // Step 1: Fetch booking details
+        const bookingDetail = await this._plannerBookingrepository.getOne({ bookingId });
+    
+        if (!bookingDetail) {
+            throw new BadRequestError('No Booking Detail Found!');
+        }
+    
+        const advance = bookingDetail.charges?.advancePayments || 0;
+        
+        // Step 2: If advance payment exists, proceed with Razorpay order creation
+        let razorpayOrderData: any;
+        if (advance) {
+            const options = {
+                amount: advance * 100, // Razorpay expects amount in paise (1 INR = 100 paise)
+                currency: 'INR',
+            };
+    
+            const razorpayInstance = new Razorpay({
+                key_id: process.env.RAZOR_KEY_ID || '',
+                key_secret: process.env.RAZOR_KEY_SECRET || '',
+            });
+    
+            // Create Razorpay order
+            razorpayOrderData = await razorpayInstance.orders.create(options);
+            razorpayOrderData.amount_paid = advance;
+        
+    
+            // Step 3: If Razorpay order was created, update booking details
+            let updatedBooking;
+            if (razorpayOrderData) {
+                // Update the booking information
+                const updatedBookingInfo = {
+                        $set: {
+                            totalCost: bookingDetail.totalCost + advance, // Update totalCost
+                        },
+                        $push: {
+                            payments: {
+                                type: 'Advance Payment', 
+                                amount: advance, // Payment amount (advance)
+                                mode: 'Razorpay', // Payment mode
+                                paymentInfo: razorpayOrderData, // Razorpay order data
+                                status: Status.Pending,
+                            },
+                        },
+                    },
+                
+        
+                // Step 4: Save the updated booking
+                updatedBooking = await this._plannerBookingrepository.update({ bookingId }, updatedBookingInfo) as IEventPlannerDocument | null;
+                
+                return { razorpayOrderData, booking: updatedBooking };
+            }
+            console.log(updatedBooking, "jjjj")
+           
+        }
+    
+        return null;    
+    }
+   
+
+    async payFullpayment(bookingId: string) {
+        // Step 1: Fetch booking details
+        const bookingDetail = await this._plannerBookingrepository.getOne({ bookingId });
+    
+        if (!bookingDetail) {
+            throw new BadRequestError('No Booking Detail Found!');
+        }
+        
+        const totalServiceCharges = bookingDetail?.charges?.fullPayment?.servicesCharges?.reduce((sum, charge) => sum + charge.cost, 0) || 0;
+
+        const fullpayment = (bookingDetail?.charges?.fullPayment?.planningFee || 0) + totalServiceCharges;
+        
+        
+        // Step 2: If advance payment exists, proceed with Razorpay order creation
+        let razorpayOrderData: any;
+        if (fullpayment) {
+            const options = {
+                amount: fullpayment * 100, // Razorpay expects amount in paise (1 INR = 100 paise)
+                currency: 'INR',
+            };
+    
+            const razorpayInstance = new Razorpay({
+                key_id: process.env.RAZOR_KEY_ID || '',
+                key_secret: process.env.RAZOR_KEY_SECRET || '',
+            });
+    
+            // Create Razorpay order
+            razorpayOrderData = await razorpayInstance.orders.create(options);
+            razorpayOrderData.amount_paid = fullpayment;
+        
+    
+            // Step 3: If Razorpay order was created, update booking details
+            let updatedBooking;
+            if (razorpayOrderData) {
+                // Update the booking information
+                const updatedBookingInfo = {
+                        $push: {
+                            payments: {
+                                type: 'Full Payment', 
+                                amount: fullpayment, // Payment amount (advance)
+                                mode: 'Razorpay', // Payment mode
+                                paymentInfo: razorpayOrderData, // Razorpay order data
+                                status: Status.Pending,
+                            },
+                        },
+                    },
+                
+        
+                // Step 4: Save the updated booking
+                updatedBooking = await this._plannerBookingrepository.update({ bookingId }, updatedBookingInfo) as IEventPlannerDocument | null;
+                
+                return { razorpayOrderData, booking: updatedBooking };
+            }
+            console.log(updatedBooking, "jjjj")
+           
+        }
+    
+        return null;    
+    }
+
+    async generateFullPayment(
+        bookingId: string,
+        fullPaymentCharges: { planningFee: number; charges: { chargeName: string; amount: number }[] }
+      ): Promise<{bookingData: IEventPlannerBooking | null, fullPayment: number}| null> {
+        
+        // Fetch the current booking details to get the existing totalCost
+        const bookingDetail = await this._plannerBookingrepository.getOne({ bookingId });
+      
+        if (!bookingDetail) {
+          throw new Error('Booking not found');
+        }
+      
+        // Create serviceCharges array by mapping charges
+        const serviceCharges = fullPaymentCharges.charges.map(charge => ({
+          service: charge.chargeName,  
+          cost: charge.amount,         
+        }));
+      
+        // Calculate the total sum of amounts
+        const totalServiceCharges = fullPaymentCharges.charges.reduce((sum, charge) => sum + charge.amount, 0);
+      
+        // Add the new calculated charges to the existing totalCost
+        const updatedTotalCost = bookingDetail.totalCost + fullPaymentCharges.planningFee + totalServiceCharges;
+      
+        // Perform the update operation
+        const bookingData = await this._plannerBookingrepository.update(
+          { bookingId }, // Find booking by bookingId
+          { 
+            'charges.fullPayment.planningFee': fullPaymentCharges.planningFee, // Update planningFee
+            'charges.fullPayment.servicesCharges': serviceCharges,             // Update servicesCharges with mapped values
+            'totalCost': updatedTotalCost                                      // Update totalCost by adding new charges to existing totalCost
+          }
+        );
+      
+        return { bookingData, fullPayment: fullPaymentCharges.planningFee + totalServiceCharges };
+      }
+      
+    
 }
 
 export default EventPlannerService;

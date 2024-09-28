@@ -98,6 +98,13 @@ const addNewEvent = asyncHandler( async(req: CustomRequest, res: Response): Prom
     createSuccessResponse(200, null , "Holiday added successfully", res, req);
 });
 
+const generateFullPayment = asyncHandler( async(req: CustomRequest, res: Response): Promise<void> => {
+    const { fullPaymentCharges, bookingId } = req.body;
+    console.log(fullPaymentCharges, bookingId);
+    const bookingData = await eventPlannerService.generateFullPayment(bookingId, fullPaymentCharges);
+    console.log(bookingData, "bookingData")
+    createSuccessResponse(200, { ...bookingData } , "successfull", res, req);
+})
 
 export {
     getEventPlannerDashboard,
@@ -109,7 +116,8 @@ export {
     generateAdvancePayment,
     getAvailabilityInfo,
     addHoliday,
-    addNewEvent
+    addNewEvent,
+    generateFullPayment
 
 };
 

@@ -27,10 +27,10 @@ const authMiddleware = (0, express_async_handler_1.default)((req, res, next) => 
     let role;
     try {
         const authorizationHeader = (_a = req.headers) === null || _a === void 0 ? void 0 : _a.authorization;
-        if (!authorizationHeader || !authorizationHeader.startsWith('Bearer ')) {
-            throw new customError_1.UnauthorizedError('Not authorized: no Bearer');
+        if (!authorizationHeader || !authorizationHeader.startsWith("Bearer ")) {
+            throw new customError_1.UnauthorizedError("Not authorized: no Bearer");
         }
-        const accessToken = authorizationHeader.split(' ')[1];
+        const accessToken = authorizationHeader.split(" ")[1];
         if (!accessToken) {
             throw new customError_1.UnauthorizedError("Not authorized: no access token");
         }
@@ -40,19 +40,26 @@ const authMiddleware = (0, express_async_handler_1.default)((req, res, next) => 
         if (!user)
             throw new customError_1.UnauthorizedError("User not found!");
         if (user.isBlocked) {
-            let tokenKey = (role === important_variables_1.UserRole.Customer) ? process.env.CUSTOMER_REFRESH : process.env.VENDOR_REFRESH;
+            let tokenKey = role === important_variables_1.UserRole.Customer
+                ? process.env.CUSTOMER_REFRESH
+                : process.env.VENDOR_REFRESH;
             res.clearCookie(tokenKey);
-            throw new customError_1.ForbiddenError('User account is blocked');
+            throw new customError_1.ForbiddenError("User account is blocked");
         }
+        console.log(user, role, (0, helperFunctions_1.isVendorDocument)(user));
         if (user && role === important_variables_1.UserRole.Vendor && (0, helperFunctions_1.isVendorDocument)(user)) {
             if (user.vendorType === important_variables_1.VendorType.EventPlanner) {
-                const eventPlanner = yield eventPlannerService.getEventPlanner({ vendorId: user.id });
+                const eventPlanner = yield eventPlannerService.getEventPlanner({
+                    vendorId: user.id,
+                });
                 if (eventPlanner) {
                     user.serviceName = eventPlanner.company;
                 }
             }
             else if (user.vendorType === important_variables_1.VendorType.VenueVendor) {
-                const venueVendor = yield venueVendorService.getVenue({ vendorId: user.id });
+                const venueVendor = yield venueVendorService.getVenue({
+                    vendorId: user.id,
+                });
                 if (venueVendor) {
                     user.serviceName = venueVendor.venueName;
                 }
@@ -62,6 +69,7 @@ const authMiddleware = (0, express_async_handler_1.default)((req, res, next) => 
         return next();
     }
     catch (error) {
+        console.log(error, "line 75 authmiddleware");
         let tokenKey;
         if (error instanceof jsonwebtoken_1.default.TokenExpiredError) {
             let refreshToken;
@@ -77,7 +85,8 @@ const authMiddleware = (0, express_async_handler_1.default)((req, res, next) => 
             refreshToken = req === null || req === void 0 ? void 0 : req.cookies[tokenKey];
             if (!refreshToken && role === important_variables_1.UserRole.Customer)
                 return next();
-            if (!refreshToken && (role === important_variables_1.UserRole.Admin || role === important_variables_1.UserRole.Vendor)) {
+            if (!refreshToken &&
+                (role === important_variables_1.UserRole.Admin || role === important_variables_1.UserRole.Vendor)) {
                 throw new customError_1.UnauthorizedError(`Refreshtoken is not found! ${role}`);
             }
             try {
@@ -85,15 +94,17 @@ const authMiddleware = (0, express_async_handler_1.default)((req, res, next) => 
                 if (!user)
                     throw new customError_1.UnauthorizedError("User not found!");
                 if (user.isBlocked) {
-                    throw new customError_1.ForbiddenError('User account is blocked');
+                    throw new customError_1.ForbiddenError("User account is blocked");
                 }
                 const token = (0, helperFunctions_1.generateNewToken)(user.id, user.role);
+                console.log("new token has been generated and stored");
                 req.user = user;
                 req.token = token;
             }
             catch (error) {
                 res.clearCookie(tokenKey);
-                if (error instanceof customError_1.ForbiddenError || error instanceof customError_1.UnauthorizedError)
+                if (error instanceof customError_1.ForbiddenError ||
+                    error instanceof customError_1.UnauthorizedError)
                     throw error;
                 console.log(error === null || error === void 0 ? void 0 : error.message, "session expired");
             }
@@ -101,7 +112,6 @@ const authMiddleware = (0, express_async_handler_1.default)((req, res, next) => 
         else if (error instanceof customError_1.ForbiddenError) {
             throw error;
         }
-        console.log(error === null || error === void 0 ? void 0 : error.message);
         return next();
     }
 }));
@@ -121,7 +131,7 @@ const authenticateSocket = (socket, next) => __awaiter(void 0, void 0, void 0, f
     try {
         const token = socket.handshake.auth.token || socket.handshake.query.token;
         if (!token) {
-            return next(new customError_1.UnauthorizedError('Not authorized: no token provided'));
+            return next(new customError_1.UnauthorizedError("Not authorized: no token provided"));
         }
         const decoded = jsonwebtoken_1.default.decode(token);
         role = decoded.role;
@@ -134,16 +144,19 @@ const authenticateSocket = (socket, next) => __awaiter(void 0, void 0, void 0, f
         console.log(error.message, "in authenticateSocket");
         if (error instanceof jsonwebtoken_1.default.TokenExpiredError) {
             // Handle token expiration based on role
-            tokenKey = role === important_variables_1.UserRole.Customer ? process.env.CUSTOMER_REFRESH : process.env.VENDOR_REFRESH;
-            const refreshToken = (_c = (_b = socket.handshake.headers.cookie) === null || _b === void 0 ? void 0 : _b.split('; ').find(cookie => cookie.startsWith(tokenKey))) === null || _c === void 0 ? void 0 : _c.split('=')[1];
+            tokenKey =
+                role === important_variables_1.UserRole.Customer
+                    ? process.env.CUSTOMER_REFRESH
+                    : process.env.VENDOR_REFRESH;
+            const refreshToken = (_c = (_b = socket.handshake.headers.cookie) === null || _b === void 0 ? void 0 : _b.split("; ").find((cookie) => cookie.startsWith(tokenKey))) === null || _c === void 0 ? void 0 : _c.split("=")[1];
             if (!refreshToken)
-                return next(new customError_1.UnauthorizedError('Refresh token not found!'));
+                return next(new customError_1.UnauthorizedError("Refresh token not found!"));
             try {
                 const user = yield tokenVerify(refreshToken, role, 2);
                 const newToken = (0, helperFunctions_1.generateNewToken)(user.id, user.role);
                 socket.user = user;
                 console.log("New token generated during socket connection");
-                socket.emit('new-token', { token: newToken }); // Emit new token to the client
+                socket.emit("new-token", { token: newToken }); // Emit new token to the client
                 return next();
             }
             catch (refreshError) {
@@ -151,11 +164,11 @@ const authenticateSocket = (socket, next) => __awaiter(void 0, void 0, void 0, f
             }
         }
         else if (error instanceof customError_1.ForbiddenError) {
-            return next(new customError_1.ForbiddenError('User account is blocked'));
+            return next(new customError_1.ForbiddenError("User account is blocked"));
         }
         else {
             console.log("Authentication error:", error === null || error === void 0 ? void 0 : error.message);
-            return next(new customError_1.UnauthorizedError('Authentication error'));
+            return next(new customError_1.UnauthorizedError("Authentication error"));
         }
     }
 });
@@ -163,7 +176,7 @@ exports.authenticateSocket = authenticateSocket;
 const validateSocketUser = (socket) => __awaiter(void 0, void 0, void 0, function* () {
     var _d, _e;
     if (!socket.user) {
-        throw new customError_1.UnauthorizedError('User not authenticated');
+        throw new customError_1.UnauthorizedError("User not authenticated");
     }
     let role = socket.user.role;
     const token = socket.handshake.auth.token || socket.handshake.query.token;
@@ -174,25 +187,28 @@ const validateSocketUser = (socket) => __awaiter(void 0, void 0, void 0, functio
     catch (error) {
         let tokenKey;
         if (error instanceof jsonwebtoken_1.default.TokenExpiredError) {
-            tokenKey = role === important_variables_1.UserRole.Customer ? process.env.CUSTOMER_REFRESH : process.env.VENDOR_REFRESH;
-            const refreshToken = (_e = (_d = socket.handshake.headers.cookie) === null || _d === void 0 ? void 0 : _d.split('; ').find(cookie => cookie.startsWith(tokenKey))) === null || _e === void 0 ? void 0 : _e.split('=')[1];
+            tokenKey =
+                role === important_variables_1.UserRole.Customer
+                    ? process.env.CUSTOMER_REFRESH
+                    : process.env.VENDOR_REFRESH;
+            const refreshToken = (_e = (_d = socket.handshake.headers.cookie) === null || _d === void 0 ? void 0 : _d.split("; ").find((cookie) => cookie.startsWith(tokenKey))) === null || _e === void 0 ? void 0 : _e.split("=")[1];
             if (!refreshToken) {
-                throw new customError_1.UnauthorizedError('Refresh token not found!');
+                throw new customError_1.UnauthorizedError("Refresh token not found!");
             }
             try {
                 const user = yield tokenVerify(refreshToken, role, 2);
                 socket.user = user;
                 const newToken = (0, helperFunctions_1.generateNewToken)(user.id, role);
-                console.log('new token is generated in the socket events');
-                socket.emit('new-token', { token: newToken }); // Emit new token if refreshed
+                console.log("new token is generated in the socket events");
+                socket.emit("new-token", { token: newToken }); // Emit new token if refreshed
                 return true;
             }
             catch (refreshError) {
-                throw new customError_1.UnauthorizedError('Unable to refresh token');
+                throw new customError_1.UnauthorizedError("Unable to refresh token");
             }
         }
         else {
-            throw new customError_1.UnauthorizedError('Authentication error');
+            throw new customError_1.UnauthorizedError("Authentication error");
         }
     }
     return true;
@@ -202,10 +218,10 @@ function tokenVerify(token, role, num) {
     return __awaiter(this, void 0, void 0, function* () {
         const user = yield (0, helperFunctions_1.verifyToken)(token, role, num);
         if (!user) {
-            throw new customError_1.UnauthorizedError('User not found!');
+            throw new customError_1.UnauthorizedError("User not found!");
         }
         if (user.isBlocked) {
-            throw new customError_1.ForbiddenError('User account is blocked');
+            throw new customError_1.ForbiddenError("User account is blocked");
         }
         return user;
     });

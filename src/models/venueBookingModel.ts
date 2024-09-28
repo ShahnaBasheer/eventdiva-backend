@@ -9,14 +9,17 @@ import { Status } from "../utils/status-options";
 
 // Define the Charges Schema
 const ChargesSchema = new Schema({
-    venueRental: { type: Number },
     platformCharge: { type: Number, required: true, default: 50 },
     advancePayments: { type: Number },
-    servicesCharges: [{
-        service: { type: String, required: true },
-        cost: { type: Number, required: true }
-    }],
-    additionalFees: { type: Schema.Types.Mixed }
+    fullPayment: { 
+        type:  {
+            venueRental: { type: Number },
+            servicesCharges: [{
+                service: { type: String, required: true },
+                cost: { type: Number, required: true }
+            }],
+        }
+    }  
 });
 
 

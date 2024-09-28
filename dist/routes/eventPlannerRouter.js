@@ -16,6 +16,7 @@ router.get('/bookings', authMiddleware_1.authMiddleware, authMiddleware_1.isUser
 router.get('/bookings/details/:bookingId', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, event_planner_controller_1.getPlannerBookingDetails);
 router.patch('/bookings/details/:bookingId/change-status/', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, event_planner_controller_1.changeBookingStatus);
 router.patch('/bookings/advance-payment/', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, event_planner_controller_1.generateAdvancePayment);
+router.patch('/bookings/full-payment/', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, event_planner_controller_1.generateFullPayment);
 router.get('/calendar', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, event_planner_controller_1.getAvailabilityInfo);
 router.patch('/calendar/add-holiday/', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, event_planner_controller_1.addHoliday);
 router.patch('/calendar/add-new-event/', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, event_planner_controller_1.addNewEvent);

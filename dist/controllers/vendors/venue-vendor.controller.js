@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addNewEvent = exports.addHoliday = exports.getAvailabilityInfo = exports.generateAdvancePayment = exports.changeBookingStatus = exports.getVenueBookingDetails = exports.getAllVenueBookings = exports.registerVenueVendorService = exports.getVenueVendorService = exports.getVenueVendorProfile = exports.getVenueVendorDashboard = void 0;
+exports.generateFullPayment = exports.addNewEvent = exports.addHoliday = exports.getAvailabilityInfo = exports.generateAdvancePayment = exports.changeBookingStatus = exports.getVenueBookingDetails = exports.getAllVenueBookings = exports.registerVenueVendorService = exports.getVenueVendorService = exports.getVenueVendorProfile = exports.getVenueVendorDashboard = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const responseFormatter_1 = __importDefault(require("../../utils/responseFormatter"));
 const vendor_service_1 = __importDefault(require("../../services/vendor.service"));
@@ -105,8 +105,17 @@ const addHoliday = (0, express_async_handler_1.default)((req, res) => __awaiter(
 }));
 exports.addHoliday = addHoliday;
 const addNewEvent = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    // const { date } = req.body;
-    // const holiday = await venueService.addHoliday(req.user?.id, date);
+    var _l;
+    const { formValue } = req.body;
+    const holiday = yield venueService.addHoliday((_l = req.user) === null || _l === void 0 ? void 0 : _l.id, formValue);
     (0, responseFormatter_1.default)(200, null, "Holiday added successfully", res, req);
 }));
 exports.addNewEvent = addNewEvent;
+const generateFullPayment = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { fullPaymentCharges, bookingId } = req.body;
+    console.log(fullPaymentCharges, bookingId);
+    const bookingData = yield venueService.generateFullPayment(bookingId, fullPaymentCharges);
+    console.log(bookingData, "bookingData");
+    (0, responseFormatter_1.default)(200, Object.assign({}, bookingData), "successfull", res, req);
+}));
+exports.generateFullPayment = generateFullPayment;

@@ -23,11 +23,17 @@ router.get('/vendors/venues/booking/:slug', authMiddleware_1.authMiddleware, aut
 router.post('/venues/booking/payment/:slug', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, multer_1.upload, validateForm_1.ValidateVenueBooking, pages_controller_1.createVenueBooking);
 router.post('/venues/booking/razorpay', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.venueRazorPayment);
 router.post('/venues/check-availability/:slug', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, validateForm_1.ValidateCheckAvailability, pages_controller_1.checkVenueAvailability);
-router.get('/vendors/event-planners/booking/:slug', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.getPlannerBookingPage);
+router.get('/vendors/event-planners/booking/:slug', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.getPlannerBookingForm);
 router.post('/event-planners/booking/payment/:slug', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, validateForm_1.ValidatePlannerBooking, pages_controller_1.createPlannerBooking);
 router.post('/event-planners/booking/razorpay', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.plannerRazorPayment);
 router.post('/event-planners/check-availability/:slug', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, validateForm_1.ValidateCheckAvailability, pages_controller_1.checkPlannerAvailability);
 router.get('/bookings', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.getAllBookings);
+router.get('/bookings/event-planner/details/:bookingId', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.getPlannerBookingDetails);
+router.get('/bookings/event-planner/advancepayment/:bookingId', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.plannerAdvancePayment);
+router.get('/bookings/event-planner/fullpayment/:bookingId', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.plannerFullPayment);
+router.get('/bookings/venue/details/:bookingId', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.getVenueBookingDetails);
+router.get('/bookings/venue/advancepayment/:bookingId', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.venueAdvancePayment);
+router.get('/bookings/venue/fullpayment/:bookingId', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.venueFullPayment);
 router.post('/video-call/start-call', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, socket_controller_1.getStartCall);
 router.post('/chat-room/join-room', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, socket_controller_1.getOrCreateChatRoom);
 router.get('/notifications', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.getNotifications);

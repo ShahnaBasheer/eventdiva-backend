@@ -18,7 +18,6 @@ class BaseRepository {
         return __awaiter(this, void 0, void 0, function* () {
             // Create a new document with the provided data
             const document = new this.model(Object.assign({}, docItems));
-            console.log(document);
             const createdItem = yield this.model.create(document);
             // If the item is not created, throw an error
             if (!createdItem) {
@@ -68,17 +67,17 @@ class BaseRepository {
     }
     getByEmail(email) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.model.findOne({ email }).exec();
+            return yield this.model.findOne({ email }).exec();
         });
     }
     block(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.model.findByIdAndUpdate(id, { isBlocked: true }, { new: true });
+            return yield this.model.findByIdAndUpdate(id, { isBlocked: true }, { new: true });
         });
     }
     unblock(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.model.findByIdAndUpdate(id, { isBlocked: false }, { new: true });
+            return yield this.model.findByIdAndUpdate(id, { isBlocked: false }, { new: true });
         });
     }
     getAllVendors(filter) {
@@ -100,7 +99,7 @@ class BaseRepository {
     }
     getCount() {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.model.countDocuments();
+            return yield this.model.countDocuments();
         });
     }
 }

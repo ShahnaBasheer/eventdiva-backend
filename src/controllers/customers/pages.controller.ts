@@ -1,3 +1,4 @@
+
 import  CustomerService  from '../../services/customer.service';
 import { Request, Response } from 'express';
 import asyncHandler from 'express-async-handler';
@@ -93,13 +94,13 @@ const venueRazorPayment = asyncHandler(async(req: CustomRequest, res: Response):
 
 const getAllBookings = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
     const allBookings = await customerService.getAllBookings(req.user?.id);
-    createSuccessResponse(200, { allBookings } , "successfully fetch venue detail for booking", res, req)
+    createSuccessResponse(200, { allBookings } , "successfully fetch all bookings", res, req)
 });
 
-const getPlannerBookingPage = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
+const getPlannerBookingForm = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
     const { slug } = req.params;
     const plannerData = await eventPlannerService.getEventPlanner({slug, approval: Status.Approved});
-    createSuccessResponse(200, { plannerData } , "successfully fetch venue detail for booking", res, req)
+    createSuccessResponse(200, { plannerData } , "successfully fetch planner detail for booking", res, req)
 });
 
 
@@ -121,7 +122,7 @@ const createPlannerBooking = asyncHandler(async(req: CustomRequest, res: Respons
             ...eventInfo, addressInfo, ...paymentInfo , user: req.user
         }, slug )
     }   
-    createSuccessResponse(200, data , "successfully fetch venue detail for booking", res, req)
+    createSuccessResponse(200, data , "successfully fetch planner booking for booking", res, req)
 });
 
 
@@ -172,6 +173,68 @@ const deleteNotification = asyncHandler(async(req: CustomRequest, res: Response)
 
 
 
+const getPlannerBookingDetails = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
+    const { bookingId } = req.params;
+    const bookingData = await eventPlannerService.getOneBooking(bookingId);
+    let fullPayment = 0;
+    // Calculate the total sum of amounts
+    if(bookingData){
+       const totalServiceCharges = bookingData?.charges?.fullPayment?.servicesCharges?.reduce((sum, charge) => sum + charge.cost, 0) || 0;
+       fullPayment = (bookingData?.charges?.fullPayment?.planningFee || 0) + totalServiceCharges;
+    }
+
+    console.log(fullPayment)
+   
+    createSuccessResponse(200, { bookingData, fullPayment } , "successfully fetch planner detail for booking", res, req)
+});
+
+
+const getVenueBookingDetails = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
+    const { bookingId } = req.params;
+    const bookingData = await venueVendorService.getOneBooking(bookingId);
+    let fullPayment = 0;
+    // Calculate the total sum of amounts
+    if(bookingData){
+       const totalServiceCharges = bookingData?.charges?.fullPayment?.servicesCharges?.reduce((sum, charge) => sum + charge.cost, 0) || 0;
+       fullPayment = (bookingData?.charges?.fullPayment?.venueRental || 0) + totalServiceCharges;
+    }
+
+    console.log(fullPayment)
+   
+    createSuccessResponse(200, { bookingData, fullPayment } , "successfully fetch planner detail for booking", res, req)
+});
+
+
+
+const plannerAdvancePayment = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
+    const { bookingId } = req.params;
+    const data = await eventPlannerService.payAdvancepayment(bookingId);
+    console.log(data, "jjhkjkj")
+    createSuccessResponse(200, { ...data } , "successfully fetch planner booking for booking", res, req)
+});
+
+const plannerFullPayment = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
+    const { bookingId } = req.params;
+    const data = await eventPlannerService.payFullpayment(bookingId);
+    console.log(data, "jjhkjkj")
+    createSuccessResponse(200, { ...data } , "successfully fetch planner booking for booking", res, req)
+});
+
+const venueAdvancePayment = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
+    const { bookingId } = req.params;
+    const data = await venueVendorService.payAdvancepayment(bookingId);
+    console.log(data, "jjhkjkj")
+    createSuccessResponse(200, { ...data } , "successfully fetch planner booking for booking", res, req)
+});
+
+const venueFullPayment = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
+    const { bookingId } = req.params;
+    const data = await venueVendorService.payFullpayment(bookingId);
+    console.log(data, "jjhkjkj")
+    createSuccessResponse(200, { ...data } , "successfully fetch planner booking for booking", res, req)
+});
+
+
 
 export {
     getCustomerHome,
@@ -184,14 +247,21 @@ export {
     createVenueBooking,
     venueRazorPayment,
     getAllBookings,
-    getPlannerBookingPage,
+    getPlannerBookingForm,
     createPlannerBooking,
     plannerRazorPayment,
     checkVenueAvailability,
     checkPlannerAvailability,
     getNotifications,
     changeReadStatus,
-    deleteNotification
+    deleteNotification,
+    getPlannerBookingDetails,
+    getVenueBookingDetails,
+    plannerAdvancePayment,
+    plannerFullPayment,
+    venueAdvancePayment,
+    venueFullPayment,
+
 };
 
 

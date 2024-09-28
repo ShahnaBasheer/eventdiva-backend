@@ -9,13 +9,16 @@ import VenueVendorRepository from "../repositories/venueVendor.repository";
 import Venue from "../models/venueModel";
 import Razorpay from 'razorpay';
 import VenueBookingRepository from "../repositories/venueBooking.repository";
-import { IVenueBooking  } from "../interfaces/venueBooking.interface";
+import { IVenueBooking, IVenueBookingDocument  } from "../interfaces/venueBooking.interface";
 import { generateOrderId } from "../utils/helperFunctions";
 import { IVenue, IVenueDocument } from "../interfaces/venue.interface";
 import { Status } from "../utils/status-options";
 import AvailabilityRepository from "../repositories/availability.repository";
 import { IAvailability } from "../interfaces/availability.interface";
 import NotificationRepository from "../repositories/notification.repository";
+import cloudinary from '../config/cloudinary.config';
+import sharp from "sharp";
+import { Readable } from "stream";
 
 
 
@@ -43,15 +46,22 @@ class VenueVendorService {
         if(!userInfo.addressInfo.town) delete userInfo.addressInfo.town;
         if(!userInfo.addressInfo.landmark) delete userInfo.addressInfo.landmark;
         
+        
+        
+        // const coverPicPath = await this.fileStore(files?.coverPic, process.env.VV_COVERPIC,"VV_coverPic");
+        // const docPath = await this.fileStore(files?.document, process.env.VV_DOCUMENTS,"VV_doc");
+        // const portPath = await this.fileStore(files?.portfolios, process.env.VV_PORTFOLIOS,"VV_portfolio");
+
+        console.log('createEventPlanner called');
+        const coverPicPath = await this.CloudinaryfileStore(files?.coverPic, "/Venues/CoverPics","VV_coverpic");
+        const docPath = await this.CloudinaryfileStore(files?.document, "/Venues/DocumentS","VV_doc");
+        const portPath = await this.CloudinaryfileStore(files?.portfolios, "/venues/Portfolios","VV_portfolio");
+
         const address = await this._addressRepository.create({ ...userInfo.addressInfo });
 
         if(!address){
            throw new BadRequestError("Address creation failed. Please check the provided information!")
         }
-        
-        const coverPicPath = await this.fileStore(files?.coverPic, process.env.VV_COVERPIC,"VV_coverPic");
-        const docPath = await this.fileStore(files?.document, process.env.VV_DOCUMENTS,"VV_doc");
-        const portPath = await this.fileStore(files?.portfolios, process.env.VV_PORTFOLIOS,"VV_portfolio");
            
         // Check if the company name is unique
         const existingVenue = await this._venueVendorRepository.getOneByFilter({ company: userInfo.company });
@@ -124,8 +134,79 @@ class VenueVendorService {
         }
         return userDoc;  
     }
+   
+
+    async CloudinaryfileStore(files: any, folderName: string, fName: string): Promise<string[]> {
+        if (!files || !folderName || !fName) {
+            throw new Error('Invalid input');
+        }
+    
+        const processedImages: string[] = [];
+        console.log(files.length, folderName);
+    
+        const uploadPromises = files.map((file: any) => {
+            return new Promise((resolve, reject) => {
+                sharp(file.buffer, { failOnError: false })
+                    .resize({ width: 800 })
+                    .toBuffer()
+                    .then((buffer) => {
+                        const uploadStream = cloudinary.uploader.upload_stream({
+                            folder: folderName,
+                            public_id: `${fName}_${Date.now()}`,
+                            resource_type: 'auto',
+                        }, (error, result) => {
+                            if (error) {
+                                reject(error);
+                            } else {
+                                resolve(result?.secure_url);
+                            }
+                        });
+    
+                        // Convert the optimized buffer into a stream and upload it
+                        const bufferStream = Readable.from(buffer);
+                        bufferStream.pipe(uploadStream).on('error', (streamError) => {
+                            reject(streamError);
+                        });
+                    })
+                    .catch((err) => {
+                        console.log(err)
+                        console.error(`Sharp processing error: ${err.message}`);
+                        // Skip the problematic file and resolve with null or a placeholder
+                        resolve(null);
+                    });
+            });
+        });
+    
+        // Filter out any null values (from skipped files)
+        const results = await Promise.all(uploadPromises);
+        return results.filter(url => url !== null); // Only return successful uploads
+    }
 
 
+    // Function to get all URLs from a specific folder
+    async getAllUrlsInFolder(folderName: string): Promise<string[]> {
+        try {
+          const fullPath = `${folderName}`;
+          const { resources } = await cloudinary.api.resources({
+            type: 'upload',
+            prefix: fullPath,
+            max_results: 500,
+            resource_type: 'auto',
+          });
+          return resources.map((resource: any) => resource.secure_url);
+        } catch (error: any) {
+          if (error.error.http_code === 404) {
+            console.log(`Folder not found: ${folderName}`);
+            return [];
+          } else {
+            console.error("Error fetching resources from Cloudinary:", error);
+            const message = error?.error?.message || "Unknown error";
+            throw new Error(`Failed to retrieve URLs from folder: ${message}`);
+          }
+        }
+      }
+
+     
     async fileStore(files: any, directory: string | undefined, fName: string | undefined){
         const processedImages = [];
         if(files){
@@ -560,6 +641,165 @@ class VenueVendorService {
 
         return  { totalRevenue, totalBookings,  AllBookings, revenueOverTime}
     }
+
+    async payAdvancepayment(bookingId: string) {
+        // Step 1: Fetch booking details
+        const bookingDetail = await this._venueBookingrepository.getOne({ bookingId });
+    
+        if (!bookingDetail) {
+            throw new BadRequestError('No Booking Detail Found!');
+        }
+    
+        const advance = bookingDetail.charges?.advancePayments || 0;
+        
+        // Step 2: If advance payment exists, proceed with Razorpay order creation
+        let razorpayOrderData: any;
+        if (advance) {
+            const options = {
+                amount: advance * 100, // Razorpay expects amount in paise (1 INR = 100 paise)
+                currency: 'INR',
+            };
+    
+            const razorpayInstance = new Razorpay({
+                key_id: process.env.RAZOR_KEY_ID || '',
+                key_secret: process.env.RAZOR_KEY_SECRET || '',
+            });
+    
+            // Create Razorpay order
+            razorpayOrderData = await razorpayInstance.orders.create(options);
+            razorpayOrderData.amount_paid = advance;
+        
+    
+            // Step 3: If Razorpay order was created, update booking details
+            let updatedBooking;
+            if (razorpayOrderData) {
+                // Update the booking information
+                const updatedBookingInfo = {
+                        $set: {
+                            totalCost: bookingDetail?.totalCost + advance, // Update totalCost
+                        },
+                        $push: {
+                            payments: {
+                                type: 'Advance Payment', 
+                                amount: advance, // Payment amount (advance)
+                                mode: 'Razorpay', // Payment mode
+                                paymentInfo: razorpayOrderData, // Razorpay order data
+                                status: Status.Pending,
+                            },
+                        },
+                    },
+                
+        
+                // Step 4: Save the updated booking
+                updatedBooking = await this._venueBookingrepository.update({ bookingId }, updatedBookingInfo) as IVenueBookingDocument | null;
+                
+                return { razorpayOrderData, booking: updatedBooking };
+            }
+            console.log(updatedBooking, "jjjj")
+           
+        }
+    
+        return null;    
+    }
+   
+
+    async payFullpayment(bookingId: string) {
+        // Step 1: Fetch booking details
+        const bookingDetail = await this._venueBookingrepository.getOne({ bookingId });
+    
+        if (!bookingDetail) {
+            throw new BadRequestError('No Booking Detail Found!');
+        }
+        
+        const totalServiceCharges = bookingDetail?.charges?.fullPayment?.servicesCharges?.reduce((sum, charge) => sum + charge.cost, 0) || 0;
+
+        const fullpayment = (bookingDetail?.charges?.fullPayment?.venueRental || 0) + totalServiceCharges;
+        
+        
+        // Step 2: If advance payment exists, proceed with Razorpay order creation
+        let razorpayOrderData: any;
+        if (fullpayment) {
+            const options = {
+                amount: fullpayment * 100, // Razorpay expects amount in paise (1 INR = 100 paise)
+                currency: 'INR',
+            };
+    
+            const razorpayInstance = new Razorpay({
+                key_id: process.env.RAZOR_KEY_ID || '',
+                key_secret: process.env.RAZOR_KEY_SECRET || '',
+            });
+    
+            // Create Razorpay order
+            razorpayOrderData = await razorpayInstance.orders.create(options);
+            razorpayOrderData.amount_paid = fullpayment;
+        
+    
+            // Step 3: If Razorpay order was created, update booking details
+            let updatedBooking;
+            if (razorpayOrderData) {
+                // Update the booking information
+                const updatedBookingInfo = {
+                        $push: {
+                            payments: {
+                                type: 'Full Payment', 
+                                amount: fullpayment, // Payment amount (advance)
+                                mode: 'Razorpay', // Payment mode
+                                paymentInfo: razorpayOrderData, // Razorpay order data
+                                status: Status.Pending,
+                            },
+                        },
+                    },
+                
+        
+                // Step 4: Save the updated booking
+                updatedBooking = await this._venueBookingrepository.update({ bookingId }, updatedBookingInfo) as IVenueBookingDocument | null;
+                
+                return { razorpayOrderData, booking: updatedBooking };
+            }
+            console.log(updatedBooking, "jjjj")
+           
+        }
+    
+        return null;    
+    }
+
+    async generateFullPayment(
+        bookingId: string,
+        fullPaymentCharges: { planningFee: number; charges: { chargeName: string; amount: number }[] }
+      ): Promise<{bookingData: IVenueBookingDocument | null, fullPayment: number}| null> {
+        
+        // Fetch the current booking details to get the existing totalCost
+        const bookingDetail = await this._venueBookingrepository.getOne({ bookingId });
+      
+        if (!bookingDetail) {
+          throw new Error('Booking not found');
+        }
+      
+        // Create serviceCharges array by mapping charges
+        const serviceCharges = fullPaymentCharges.charges.map(charge => ({
+          service: charge.chargeName,  
+          cost: charge.amount,         
+        }));
+      
+        // Calculate the total sum of amounts
+        const totalServiceCharges = fullPaymentCharges.charges.reduce((sum, charge) => sum + charge.amount, 0);
+      
+        // Add the new calculated charges to the existing totalCost
+        const updatedTotalCost = bookingDetail.totalCost + fullPaymentCharges.planningFee + totalServiceCharges;
+      
+        // Perform the update operation
+        const bookingData = await this._venueBookingrepository.update(
+          { bookingId }, // Find booking by bookingId
+          { 
+            'charges.fullPayment.veneuRental': fullPaymentCharges.planningFee, // Update planningFee
+            'charges.fullPayment.servicesCharges': serviceCharges,             // Update servicesCharges with mapped values
+            'totalCost': updatedTotalCost                                      // Update totalCost by adding new charges to existing totalCost
+          }
+        );
+      
+        return { bookingData, fullPayment: fullPaymentCharges.planningFee + totalServiceCharges };
+      }
+      
     
 }
 

@@ -30,14 +30,17 @@ const commonSchema_1 = require("./commonSchema");
 const status_options_1 = require("../utils/status-options");
 // Define the Charges Schema
 const ChargesSchema = new mongoose_1.Schema({
-    venueRental: { type: Number },
     platformCharge: { type: Number, required: true, default: 50 },
     advancePayments: { type: Number },
-    servicesCharges: [{
-            service: { type: String, required: true },
-            cost: { type: Number, required: true }
-        }],
-    additionalFees: { type: mongoose_1.Schema.Types.Mixed }
+    fullPayment: {
+        type: {
+            venueRental: { type: Number },
+            servicesCharges: [{
+                    service: { type: String, required: true },
+                    cost: { type: Number, required: true }
+                }],
+        }
+    }
 });
 const venueBookingSchema = new mongoose_1.Schema({
     bookingId: {

@@ -97,10 +97,19 @@ const addHoliday = asyncHandler( async(req: CustomRequest, res: Response): Promi
 });
 
 const addNewEvent = asyncHandler( async(req: CustomRequest, res: Response): Promise<void> => {
-    // const { date } = req.body;
-    // const holiday = await venueService.addHoliday(req.user?.id, date);
+    const { formValue } = req.body;
+    const holiday = await venueService.addHoliday(req.user?.id, formValue);
     createSuccessResponse(200, null , "Holiday added successfully", res, req);
 });
+
+
+const generateFullPayment = asyncHandler( async(req: CustomRequest, res: Response): Promise<void> => {
+    const { fullPaymentCharges, bookingId } = req.body;
+    console.log(fullPaymentCharges, bookingId);
+    const bookingData = await venueService.generateFullPayment(bookingId, fullPaymentCharges);
+    console.log(bookingData, "bookingData")
+    createSuccessResponse(200, { ...bookingData } , "successfull", res, req);
+})
 
 export {
     getVenueVendorDashboard,
@@ -113,7 +122,8 @@ export {
     generateAdvancePayment,
     getAvailabilityInfo,
     addHoliday,
-    addNewEvent
+    addNewEvent,
+    generateFullPayment
 };
 
 

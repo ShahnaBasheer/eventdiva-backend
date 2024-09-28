@@ -17,7 +17,6 @@ class BaseRepository<T extends Document> implements IBaseRepository<T> {
     async create(docItems: Filter, populate?: { path: string, select?: string, model: string }[] ): Promise<T> {
         // Create a new document with the provided data
         const document = new this.model({ ...docItems });
-        console.log(document)
         const createdItem = await this.model.create(document);
     
         // If the item is not created, throw an error
@@ -61,15 +60,15 @@ class BaseRepository<T extends Document> implements IBaseRepository<T> {
     
 
     async getByEmail(email: string): Promise<T | null> {
-        return this.model.findOne({ email }).exec();
+        return await this.model.findOne({ email }).exec();
     }
 
     async block(id: string): Promise<T | null>{
-        return this.model.findByIdAndUpdate(id,{isBlocked : true},{new:true})
+        return await this.model.findByIdAndUpdate(id,{isBlocked : true},{new:true})
     }
 
     async unblock(id: string): Promise<T | null>{
-        return this.model.findByIdAndUpdate(id,{isBlocked : false},{new:true})
+        return await this.model.findByIdAndUpdate(id,{isBlocked : false},{new:true})
     }
 
     async getAllVendors(filter: FilterQuery<T>): Promise<T [] | null> {
@@ -89,7 +88,7 @@ class BaseRepository<T extends Document> implements IBaseRepository<T> {
     }
 
     async getCount(){
-        return this.model.countDocuments();
+        return await this.model.countDocuments();
     }
 }
 

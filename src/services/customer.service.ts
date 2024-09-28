@@ -10,12 +10,13 @@ import VenueBookingRepository from "../repositories/venueBooking.repository";
 import PlannerBookingRepository from "../repositories/plannerBooking.repository";
 import NotificationRepository from "../repositories/notification.repository";
 import { NotificationType } from "../utils/eventsVariables";
+import ICustomerService from "../interfaces/customer.service.interface";
 
 
 
 
 
-class CustomerService {
+class CustomerService  {
     private customerRepository!: CustomerRepository;
     private _venueBookingRepository!: VenueBookingRepository;
     private _plannerBookingrepository: PlannerBookingRepository;

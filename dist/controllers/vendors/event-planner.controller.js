@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addNewEvent = exports.addHoliday = exports.getAvailabilityInfo = exports.generateAdvancePayment = exports.changeBookingStatus = exports.getPlannerBookingDetails = exports.getAllPlannerBookings = exports.registerEventPlannerService = exports.getEventPlannerService = exports.getEventPlannerDashboard = void 0;
+exports.generateFullPayment = exports.addNewEvent = exports.addHoliday = exports.getAvailabilityInfo = exports.generateAdvancePayment = exports.changeBookingStatus = exports.getPlannerBookingDetails = exports.getAllPlannerBookings = exports.registerEventPlannerService = exports.getEventPlannerService = exports.getEventPlannerDashboard = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const responseFormatter_1 = __importDefault(require("../../utils/responseFormatter"));
 const eventPlanner_service_1 = __importDefault(require("../../services/eventPlanner.service"));
@@ -100,3 +100,11 @@ const addNewEvent = (0, express_async_handler_1.default)((req, res) => __awaiter
     (0, responseFormatter_1.default)(200, null, "Holiday added successfully", res, req);
 }));
 exports.addNewEvent = addNewEvent;
+const generateFullPayment = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { fullPaymentCharges, bookingId } = req.body;
+    console.log(fullPaymentCharges, bookingId);
+    const bookingData = yield eventPlannerService.generateFullPayment(bookingId, fullPaymentCharges);
+    console.log(bookingData, "bookingData");
+    (0, responseFormatter_1.default)(200, Object.assign({}, bookingData), "successfull", res, req);
+}));
+exports.generateFullPayment = generateFullPayment;

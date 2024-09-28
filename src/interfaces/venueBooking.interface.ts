@@ -13,7 +13,7 @@ interface IVenueBooking {
     isMultipleDays: boolean;
     servicesRequested?: string[];
     guests: number;
-    totalCost?: number;
+    totalCost: number;
     contact: {
         email: string;
         mobile: string;
@@ -50,10 +50,11 @@ interface Service {
 
 interface Charges {
     platformCharge: number;
-    venueRental?: number;
     advancePayments?: number; 
-    servicesCharges?: Service[],
-    additionalFees?: any; 
+    fullPayment?: {
+        venueRental?: number;
+        servicesCharges: Service[], 
+    }
 }
 
 interface EventDate {

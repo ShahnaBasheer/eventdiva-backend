@@ -8,16 +8,20 @@ import { Status } from '../utils/status-options';
 
 
 
+
 // Define the Charges Schema
 const ChargesSchema = new Schema({
-    planningFee: { type: Number },
     platformCharge: { type: Number, required: true, default: 50 },
     advancePayments: { type: Number },
-    servicesCharges: [{
-        service: { type: String, required: true },
-        cost: { type: Number, required: true }
-    }],
-    additionalFees: { type: Schema.Types.Mixed }
+    fullPayment: { 
+        type:  {
+            planningFee: { type: Number },
+            servicesCharges: [{
+                service: { type: String, required: true },
+                cost: { type: Number, required: true }
+            }],
+        }
+    }  
 });
 
 
@@ -61,7 +65,7 @@ const eventPlannerBookingSchema: Schema = new Schema(
         },
         totalCost: { 
             type: Number, 
-            required: true 
+            required: true
         },
         address: { 
             type: Schema.Types.ObjectId, 
@@ -88,7 +92,7 @@ const eventPlannerBookingSchema: Schema = new Schema(
                   const hasPlatformFee = payments.some((payment: Payment) => payment.type === 'Platform Fee');
                   return hasPlatformFee; // Ensure at least one platform fee payment is included
                 },
-                message: 'At least one platform fee payment is required.'
+                message: 'At least one fee payment is required.'
               }
         },
         charges: {

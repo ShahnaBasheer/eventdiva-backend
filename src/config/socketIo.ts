@@ -21,8 +21,11 @@ const customers: Record<string, CustomSocket> = {};
 const initializeSocket = (server: http.Server) => {
     io = new Server(server, {
         cors: {
-            origin: "http://localhost:4200",
-            methods: ["GET", "POST"],
+            origin:  ['http://localhost:4200', 
+                'https://master.d1ee9rxmukt8sl.amplifyapp.com', 
+                'https://www.eventdiva.online', 
+                'https://eventdiva.online'],
+            methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT'],
             allowedHeaders: ["authorization"],
             credentials: true,
         }
@@ -151,7 +154,7 @@ const initializeSocket = (server: http.Server) => {
 
                     const ringingTimeout = setTimeout(async () => {
                         const notification = await handleNotification({ 
-                            ...data, userId: vendorId, role: 'vendor', 
+                            ...data, userId: vendorId, role: 'vendor',
                             type: NotificationType.MISSED_CALL, name
                         });
                         vendorSocket.emit('loaded-notification', { notification });
@@ -232,11 +235,12 @@ const initializeSocket = (server: http.Server) => {
         // Save notifications
         socket.on('save-notifications', async (data) => {
             try {
-                const notifications = await handleNotification(data);
-                if (notifications) {
-                    const receiverSocket = data.role === 'vendor' ? vendors[data.userId] : customers[data.userId];
+                console.log("save notification is triggered", socket)
+                const notification = await handleNotification(data);
+                if (notification) {
+                    const receiverSocket = data.role === UserRole.Vendor ? vendors[data.userId] : customers[data.userId];
                     if (receiverSocket) {
-                        receiverSocket.emit('loaded-notification', { notifications });
+                        receiverSocket.emit('loaded-notification', { notification });
                     }
                 }
             } catch (error: any) {

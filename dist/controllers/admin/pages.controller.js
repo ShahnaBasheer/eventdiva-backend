@@ -63,8 +63,8 @@ const getAllPlannersBookings = (0, express_async_handler_1.default)((req, res) =
 exports.getAllPlannersBookings = getAllPlannersBookings;
 const getVenueDetail = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { slug } = req.params;
-    console.log(slug, "heyyyyyyy");
     const venueData = yield venueService.getVenue({ slug });
+    console.log(venueData);
     (0, responseFormatter_1.default)(200, { venueData }, "successfully fetch venue detail", res, req);
 }));
 exports.getVenueDetail = getVenueDetail;

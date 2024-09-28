@@ -45,10 +45,11 @@ interface Service {
 
 interface Charges {
     platformCharge: number;
-    planningFee?: number;
     advancePayments?: number; 
-    servicesCharges?: Service[],
-    additionalFees?: any; 
+    fullPayment?: {
+        planningFee: number,
+        servicesCharges: Service[], 
+    }
 }
 
 interface Payment {

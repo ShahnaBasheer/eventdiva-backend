@@ -254,7 +254,6 @@ class VendorService {
               $set: { password: hashedNewPassword }
             });
       
-
             // Step 5: Return success message
             return details;
           

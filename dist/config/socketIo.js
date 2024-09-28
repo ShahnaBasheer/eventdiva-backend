@@ -27,8 +27,11 @@ const customers = {};
 const initializeSocket = (server) => {
     io = new socket_io_1.Server(server, {
         cors: {
-            origin: "http://localhost:4200",
-            methods: ["GET", "POST"],
+            origin: ['http://localhost:4200',
+                'https://master.d1ee9rxmukt8sl.amplifyapp.com',
+                'https://www.eventdiva.online',
+                'https://eventdiva.online'],
+            methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT'],
             allowedHeaders: ["authorization"],
             credentials: true,
         }
@@ -227,11 +230,12 @@ const initializeSocket = (server) => {
         // Save notifications
         socket.on('save-notifications', (data) => __awaiter(void 0, void 0, void 0, function* () {
             try {
-                const notifications = yield (0, helperFunctions_1.handleNotification)(data);
-                if (notifications) {
-                    const receiverSocket = data.role === 'vendor' ? vendors[data.userId] : customers[data.userId];
+                console.log("save notification is triggered", socket);
+                const notification = yield (0, helperFunctions_1.handleNotification)(data);
+                if (notification) {
+                    const receiverSocket = data.role === important_variables_1.UserRole.Vendor ? vendors[data.userId] : customers[data.userId];
                     if (receiverSocket) {
-                        receiverSocket.emit('loaded-notification', { notifications });
+                        receiverSocket.emit('loaded-notification', { notification });
                     }
                 }
             }

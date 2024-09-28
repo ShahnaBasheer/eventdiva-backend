@@ -4,7 +4,8 @@ import { getVenueVendorDashboard, getVenueVendorProfile,
        getVenueVendorService, registerVenueVendorService,
        getAllVenueBookings, getVenueBookingDetails, 
        changeBookingStatus, generateAdvancePayment,
-       getAvailabilityInfo, addHoliday, addNewEvent
+       getAvailabilityInfo, addHoliday, addNewEvent,
+       generateFullPayment
     } from '../controllers/vendors/venue-vendor.controller';
 import { upload } from '../middlewares/multer';
 import { ValidateVenue } from '../middlewares/validateForm';
@@ -20,6 +21,7 @@ router.get('/bookings', authMiddleware, isUser, getAllVenueBookings);
 router.get('/bookings/details/:bookingId', authMiddleware, isUser, getVenueBookingDetails);
 router.patch('/bookings/details/:bookingId/change-status/', authMiddleware, isUser, changeBookingStatus);
 router.patch('/bookings/advance-payment/', authMiddleware, isUser, generateAdvancePayment);
+router.patch('/bookings/full-payment/', authMiddleware, isUser, generateFullPayment);
 router.get('/calendar', authMiddleware, isUser, getAvailabilityInfo);
 router.patch('/calendar/add-holiday/', authMiddleware, isUser, addHoliday);
 router.patch('/calendar/add-new-event/', authMiddleware, isUser, addNewEvent);

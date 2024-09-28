@@ -84,6 +84,7 @@ const logout = asyncHandler(async (req, res) => {
 
 const getNotifications = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
     const data = await notificationService.getNotifications(req.user?.id, req.user?.role);
+    console.log(data, "notfication")
     createSuccessResponse(200, { notifications: data.notifications, readCount: data.readCount } , "successfull", res, req)
 });
 

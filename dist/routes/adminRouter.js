@@ -15,11 +15,11 @@ router.get('/dashboard', authMiddleware_1.authMiddleware, authMiddleware_1.isUse
 router.get('/customers', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.getAllCustomers);
 router.get('/vendors', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.getAllVendors);
 router.get('/venues', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.getAllVenues);
-router.get('/venues/:slug/:status', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.venueStatusApproval);
 router.get('/venues/details/:slug', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.getVenueDetail);
+router.get('/venues/:slug/:status', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.venueStatusApproval);
 router.get('/event-planners', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.getAllPlanners);
-router.get('/event-planners/:slug/:status', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.plannerStatusApproval);
 router.get('/event-planners/details/:slug', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.getEventPlannerDetail);
+router.get('/event-planners/:slug/:status', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.plannerStatusApproval);
 router.get('/venues/bookings', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.getAllVenuesBookings);
 router.get('/event-planners/bookings', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.getAllPlannersBookings);
 router.get('/logout', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, adminAuth_controller_1.logoutAdmin);

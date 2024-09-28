@@ -61,15 +61,15 @@ const getAllPlannersBookings = asyncHandler(async(req: CustomRequest, res: Respo
 
 const getVenueDetail = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
     const { slug } = req.params;
-    console.log(slug, "heyyyyyyy")
-    const venueData = await venueService.getVenue({slug });
+    const venueData = await venueService.getVenue({ slug });
+    console.log(venueData)
     createSuccessResponse(200, { venueData } , "successfully fetch venue detail", res, req)
 });
 
 
 const getEventPlannerDetail = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
     const { slug } = req.params;
-    const eventPlannerData = await eventPlannerService.getEventPlanner({slug });
+    const eventPlannerData = await eventPlannerService.getEventPlanner({ slug });
     createSuccessResponse(200, { eventPlannerData } , "successfully fetch event planner detail", res, req)
 });
 

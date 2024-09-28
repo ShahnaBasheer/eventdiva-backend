@@ -4,7 +4,7 @@ import CustomerService from "../services/customer.service";
 import AdminService from '../services/admin.service';
 import { IAdminDocument } from '../interfaces/admin.interface';
 import VendorService from '../services/vendor.service';
-import { IVendorDocument } from '../interfaces/vendor.interface';
+import { IVendor, IVendorDocument } from '../interfaces/vendor.interface';
 import { generateAdminToken, generateCustomerToken, generateVendorToken } from '../config/jwToken';
 import NotificationService from '../services/notification.service';
 import { NotificationType } from './eventsVariables';
@@ -44,10 +44,8 @@ const verifyToken = async(token: string, role: string, tokenType: number): Promi
 }
 
 
-
-
-const isVendorDocument = (user: any): user is IVendorDocument => {
-  return user && typeof user.vendorType === 'string';
+const isVendorDocument = (user: IVendorDocument | IcustomerDocument | IAdminDocument): user is IVendorDocument => {
+  return user && typeof (user  as IVendorDocument).vendorType !== undefined;
 }
 
 
@@ -81,27 +79,27 @@ const notificationTypes = {
     }),
   
     booking_created: (bookingId: string) => ({
-      message: `Your booking #${bookingId} has been successfully created.`,
+      message: `Your booking #${bookingId} has been successfully created`,
       link: `/bookings/${bookingId}`
     }),
   
     booking_confirmation: (bookingId: string) => ({
-      message: `Booking #${bookingId} has been confirmed.`,
+      message: `Booking #${bookingId} has been confirmed`,
       link: `/bookings/${bookingId}`
     }),
   
     booking_cancellation: (bookingId: string) => ({
-      message: `Booking #${bookingId} has been cancelled.`,
+      message: `Booking #${bookingId} has been cancelled`,
       link: `/bookings/${bookingId}/cancellation`
     }),
   
     advance_payment_customer: (amount: number, name: string) => ({
-      message: `Generated Advance payment of $${amount} by ${name}.`,
+      message: `Generated Advance payment of $${amount} by ${name}`,
       link: `/payments/advance`
     }),
   
     advance_payment_vendor: (amount: number) => ({
-      message: `Generated Advance payment for BookingId ${amount}.`,
+      message: `Generated Advance payment for BookingId ${amount}`,
       link: `/payments/advance`
     }),
   
@@ -111,7 +109,7 @@ const notificationTypes = {
     }),
   
     missed_call: (name: string) => ({
-      message: `You got a missed call from <b>${name}</b>.`,
+      message: `You got a missed call from <b>${name}</b>`,
       link: `/calls/missed`
     }),
   
@@ -121,7 +119,11 @@ const notificationTypes = {
     }),
   
     signup: () => ({
-      message: `Welcome! Your signup is successful.`,
+      message: `Welcome! Your signup is successfull`,
+    }),
+
+    service_register: () => ({
+       message: `Your service has been successfully registered`,
     })
   };
 
@@ -164,6 +166,9 @@ const notificationTypes = {
           notificationData = notificationTypes.signup();
           break;
 
+        case NotificationType.SERVICE_REGISTERED: 
+          notificationData = notificationTypes.service_register();
+          break;
   
         default:
           console.log('Unknown notification type:', data.type);

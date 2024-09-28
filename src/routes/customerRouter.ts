@@ -5,11 +5,14 @@ import { getAllEventPlanners, getAllVenues,
         getCustomerHome, getEventPlannerDetail, 
         getVenueDetail, getVenueBookingPage,
         createVenueBooking, getAllBookings, 
-        venueRazorPayment, getPlannerBookingPage,
+        venueRazorPayment, getPlannerBookingForm,
         createPlannerBooking, plannerRazorPayment,
         checkVenueAvailability, checkPlannerAvailability,
         getNotifications, changeReadStatus,
-        deleteNotification} from '../controllers/customers/pages.controller';
+        deleteNotification, getPlannerBookingDetails,
+        getVenueBookingDetails, plannerAdvancePayment,
+        plannerFullPayment, venueAdvancePayment,
+        venueFullPayment} from '../controllers/customers/pages.controller';
 import { authMiddleware, isUser } from '../middlewares/authMiddleware';
 import { validateSignup, validateLogin, ValidateVenueBooking, ValidatePlannerBooking, ValidateCheckAvailability } from '../middlewares/validateForm';
 import { loginCustomer, logout, resendOtp, signinWithGoogle, signupCustomer, verifyOtp } from '../controllers/customers/customer.controller';
@@ -32,11 +35,17 @@ router.get('/vendors/venues/booking/:slug', authMiddleware, isUser, getVenueBook
 router.post('/venues/booking/payment/:slug', authMiddleware, isUser, upload, ValidateVenueBooking, createVenueBooking);
 router.post('/venues/booking/razorpay', authMiddleware,isUser, venueRazorPayment);
 router.post('/venues/check-availability/:slug', authMiddleware, isUser, ValidateCheckAvailability, checkVenueAvailability)
-router.get('/vendors/event-planners/booking/:slug', authMiddleware, isUser, getPlannerBookingPage);
+router.get('/vendors/event-planners/booking/:slug', authMiddleware, isUser, getPlannerBookingForm);
 router.post('/event-planners/booking/payment/:slug', authMiddleware, isUser, ValidatePlannerBooking, createPlannerBooking);
 router.post('/event-planners/booking/razorpay', authMiddleware,isUser, plannerRazorPayment);
 router.post('/event-planners/check-availability/:slug', authMiddleware, isUser, ValidateCheckAvailability, checkPlannerAvailability)
 router.get('/bookings', authMiddleware, isUser, getAllBookings);
+router.get('/bookings/event-planner/details/:bookingId', authMiddleware, isUser, getPlannerBookingDetails);
+router.get('/bookings/event-planner/advancepayment/:bookingId', authMiddleware, isUser, plannerAdvancePayment);
+router.get('/bookings/event-planner/fullpayment/:bookingId', authMiddleware, isUser, plannerFullPayment);
+router.get('/bookings/venue/details/:bookingId', authMiddleware, isUser, getVenueBookingDetails);
+router.get('/bookings/venue/advancepayment/:bookingId', authMiddleware, isUser, venueAdvancePayment);
+router.get('/bookings/venue/fullpayment/:bookingId', authMiddleware, isUser, venueFullPayment);
 router.post('/video-call/start-call', authMiddleware, isUser, getStartCall);
 router.post('/chat-room/join-room', authMiddleware, isUser, getOrCreateChatRoom);
 router.get('/notifications', authMiddleware, isUser, getNotifications);

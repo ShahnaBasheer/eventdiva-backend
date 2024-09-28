@@ -29,14 +29,17 @@ const commonSchema_1 = require("./commonSchema");
 const status_options_1 = require("../utils/status-options");
 // Define the Charges Schema
 const ChargesSchema = new mongoose_1.Schema({
-    planningFee: { type: Number },
     platformCharge: { type: Number, required: true, default: 50 },
     advancePayments: { type: Number },
-    servicesCharges: [{
-            service: { type: String, required: true },
-            cost: { type: Number, required: true }
-        }],
-    additionalFees: { type: mongoose_1.Schema.Types.Mixed }
+    fullPayment: {
+        type: {
+            planningFee: { type: Number },
+            servicesCharges: [{
+                    service: { type: String, required: true },
+                    cost: { type: Number, required: true }
+                }],
+        }
+    }
 });
 const eventPlannerBookingSchema = new mongoose_1.Schema({
     bookingId: {
@@ -104,7 +107,7 @@ const eventPlannerBookingSchema = new mongoose_1.Schema({
                 const hasPlatformFee = payments.some((payment) => payment.type === 'Platform Fee');
                 return hasPlatformFee; // Ensure at least one platform fee payment is included
             },
-            message: 'At least one platform fee payment is required.'
+            message: 'At least one fee payment is required.'
         }
     },
     charges: {
