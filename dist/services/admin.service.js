@@ -82,10 +82,10 @@ class AdminService {
     getDashboardData() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const totalUsers = yield this.customerRepository.getCount();
-                const totalVendors = yield this.vendorRepository.getCount();
-                const totalPlannerBookings = yield this._plannerBookingrepository.getCount();
-                const totalVenueBookings = yield this._venueBookingrepository.getCount();
+                const totalUsers = yield this.customerRepository.getCount({});
+                const totalVendors = yield this.vendorRepository.getCount({});
+                const totalPlannerBookings = yield this._plannerBookingrepository.getCount({});
+                const totalVenueBookings = yield this._venueBookingrepository.getCount({});
                 // const allPlannerBookings = await this._plannerBookingrepository.find({ type: 'planner' });
                 // const allVenueBookings = await this._venueBookingrepository.find({ type: 'venue' });
                 const venuebookingStatusPipeline = [

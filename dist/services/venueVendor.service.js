@@ -12,7 +12,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const addressModel_1 = __importDefault(require("../models/addressModel"));
 const address_repository_1 = __importDefault(require("../repositories/address.repository"));
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
@@ -28,6 +27,7 @@ const notification_repository_1 = __importDefault(require("../repositories/notif
 const cloudinary_config_1 = __importDefault(require("../config/cloudinary.config"));
 const sharp_1 = __importDefault(require("sharp"));
 const stream_1 = require("stream");
+const razorpay_utils_1 = require("razorpay/dist/utils/razorpay-utils");
 class VenueVendorService {
     constructor() {
         this._venueVendorRepository = new venueVendor_repository_1.default();
@@ -39,11 +39,11 @@ class VenueVendorService {
     createVenue(userInfo, files) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!(files === null || files === void 0 ? void 0 : files.coverPic))
-                throw new customError_1.ConflictError('Cover Picture is required');
+                throw new customError_1.ConflictError("Cover Picture is required");
             if (!(files === null || files === void 0 ? void 0 : files.document))
-                throw new customError_1.ConflictError('Document is required');
+                throw new customError_1.ConflictError("Document is required");
             if (!(files === null || files === void 0 ? void 0 : files.portfolios))
-                throw new customError_1.ConflictError('Portfolio files are required');
+                throw new customError_1.ConflictError("Portfolio files are required");
             if (!userInfo.addressInfo.street)
                 delete userInfo.addressInfo.street;
             if (!userInfo.addressInfo.town)
@@ -53,7 +53,7 @@ class VenueVendorService {
             // const coverPicPath = await this.fileStore(files?.coverPic, process.env.VV_COVERPIC,"VV_coverPic");
             // const docPath = await this.fileStore(files?.document, process.env.VV_DOCUMENTS,"VV_doc");
             // const portPath = await this.fileStore(files?.portfolios, process.env.VV_PORTFOLIOS,"VV_portfolio");
-            console.log('createEventPlanner called');
+            console.log("createEventPlanner called");
             const coverPicPath = yield this.CloudinaryfileStore(files === null || files === void 0 ? void 0 : files.coverPic, "/Venues/CoverPics", "VV_coverpic");
             const docPath = yield this.CloudinaryfileStore(files === null || files === void 0 ? void 0 : files.document, "/Venues/DocumentS", "VV_doc");
             const portPath = yield this.CloudinaryfileStore(files === null || files === void 0 ? void 0 : files.portfolios, "/venues/Portfolios", "VV_portfolio");
@@ -62,14 +62,18 @@ class VenueVendorService {
                 throw new customError_1.BadRequestError("Address creation failed. Please check the provided information!");
             }
             // Check if the company name is unique
-            const existingVenue = yield this._venueVendorRepository.getOneByFilter({ company: userInfo.company });
+            const existingVenue = yield this._venueVendorRepository.getOneByFilter({
+                company: userInfo.company,
+            });
             if (existingVenue) {
-                throw new customError_1.ConflictError('Company name already exists. Please choose a different name.');
+                throw new customError_1.ConflictError("Company name already exists. Please choose a different name.");
             }
             // Check if the email address is unique
-            const existingEmail = yield this._venueVendorRepository.getOneByFilter({ 'contact.email': userInfo.email });
+            const existingEmail = yield this._venueVendorRepository.getOneByFilter({
+                "contact.email": userInfo.email,
+            });
             if (existingEmail) {
-                throw new customError_1.ConflictError('Email address already in use. Please choose a different email.');
+                throw new customError_1.ConflictError("Email address already in use. Please choose a different email.");
             }
             // Generate a slug from company name
             const uniqueId = Math.floor(1000 + Math.random() * (90000 - 1000 + 1));
@@ -78,29 +82,35 @@ class VenueVendorService {
             const userData = Object.assign(Object.assign(Object.assign(Object.assign({ vendorId: userInfo.user._id, address: address === null || address === void 0 ? void 0 : address._id, contact: {
                     email: userInfo.email,
                     mobile: userInfo.mobile,
-                }, venueName: userInfo.venueName, venueType: userInfo.venueType, slug: `${slug}-${uniqueId}`, startYear: userInfo.startYear, services: userInfo.service, capacity: userInfo.areas, amenities: userInfo.amenities, description: userInfo.description, rent: userInfo.rent }, ((userInfo === null || userInfo === void 0 ? void 0 : userInfo.includeRooms) && { rooms: {
+                }, venueName: userInfo.venueName, venueType: userInfo.venueType, slug: `${slug}-${uniqueId}`, startYear: userInfo.startYear, services: userInfo.service, capacity: userInfo.areas, amenities: userInfo.amenities, description: userInfo.description, rent: userInfo.rent }, ((userInfo === null || userInfo === void 0 ? void 0 : userInfo.includeRooms) && {
+                rooms: {
                     count: userInfo.rooms.count,
-                    roomStartingPrice: userInfo.rooms.startingPrice
-                } })), ((userInfo === null || userInfo === void 0 ? void 0 : userInfo.includeDecor) && { decorStartingPrice: userInfo.decorStartingPrice })), ((userInfo === null || userInfo === void 0 ? void 0 : userInfo.includePricePerPlate) && { platePrice: {
+                    roomStartingPrice: userInfo.rooms.startingPrice,
+                },
+            })), ((userInfo === null || userInfo === void 0 ? void 0 : userInfo.includeDecor) && {
+                decorStartingPrice: userInfo.decorStartingPrice,
+            })), ((userInfo === null || userInfo === void 0 ? void 0 : userInfo.includePricePerPlate) && {
+                platePrice: {
                     vegPerPlate: userInfo.platePrice.vegPerPlate,
-                    nonVegPerPlate: userInfo.platePrice.nonVegPerPlate
-                } })), { coverPic: coverPicPath[0], portfolios: portPath, document: docPath[0] });
+                    nonVegPerPlate: userInfo.platePrice.nonVegPerPlate,
+                },
+            })), { coverPic: coverPicPath[0], portfolios: portPath, document: docPath[0] });
             // // Create event planner document
             const userDoc = yield this._venueVendorRepository.create(Object.assign({}, userData));
             if (userDoc) {
                 const availabilityData = {
                     vendorId: userDoc.vendorId,
                     maxEvents: userInfo.maxEvents,
-                    bookingType: 'VenueBooking',
+                    bookingType: "VenueBooking",
                     bookedDates: [],
-                    holyDays: []
+                    holyDays: [],
                 };
                 yield this._availabilityrepository.create(availabilityData);
                 yield this._notificationrepository.create({
                     userId: userInfo.user._id,
-                    userType: 'Vendor',
+                    userType: "Vendor",
                     message: `Your service has been successfully registered.`,
-                    notificationType: 'service_registered'
+                    notificationType: "service_registered",
                 });
             }
             return userDoc;
@@ -109,7 +119,7 @@ class VenueVendorService {
     CloudinaryfileStore(files, folderName, fName) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!files || !folderName || !fName) {
-                throw new Error('Invalid input');
+                throw new Error("Invalid input");
             }
             const processedImages = [];
             console.log(files.length, folderName);
@@ -122,7 +132,7 @@ class VenueVendorService {
                         const uploadStream = cloudinary_config_1.default.uploader.upload_stream({
                             folder: folderName,
                             public_id: `${fName}_${Date.now()}`,
-                            resource_type: 'auto',
+                            resource_type: "auto",
                         }, (error, result) => {
                             if (error) {
                                 reject(error);
@@ -133,7 +143,7 @@ class VenueVendorService {
                         });
                         // Convert the optimized buffer into a stream and upload it
                         const bufferStream = stream_1.Readable.from(buffer);
-                        bufferStream.pipe(uploadStream).on('error', (streamError) => {
+                        bufferStream.pipe(uploadStream).on("error", (streamError) => {
                             reject(streamError);
                         });
                     })
@@ -147,7 +157,7 @@ class VenueVendorService {
             });
             // Filter out any null values (from skipped files)
             const results = yield Promise.all(uploadPromises);
-            return results.filter(url => url !== null); // Only return successful uploads
+            return results.filter((url) => url !== null); // Only return successful uploads
         });
     }
     // Function to get all URLs from a specific folder
@@ -157,10 +167,10 @@ class VenueVendorService {
             try {
                 const fullPath = `${folderName}`;
                 const { resources } = yield cloudinary_config_1.default.api.resources({
-                    type: 'upload',
+                    type: "upload",
                     prefix: fullPath,
                     max_results: 500,
-                    resource_type: 'auto',
+                    resource_type: "auto",
                 });
                 return resources.map((resource) => resource.secure_url);
             }
@@ -196,7 +206,7 @@ class VenueVendorService {
                         }
                         catch (error) {
                             console.log("error", error === null || error === void 0 ? void 0 : error.message);
-                            throw new customError_1.BadRequestError('');
+                            throw new customError_1.BadRequestError("");
                         }
                     }
                 }
@@ -209,54 +219,272 @@ class VenueVendorService {
             return yield this._venueVendorRepository.getVenueDetail(Object.assign({}, filter));
         });
     }
-    getAllVenues(filter) {
+    get(filter) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this._venueVendorRepository.getAllWithPopuate(Object.assign({}, filter));
         });
     }
-    getAllBookings(filter) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const venue = yield this._venueVendorRepository.getVenue(Object.assign({}, filter));
-            let bookings = null;
-            if (venue) {
-                bookings = yield this._venueBookingrepository.getAllBookings({ venueId: venue.id });
+    getAllVenues() {
+        return __awaiter(this, arguments, void 0, function* (page = 1, limit = 10, approval, allfilters) {
+            var _a;
+            const skip = (page - 1) * limit;
+            try {
+                // Initialize the filter query
+                let filterQuery = {};
+                // Build the filtering criteria based on the provided filters
+                if (allfilters) {
+                    // Location filter
+                    if (allfilters.location) {
+                        filterQuery["location.city"] = allfilters.location;
+                    }
+                    // Services filter
+                    if (allfilters.services && allfilters.services.length > 0) {
+                        filterQuery["services"] = { $all: allfilters.services };
+                    }
+                    // Amenities filter
+                    if (allfilters.amenities && allfilters.amenities.length > 0) {
+                        filterQuery["amenities"] = { $all: allfilters.amenities };
+                    }
+                }
+                // Execute the count pipeline
+                const totalCount = yield this._venueVendorRepository.getCount(filterQuery);
+                // Aggregation pipeline for fetching venue names and their full addresses based on filters
+                // Aggregation pipeline for fetching venue names and their full addresses based on filters
+                const pipeline = [
+                    {
+                        $lookup: {
+                            from: "addresses", // Ensure this matches your Address model's collection name
+                            localField: "address", // The field in the venue documents that contains the address ID
+                            foreignField: "_id", // The field in the addresses collection that matches the address ID
+                            as: "address", // The name of the field where the populated address will be stored
+                        },
+                    },
+                    {
+                        $match: filterQuery, // Apply the dynamic filters to the venues
+                    },
+                    {
+                        $project: {
+                            // Include all fields from the IVenue interface
+                            vendorId: 1,
+                            slug: 1,
+                            venueName: 1,
+                            venueType: 1,
+                            contact: 1,
+                            address: { $arrayElemAt: ["$address", 0] }, // Extract the first address from the array
+                            description: 1,
+                            amenities: 1,
+                            rent: 1,
+                            rooms: 1,
+                            decorStartingPrice: 1,
+                            services: 1,
+                            platePrice: 1,
+                            capacity: 1,
+                            coverPic: 1,
+                            isDeleted: 1,
+                            createdAt: 1,
+                            updatedAt: 1,
+                        },
+                    },
+                    {
+                        $skip: skip, // Pagination: skip the documents for the previous pages
+                    },
+                    {
+                        $limit: limit, // Pagination: limit the number of documents for the current page
+                    },
+                ];
+                // Fetch the filtered and paginated venue data
+                const venues = (yield this._venueVendorRepository.getAggregateData(pipeline)) || [];
+                // Count pipeline to get total count with filtering logic
+                const countPipeline = [
+                    {
+                        $lookup: {
+                            from: "addresses", // Ensure this matches your Address model's collection name
+                            localField: "address",
+                            foreignField: "_id",
+                            as: "location",
+                        },
+                    },
+                    {
+                        $unwind: {
+                            path: "$location",
+                            preserveNullAndEmptyArrays: true,
+                        },
+                    },
+                    {
+                        $match: filterQuery, // Apply the same filter query for counting
+                    },
+                    {
+                        // Unwind the services array to flatten them
+                        $unwind: {
+                            path: "$services",
+                            preserveNullAndEmptyArrays: true,
+                        },
+                    },
+                    {
+                        // Unwind the amenities array to flatten them
+                        $unwind: {
+                            path: "$amenities",
+                            preserveNullAndEmptyArrays: true,
+                        },
+                    },
+                    {
+                        $group: {
+                            _id: null,
+                            locations: { $addToSet: "$location.city" },
+                            services: { $addToSet: "$services" },
+                            amenities: { $addToSet: "$amenities" },
+                        },
+                    },
+                ];
+                // Fetch total venue count and aggregated data
+                const countResult = (_a = (yield this._venueVendorRepository.getAggregateData(countPipeline))) !== null && _a !== void 0 ? _a : [];
+                const totalPages = Math.ceil(totalCount / limit);
+                console.log(countResult[0]);
+                return { venues, totalCount, totalPages, filterData: countResult[0] };
             }
-            return bookings;
+            catch (error) {
+                console.error("Error fetching venues:", error);
+                throw new customError_1.BadRequestError("Something went wrong!");
+            }
         });
     }
-    getAllvenueBookings(filter) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this._venueBookingrepository.getAllBookings(Object.assign({}, filter));
+    getAllvenueBookings(filter_1) {
+        return __awaiter(this, arguments, void 0, function* (filter, page = 1, limit = 10, status = "", allfilters) {
+            var _a;
+            console.log(page, limit, status, "page and limit");
+            let venue = null;
+            let filterQuery = {};
+            let bookings = null;
+            let completedBookingsCount = 0;
+            const skip = (page - 1) * limit;
+            try {
+                // Retrieve venue if user is provided in filter
+                if (filter.user) {
+                    venue = (yield this._venueVendorRepository.getVenue({}));
+                    if (venue) {
+                        filterQuery = { venueId: venue._id };
+                    }
+                }
+                // Aggregate to get filter data
+                const aggregate = [
+                    { $match: filterQuery },
+                    {
+                        $addFields: {
+                            year: { $year: "$eventDate.startDate" },
+                            month: { $month: "$eventDate.startDate" },
+                        },
+                    },
+                    {
+                        $group: {
+                            _id: null,
+                            years: { $addToSet: "$year" },
+                            months: { $addToSet: "$month" },
+                            eventTypes: { $addToSet: "$eventType" },
+                            totalCount: { $sum: 1 },
+                            venueId: { $first: "$venueId" },
+                        },
+                    },
+                    {
+                        $project: {
+                            _id: 0,
+                            years: 1,
+                            months: { $sortArray: { input: "$months", sortBy: 1 } },
+                            eventTypes: 1,
+                            totalCount: 1,
+                        },
+                    },
+                ];
+                const allBookings = (yield this._venueBookingrepository.getAggregateData(aggregate)) || [];
+                const totalPages = Math.ceil(((_a = allBookings[0]) === null || _a === void 0 ? void 0 : _a.totalCount) / limit) || 0;
+                // Initialize match stage for booking retrieval
+                const matchStage = Object.assign({ status }, filterQuery);
+                // Apply additional filters based on the provided criteria
+                if (allfilters) {
+                    // Filter by month
+                    if (allfilters.selectedMonth !== null &&
+                        (0, razorpay_utils_1.isNumber)(allfilters.selectedMonth)) {
+                        console.log(allfilters.selectedMonth);
+                        matchStage["eventDate.startDate"] = {
+                            $gte: new Date(new Date().getFullYear(), allfilters.selectedMonth - 1, 1),
+                            $lt: new Date(new Date().getFullYear(), allfilters.selectedMonth, 1),
+                        };
+                    }
+                    // Filter by year
+                    if (allfilters.selectedYear !== null &&
+                        (0, razorpay_utils_1.isNumber)(allfilters.selectedYear)) {
+                        matchStage["eventDate.startDate"] = Object.assign(Object.assign({}, matchStage["eventDate.startDate"]), { $gte: new Date(allfilters.selectedYear, 0, 1), $lt: new Date(allfilters.selectedYear + 1, 0, 1) });
+                    }
+                    // Filter by event type
+                    if (allfilters.selectedEventType &&
+                        allfilters.selectedEventType !== "null") {
+                        matchStage.eventType = allfilters.selectedEventType;
+                    }
+                    // Filter by days
+                    if (allfilters.selectedDays) {
+                        console.log(allfilters.selectedDays);
+                        if (allfilters.selectedDays === "single") {
+                            matchStage.isMultipleDays = false;
+                        }
+                        else if (allfilters.selectedDays === "multiple") {
+                            matchStage.isMultipleDays = true;
+                        }
+                    }
+                }
+                console.log(matchStage);
+                // Fetch bookings based on constructed matchStage
+                if (venue) {
+                    bookings = yield this._venueBookingrepository.getAggregateData([
+                        { $match: matchStage },
+                        { $skip: skip },
+                        { $limit: limit },
+                    ]);
+                    if (bookings) {
+                        completedBookingsCount = bookings.filter((booking) => booking.status === "completed").length;
+                    }
+                }
+                return {
+                    bookings,
+                    completed: completedBookingsCount,
+                    totalPages,
+                    filterData: allBookings[0],
+                };
+            }
+            catch (error) {
+                console.error("Error fetching venue bookings:", error);
+                throw new customError_1.BadRequestError("Something went wrong!");
+            }
         });
     }
     venueBooking(userInfo, slug) {
         return __awaiter(this, void 0, void 0, function* () {
             let booking;
-            const venue = yield this.getVenue({ slug, approval: status_options_1.Status.Approved });
+            const venue = (yield this.getVenue({
+                slug,
+                approval: status_options_1.Status.Approved,
+            }));
             if (!venue) {
                 throw new Error(" Veneu does not Exist!");
             }
-            const addressDocument = new addressModel_1.default(Object.assign({}, userInfo.addressInfo));
-            const address = yield this._addressRepository.create(addressDocument);
+            const address = yield this._addressRepository.create(Object.assign({}, userInfo.addressInfo));
             if (!address) {
                 throw new customError_1.BadRequestError("Address creation failed. Please check the provided information!");
             }
             let razorpayOrderData;
-            if (userInfo.paymentMode === 'Razorpay') {
+            if (userInfo.paymentMode === "Razorpay") {
                 const options = {
                     amount: 50 * 100,
-                    currency: 'INR',
+                    currency: "INR",
                 };
                 const razorpayInstance = new razorpay_1.default({
-                    key_id: process.env.RAZOR_KEY_ID || '',
-                    key_secret: process.env.RAZOR_KEY_SECRET || '',
+                    key_id: process.env.RAZOR_KEY_ID || "",
+                    key_secret: process.env.RAZOR_KEY_SECRET || "",
                 });
                 razorpayOrderData = yield razorpayInstance.orders.create(options);
                 razorpayOrderData.amount_paid = 50;
             }
             if (razorpayOrderData) {
                 let bookingInfo = {
-                    bookingId: (0, helperFunctions_1.generateOrderId)('VV'),
+                    bookingId: (0, helperFunctions_1.generateOrderId)("VV"),
                     venueId: venue.id,
                     customerId: userInfo.user.id,
                     address: address.id,
@@ -272,23 +500,23 @@ class VenueVendorService {
                     },
                     additionalNeeds: userInfo.additionalNeeds,
                     charges: {
-                        platformCharge: 50
+                        platformCharge: 50,
                     },
                     totalCost: 50,
                     eventDate: {
                         startDate: userInfo.eventDate.startDate,
                         endDate: userInfo.eventDate.endDate,
                         startTime: userInfo.eventDate.startTime,
-                        endTime: userInfo.eventDate.endTime
+                        endTime: userInfo.eventDate.endTime,
                     },
                     payments: [
                         {
-                            type: 'Platform Fee',
+                            type: "Platform Fee",
                             amount: userInfo.platformCharge,
                             mode: userInfo.paymentMode,
                             paymentInfo: razorpayOrderData,
                         },
-                    ]
+                    ],
                 };
                 booking = (yield this._venueBookingrepository.registerBooking(bookingInfo));
             }
@@ -298,26 +526,28 @@ class VenueVendorService {
     razorPayment(razorPayData) {
         return __awaiter(this, void 0, void 0, function* () {
             const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = razorPayData;
-            const CryptoJS = require('crypto-js');
+            const CryptoJS = require("crypto-js");
             let bookedData;
-            const generatedSignature = CryptoJS.HmacSHA256(`${razorpay_order_id}|${razorpay_payment_id}`, process.env.RAZOR_KEY_SECRET || '').toString();
-            bookedData = yield this._venueBookingrepository.getOne({ 'payments.paymentInfo.id': razorpay_order_id });
+            const generatedSignature = CryptoJS.HmacSHA256(`${razorpay_order_id}|${razorpay_payment_id}`, process.env.RAZOR_KEY_SECRET || "").toString();
+            bookedData = yield this._venueBookingrepository.getOne({
+                "payments.paymentInfo.id": razorpay_order_id,
+            });
             if (!bookedData) {
-                throw new customError_1.BadRequestError('Booking data not found. Payment verification failed.');
+                throw new customError_1.BadRequestError("Booking data not found. Payment verification failed.");
             }
             if (generatedSignature === razorpay_signature) {
                 bookedData.payments[0].status = status_options_1.Status.Paid;
             }
             else {
                 bookedData.payments[0].status = status_options_1.Status.Failed;
-                throw new customError_1.BadRequestError('Invalid payment signature. Potential fraud attempt.');
+                throw new customError_1.BadRequestError("Invalid payment signature. Potential fraud attempt.");
             }
             yield bookedData.save();
             yield this._notificationrepository.create({
                 userId: bookedData.customerId,
-                userType: 'Customer',
+                userType: "Customer",
                 message: `Your booking for ${bookedData.eventName} has been placed successfully`,
-                notificationType: 'booking_placed'
+                notificationType: "booking_placed",
             });
             return bookedData;
         });
@@ -331,13 +561,13 @@ class VenueVendorService {
         return __awaiter(this, void 0, void 0, function* () {
             const venueData = yield this._venueBookingrepository.update({ bookingId }, { status: status.toLowerCase() });
             if (!venueData) {
-                throw new customError_1.BadRequestError('Booking not found!');
+                throw new customError_1.BadRequestError("Booking not found!");
             }
             try {
                 if (venueData && venueData.status === status_options_1.Status.Confirmed) {
                     const availabilityModel = yield this._availabilityrepository.findOneByFilter({ vendorId });
                     if (!availabilityModel) {
-                        throw new customError_1.BadRequestError('Availability schema not found!');
+                        throw new customError_1.BadRequestError("Availability schema not found!");
                     }
                     // Convert startDate and endDate to Date objects
                     const startDate = new Date(venueData.eventDate.startDate);
@@ -357,32 +587,37 @@ class VenueVendorService {
                                 throw new customError_1.BadRequestError(`Cannot add more slots for ${startDate.toDateString()}, maximum limit reached.`);
                             }
                             // Check if the new slot overlaps with any existing slots
-                            const isOverlapping = existingDate.slots.some(slot => (newSlot.startTime < slot.endTime && newSlot.endTime > slot.startTime));
+                            const isOverlapping = existingDate.slots.some((slot) => newSlot.startTime < slot.endTime &&
+                                newSlot.endTime > slot.startTime);
                             if (isOverlapping) {
                                 throw new customError_1.BadRequestError(`Slot is already booked for ${startDate.toDateString()}.`);
                             }
                             // If the date exists, push the new slot into the existing date's slots array
-                            yield this._availabilityrepository.update({ vendorId, 'bookedDates.date': startDate }, { $push: { 'bookedDates.$.slots': newSlot } });
+                            yield this._availabilityrepository.update({ vendorId, "bookedDates.date": startDate }, { $push: { "bookedDates.$.slots": newSlot } });
                         }
                         else {
-                            yield this._availabilityrepository.update({ vendorId }, { $push: { bookedDates: {
+                            yield this._availabilityrepository.update({ vendorId }, {
+                                $push: {
+                                    bookedDates: {
                                         date: new Date(startDate),
                                         slots: [newSlot],
-                                    } } });
+                                    },
+                                },
+                            });
                         }
                         // Move to the next day
                         startDate.setDate(startDate.getDate() + 1);
                     }
                     yield this._notificationrepository.create({
                         userId: vendorId,
-                        userType: 'Vendor',
+                        userType: "Vendor",
                         message: `Booking for ${venueData.bookingId} has been Confirmed`,
-                        notificationType: 'booking_confirmation'
+                        notificationType: "booking_confirmation",
                     });
                 }
             }
             catch (error) {
-                console.error('Error in changeBookingStatus:', error.message);
+                console.error("Error in changeBookingStatus:", error.message);
                 yield this._venueBookingrepository.update({ bookingId }, { status: status_options_1.Status.Pending });
                 if (error instanceof customError_1.BadRequestError)
                     throw error;
@@ -393,13 +628,13 @@ class VenueVendorService {
     }
     generateAdvancePayment(bookingId, advancePayment) {
         return __awaiter(this, void 0, void 0, function* () {
-            const bookingData = yield this._venueBookingrepository.update({ bookingId }, { 'charges.advancePayments': advancePayment });
+            const bookingData = yield this._venueBookingrepository.update({ bookingId }, { "charges.advancePayments": advancePayment });
             if (bookingData) {
                 yield this._notificationrepository.create({
                     userId: bookingData.customerId,
-                    userType: 'Customer',
+                    userType: "Customer",
                     message: `Advance Payment for ${bookingData.bookingId} has been generated`,
-                    notificationType: 'advance_payment'
+                    notificationType: "advance_payment",
                 });
             }
             return bookingData;
@@ -409,9 +644,19 @@ class VenueVendorService {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const startDate = new Date(formData.startDate);
-                const endDate = (formData === null || formData === void 0 ? void 0 : formData.endDate) ? new Date(formData.endDate) : startDate;
+                const endDate = (formData === null || formData === void 0 ? void 0 : formData.endDate)
+                    ? new Date(formData.endDate)
+                    : startDate;
                 if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-                    throw new customError_1.BadRequestError('Invalid date format. Please try again later.');
+                    throw new customError_1.BadRequestError("Invalid date format. Please try again later.");
+                }
+                // Get today's date and add 5 days to it
+                const today = new Date();
+                const minDate = new Date(today);
+                minDate.setDate(today.getDate() + 5); // Set the minimum date to 5 days after today
+                // Check if the selected start date is at least 5 days after today
+                if (startDate.getTime() < minDate.getTime()) {
+                    throw new customError_1.BadRequestError("The selected date must be at least 5 days after today.");
                 }
                 let datesArray = [];
                 for (let date = new Date(startDate); date.getTime() <= endDate.getTime(); date.setDate(date.getDate() + 1)) {
@@ -419,35 +664,39 @@ class VenueVendorService {
                 }
                 const availabilityData = yield this._availabilityrepository.findOneByFilter({
                     vendorId,
-                    holyDays: { $nin: datesArray } // Filter out documents where holyDays include any of the dates in datesArray
+                    holyDays: { $nin: datesArray }, // Filter out documents where holyDays include any of the dates in datesArray
                 });
+                console.log(!!availabilityData, "hdydy");
                 if (availabilityData) {
                     // Check if any date in the range is booked
-                    const isBooked = datesArray.some(date => availabilityData.bookedDates.some(bookedDate => {
+                    const isBooked = datesArray.some((date) => availabilityData.bookedDates.some((bookedDate) => {
                         if (date.getTime() === bookedDate.date.getTime()) {
                             // Check for overlapping slots
-                            return bookedDate.slots.some(slot => {
-                                return ((formData.startTime < slot.endTime && formData.endTime > slot.startTime) // Fixed overlapping check
+                            return bookedDate.slots.some((slot) => {
+                                return (formData.startTime < slot.endTime &&
+                                    formData.endTime > slot.startTime // Fixed overlapping check
                                 );
                             });
                         }
                         return false;
                     }));
                     if (isBooked) {
-                        console.log('Some dates or slots are not available.');
+                        console.log("Some dates or slots are not available.");
                         return false; // Slot is not available
                     }
-                    console.log('All dates and slots are available.');
+                    console.log("All dates and slots are available.");
                     return true; // Slot is available
                 }
                 else {
-                    console.log('No availability data found for vendor.');
+                    console.log("No availability data found for vendor.");
                     return false; // No availability data found
                 }
             }
             catch (error) {
-                console.error('Error checking availability:', error);
-                throw new customError_1.BadRequestError('Failed to check availability. Please try again later.');
+                console.error("Error checking availability:", error);
+                if (error instanceof customError_1.BadRequestError)
+                    throw error;
+                throw new customError_1.BadRequestError("Failed to check availability. Please try again later.");
             }
         });
     }
@@ -459,10 +708,10 @@ class VenueVendorService {
     venueStatusChange(slug, status) {
         return __awaiter(this, void 0, void 0, function* () {
             let change = status_options_1.Status.Pending;
-            if (status === 'approved') {
+            if (status === "approved") {
                 change = status_options_1.Status.Approved;
             }
-            else if (status === 'rejected') {
+            else if (status === "rejected") {
                 change = status_options_1.Status.Rejected;
             }
             return yield this._venueVendorRepository.update({ slug }, { approval: status });
@@ -474,19 +723,21 @@ class VenueVendorService {
                 // Convert the date string to a Date object
                 const holidayDate = new Date(date);
                 // Check if the date is already booked
-                const availability = yield this._availabilityrepository.findOneByFilter({ vendorId });
+                const availability = yield this._availabilityrepository.findOneByFilter({
+                    vendorId,
+                });
                 if (!availability) {
-                    throw new Error('Vendor not found');
+                    throw new Error("Vendor not found");
                 }
                 // Check if the date is already in bookedDates
-                const isBooked = availability.bookedDates.some(bookedDate => bookedDate.date.toDateString() === holidayDate.toDateString());
+                const isBooked = availability.bookedDates.some((bookedDate) => bookedDate.date.toDateString() === holidayDate.toDateString());
                 if (isBooked) {
-                    throw new customError_1.ConflictError('Date is already booked, Cnnot add as Holiday!');
+                    throw new customError_1.ConflictError("Date is already booked, Cnnot add as Holiday!");
                 }
                 // Check if the date is already in holyDays
-                const isHoliday = availability.holyDays.some(holiday => holiday.toDateString() === holidayDate.toDateString());
+                const isHoliday = availability.holyDays.some((holiday) => holiday.toDateString() === holidayDate.toDateString());
                 if (isHoliday) {
-                    throw new customError_1.ConflictError('Date is already a holiday!');
+                    throw new customError_1.ConflictError("Date is already a holiday!");
                 }
                 // Add the date to holyDays
                 availability.holyDays.push(holidayDate);
@@ -502,32 +753,37 @@ class VenueVendorService {
     }
     getDashboardData(vendorId) {
         return __awaiter(this, void 0, void 0, function* () {
-            const venuevendor = yield this.getVenue({ vendorId });
+            const venuevendor = (yield this.getVenue({ vendorId }));
             if (!venuevendor)
-                throw new customError_1.BadRequestError('Venue Vendor is not found');
+                throw new customError_1.BadRequestError("Venue Vendor is not found");
             const totalReveneuePipeline = [
                 { $match: { venueId: venuevendor._id } },
-                { $group: { _id: null, totalRevenue: { $sum: "$totalCost" } } }
+                { $group: { _id: null, totalRevenue: { $sum: "$totalCost" } } },
             ];
             const totalBookingsPipeline = [
-                { $match: { venueId: venuevendor._id, status: { $in: [status_options_1.Status.Pending, status_options_1.Status.Confirmed, status_options_1.Status.Completed] } } },
-                { $count: "totalBookings" }
+                {
+                    $match: {
+                        venueId: venuevendor._id,
+                        status: { $in: [status_options_1.Status.Pending, status_options_1.Status.Confirmed, status_options_1.Status.Completed] },
+                    },
+                },
+                { $count: "totalBookings" },
             ];
             const bookingStatusPipeline = [
                 { $match: { venueId: venuevendor._id } },
                 {
                     $group: {
                         _id: "$status",
-                        count: { $sum: 1 }
-                    }
+                        count: { $sum: 1 },
+                    },
                 },
                 {
                     $project: {
                         _id: 0,
                         status: "$_id", // Project the status field from _id
-                        count: 1 // Include the count field
-                    }
-                }
+                        count: 1, // Include the count field
+                    },
+                },
             ];
             const currentYear = new Date().getFullYear();
             const revenueOverTimePipeline = [
@@ -536,30 +792,30 @@ class VenueVendorService {
                         venueId: venuevendor._id,
                         updatedAt: {
                             $gte: new Date(`${currentYear}-01-01`), // From the start of the current year
-                            $lt: new Date(`${currentYear + 1}-01-01`) // Before the start of the next year
-                        }
-                    }
+                            $lt: new Date(`${currentYear + 1}-01-01`), // Before the start of the next year
+                        },
+                    },
                 },
                 {
                     $group: {
                         _id: {
                             year: { $year: "$updatedAt" }, // Group by year
-                            month: { $month: "$updatedAt" } // Group by month
+                            month: { $month: "$updatedAt" }, // Group by month
                         },
-                        monthlyRevenue: { $sum: "$totalCost" }
-                    }
+                        monthlyRevenue: { $sum: "$totalCost" },
+                    },
                 },
                 {
-                    $sort: { "_id.year": 1, "_id.month": 1 } // Sort by year and month
+                    $sort: { "_id.year": 1, "_id.month": 1 }, // Sort by year and month
                 },
                 {
                     $project: {
                         _id: 0,
                         month: "$_id.month",
                         year: "$_id.year",
-                        revenue: "$monthlyRevenue"
-                    }
-                }
+                        revenue: "$monthlyRevenue",
+                    },
+                },
             ];
             const revenueOverTime = yield this._venueBookingrepository.getAggregateData(revenueOverTimePipeline);
             const totalRevenue = yield this._venueBookingrepository.getAggregateData(totalReveneuePipeline);
@@ -572,9 +828,11 @@ class VenueVendorService {
         return __awaiter(this, void 0, void 0, function* () {
             var _a;
             // Step 1: Fetch booking details
-            const bookingDetail = yield this._venueBookingrepository.getOne({ bookingId });
+            const bookingDetail = yield this._venueBookingrepository.getOne({
+                bookingId,
+            });
             if (!bookingDetail) {
-                throw new customError_1.BadRequestError('No Booking Detail Found!');
+                throw new customError_1.BadRequestError("No Booking Detail Found!");
             }
             const advance = ((_a = bookingDetail.charges) === null || _a === void 0 ? void 0 : _a.advancePayments) || 0;
             // Step 2: If advance payment exists, proceed with Razorpay order creation
@@ -582,11 +840,11 @@ class VenueVendorService {
             if (advance) {
                 const options = {
                     amount: advance * 100, // Razorpay expects amount in paise (1 INR = 100 paise)
-                    currency: 'INR',
+                    currency: "INR",
                 };
                 const razorpayInstance = new razorpay_1.default({
-                    key_id: process.env.RAZOR_KEY_ID || '',
-                    key_secret: process.env.RAZOR_KEY_SECRET || '',
+                    key_id: process.env.RAZOR_KEY_ID || "",
+                    key_secret: process.env.RAZOR_KEY_SECRET || "",
                 });
                 // Create Razorpay order
                 razorpayOrderData = yield razorpayInstance.orders.create(options);
@@ -601,16 +859,16 @@ class VenueVendorService {
                         },
                         $push: {
                             payments: {
-                                type: 'Advance Payment',
+                                type: "Advance Payment",
                                 amount: advance, // Payment amount (advance)
-                                mode: 'Razorpay', // Payment mode
+                                mode: "Razorpay", // Payment mode
                                 paymentInfo: razorpayOrderData, // Razorpay order data
                                 status: status_options_1.Status.Pending,
                             },
                         },
                     }, 
                     // Step 4: Save the updated booking
-                    updatedBooking = yield this._venueBookingrepository.update({ bookingId }, updatedBookingInfo);
+                    updatedBooking = (yield this._venueBookingrepository.update({ bookingId }, updatedBookingInfo));
                     return { razorpayOrderData, booking: updatedBooking };
                 }
                 console.log(updatedBooking, "jjjj");
@@ -622,22 +880,25 @@ class VenueVendorService {
         return __awaiter(this, void 0, void 0, function* () {
             var _a, _b, _c, _d, _e;
             // Step 1: Fetch booking details
-            const bookingDetail = yield this._venueBookingrepository.getOne({ bookingId });
+            const bookingDetail = yield this._venueBookingrepository.getOne({
+                bookingId,
+            });
             if (!bookingDetail) {
-                throw new customError_1.BadRequestError('No Booking Detail Found!');
+                throw new customError_1.BadRequestError("No Booking Detail Found!");
             }
             const totalServiceCharges = ((_c = (_b = (_a = bookingDetail === null || bookingDetail === void 0 ? void 0 : bookingDetail.charges) === null || _a === void 0 ? void 0 : _a.fullPayment) === null || _b === void 0 ? void 0 : _b.servicesCharges) === null || _c === void 0 ? void 0 : _c.reduce((sum, charge) => sum + charge.cost, 0)) || 0;
-            const fullpayment = (((_e = (_d = bookingDetail === null || bookingDetail === void 0 ? void 0 : bookingDetail.charges) === null || _d === void 0 ? void 0 : _d.fullPayment) === null || _e === void 0 ? void 0 : _e.venueRental) || 0) + totalServiceCharges;
+            const fullpayment = (((_e = (_d = bookingDetail === null || bookingDetail === void 0 ? void 0 : bookingDetail.charges) === null || _d === void 0 ? void 0 : _d.fullPayment) === null || _e === void 0 ? void 0 : _e.venueRental) || 0) +
+                totalServiceCharges;
             // Step 2: If advance payment exists, proceed with Razorpay order creation
             let razorpayOrderData;
             if (fullpayment) {
                 const options = {
                     amount: fullpayment * 100, // Razorpay expects amount in paise (1 INR = 100 paise)
-                    currency: 'INR',
+                    currency: "INR",
                 };
                 const razorpayInstance = new razorpay_1.default({
-                    key_id: process.env.RAZOR_KEY_ID || '',
-                    key_secret: process.env.RAZOR_KEY_SECRET || '',
+                    key_id: process.env.RAZOR_KEY_ID || "",
+                    key_secret: process.env.RAZOR_KEY_SECRET || "",
                 });
                 // Create Razorpay order
                 razorpayOrderData = yield razorpayInstance.orders.create(options);
@@ -649,16 +910,16 @@ class VenueVendorService {
                     const updatedBookingInfo = {
                         $push: {
                             payments: {
-                                type: 'Full Payment',
+                                type: "Full Payment",
                                 amount: fullpayment, // Payment amount (advance)
-                                mode: 'Razorpay', // Payment mode
+                                mode: "Razorpay", // Payment mode
                                 paymentInfo: razorpayOrderData, // Razorpay order data
                                 status: status_options_1.Status.Pending,
                             },
                         },
                     }, 
                     // Step 4: Save the updated booking
-                    updatedBooking = yield this._venueBookingrepository.update({ bookingId }, updatedBookingInfo);
+                    updatedBooking = (yield this._venueBookingrepository.update({ bookingId }, updatedBookingInfo));
                     return { razorpayOrderData, booking: updatedBooking };
                 }
                 console.log(updatedBooking, "jjjj");
@@ -669,27 +930,34 @@ class VenueVendorService {
     generateFullPayment(bookingId, fullPaymentCharges) {
         return __awaiter(this, void 0, void 0, function* () {
             // Fetch the current booking details to get the existing totalCost
-            const bookingDetail = yield this._venueBookingrepository.getOne({ bookingId });
+            const bookingDetail = yield this._venueBookingrepository.getOne({
+                bookingId,
+            });
             if (!bookingDetail) {
-                throw new Error('Booking not found');
+                throw new Error("Booking not found");
             }
             // Create serviceCharges array by mapping charges
-            const serviceCharges = fullPaymentCharges.charges.map(charge => ({
+            const serviceCharges = fullPaymentCharges.charges.map((charge) => ({
                 service: charge.chargeName,
                 cost: charge.amount,
             }));
             // Calculate the total sum of amounts
             const totalServiceCharges = fullPaymentCharges.charges.reduce((sum, charge) => sum + charge.amount, 0);
             // Add the new calculated charges to the existing totalCost
-            const updatedTotalCost = bookingDetail.totalCost + fullPaymentCharges.planningFee + totalServiceCharges;
+            const updatedTotalCost = bookingDetail.totalCost +
+                fullPaymentCharges.planningFee +
+                totalServiceCharges;
             // Perform the update operation
             const bookingData = yield this._venueBookingrepository.update({ bookingId }, // Find booking by bookingId
             {
-                'charges.fullPayment.veneuRental': fullPaymentCharges.planningFee, // Update planningFee
-                'charges.fullPayment.servicesCharges': serviceCharges, // Update servicesCharges with mapped values
-                'totalCost': updatedTotalCost // Update totalCost by adding new charges to existing totalCost
+                "charges.fullPayment.veneuRental": fullPaymentCharges.planningFee, // Update planningFee
+                "charges.fullPayment.servicesCharges": serviceCharges, // Update servicesCharges with mapped values
+                totalCost: updatedTotalCost, // Update totalCost by adding new charges to existing totalCost
             });
-            return { bookingData, fullPayment: fullPaymentCharges.planningFee + totalServiceCharges };
+            return {
+                bookingData,
+                fullPayment: fullPaymentCharges.planningFee + totalServiceCharges,
+            };
         });
     }
 }

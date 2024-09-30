@@ -54,7 +54,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Routes setup
-app.use('/', customerRouter);
+app.use('/api', customerRouter);
 app.use('/admin', adminRouter);
 app.use('/vendor', vendorRouter);
 app.use('/vendor/event-planner', eventPlannerRouter);

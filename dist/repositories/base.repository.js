@@ -97,9 +97,9 @@ class BaseRepository {
             }
         });
     }
-    getCount() {
+    getCount(filter) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.model.countDocuments();
+            return yield this.model.countDocuments(Object.assign({}, filter)).exec();
         });
     }
 }

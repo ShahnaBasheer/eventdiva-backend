@@ -54,8 +54,18 @@ const registerEventPlannerService = (0, express_async_handler_1.default)((req, r
 }));
 exports.registerEventPlannerService = registerEventPlannerService;
 const getAllPlannerBookings = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const bookings = yield eventPlannerService.getAllBookings({ vendorId: req.user.id });
-    (0, responseFormatter_1.default)(200, { bookings }, "successfull", res, req);
+    let { page = 1, limit = 10, status, selectedMonth, selectedYear, selectedEventType, selectedDays } = req.query;
+    page = parseInt(page);
+    limit = parseInt(limit);
+    status = status === null || status === void 0 ? void 0 : status.toString();
+    const filters = {
+        selectedMonth: selectedMonth ? parseInt(selectedMonth, 10) : null,
+        selectedYear: selectedYear ? parseInt(selectedYear, 10) : null,
+        selectedEventType: (selectedEventType === null || selectedEventType === void 0 ? void 0 : selectedEventType.toString()) || null,
+        selectedDays: (selectedDays === null || selectedDays === void 0 ? void 0 : selectedDays.toString()) || '',
+    };
+    const bookings = yield eventPlannerService.getAllplannerBookings({ user: req.user }, page, limit, status, filters);
+    (0, responseFormatter_1.default)(200, Object.assign({}, bookings), "successfull", res, req);
 }));
 exports.getAllPlannerBookings = getAllPlannerBookings;
 const getPlannerBookingDetails = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {

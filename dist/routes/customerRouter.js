@@ -14,7 +14,8 @@ const socket_controller_1 = require("../controllers/common/socket.controller");
 const router = express_1.default.Router();
 router.get('/', authMiddleware_1.authMiddleware, pages_controller_1.getCustomerHome);
 router.get('/home', authMiddleware_1.authMiddleware, pages_controller_1.getCustomerHome);
-router.get('/venues', authMiddleware_1.authMiddleware, pages_controller_1.getCustomerHome);
+router.get('/contact', authMiddleware_1.authMiddleware, pages_controller_1.getContactPage);
+router.get('/about', authMiddleware_1.authMiddleware, pages_controller_1.getAboutPage);
 router.get('/vendors/event-planners', authMiddleware_1.authMiddleware, pages_controller_1.getAllEventPlanners);
 router.get('/vendors/event-planners/:slug', authMiddleware_1.authMiddleware, pages_controller_1.getEventPlannerDetail);
 router.get('/vendors/venues', authMiddleware_1.authMiddleware, pages_controller_1.getAllVenues);
@@ -44,5 +45,6 @@ router.post('/signup', validateForm_1.validateSignup, customer_controller_1.sign
 router.post('/verify-otp', customer_controller_1.verifyOtp);
 router.post('/resend-otp', rateLimit_1.default, customer_controller_1.resendOtp);
 router.post('/auth/google', customer_controller_1.signinWithGoogle);
+router.get('/contact', authMiddleware_1.authMiddleware, pages_controller_1.getContactPage);
 router.get('/logout', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, customer_controller_1.logout);
 exports.default = router;

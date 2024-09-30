@@ -52,8 +52,21 @@ const registerEventPlannerService = asyncHandler(async(req: CustomRequest, res: 
 });
 
 const getAllPlannerBookings = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
-    const bookings = await eventPlannerService.getAllBookings({vendorId: req.user.id});
-    createSuccessResponse(200, { bookings } , "successfull", res, req);
+    let { page = 1, limit = 10, status, selectedMonth, selectedYear, selectedEventType, selectedDays } = req.query;
+    page = parseInt(page as string);
+    limit = parseInt(limit as string);
+    status = status?.toString();
+
+
+    const filters = {
+        selectedMonth : selectedMonth ? parseInt(selectedMonth as string, 10) : null,
+        selectedYear : selectedYear ? parseInt(selectedYear as string, 10) : null,
+        selectedEventType : selectedEventType?.toString() || null,
+        selectedDays : selectedDays?.toString() || '',
+    }
+    
+    const bookings = await eventPlannerService.getAllplannerBookings({user: req.user}, page, limit, status, filters);
+    createSuccessResponse(200, { ...bookings } , "successfull", res, req);
 });
 
 

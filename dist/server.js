@@ -49,7 +49,7 @@ app.use(express_1.default.urlencoded({ extended: true }));
 app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, 'uploads')));
 app.use(express_1.default.static(path_1.default.join(__dirname, 'public')));
 // Routes setup
-app.use('/', customerRouter_1.default);
+app.use('/api', customerRouter_1.default);
 app.use('/admin', adminRouter_1.default);
 app.use('/vendor', vendorRouter_1.default);
 app.use('/vendor/event-planner', eventPlannerRouter_1.default);

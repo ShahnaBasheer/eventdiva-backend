@@ -42,7 +42,7 @@ const getAllVendors = (0, express_async_handler_1.default)((req, res) => __await
 }));
 exports.getAllVendors = getAllVendors;
 const getAllVenues = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const venues = yield venueService.getAllVenues({});
+    const venues = yield venueService.getAllVenues();
     (0, responseFormatter_1.default)(200, { venues }, "successfull", res, req);
 }));
 exports.getAllVenues = getAllVenues;

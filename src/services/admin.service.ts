@@ -76,10 +76,10 @@ class AdminService {
 
     async getDashboardData(): Promise<any>{
         try {
-            const totalUsers = await this.customerRepository.getCount();
-            const totalVendors = await this.vendorRepository.getCount();
-            const totalPlannerBookings = await this._plannerBookingrepository.getCount();
-            const totalVenueBookings = await this._venueBookingrepository.getCount();
+            const totalUsers = await this.customerRepository.getCount({});
+            const totalVendors = await this.vendorRepository.getCount({});
+            const totalPlannerBookings = await this._plannerBookingrepository.getCount({});
+            const totalVenueBookings = await this._venueBookingrepository.getCount({});
             // const allPlannerBookings = await this._plannerBookingrepository.find({ type: 'planner' });
             // const allVenueBookings = await this._venueBookingrepository.find({ type: 'venue' });
         
@@ -129,6 +129,8 @@ class AdminService {
             throw new BadRequestError('Failed to Fetch Dashboard Details! Try again Later!')
           }
     }
+
+
     
 }
 

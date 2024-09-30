@@ -49,6 +49,12 @@ const vendorSchema = new mongoose_1.Schema({
         type: String,
         required: true
     },
+    resetPasswordToken: {
+        type: String
+    },
+    resetPasswordExpires: {
+        type: Date
+    },
     role: {
         type: String,
         default: 'vendor',

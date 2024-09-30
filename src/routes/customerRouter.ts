@@ -12,7 +12,8 @@ import { getAllEventPlanners, getAllVenues,
         deleteNotification, getPlannerBookingDetails,
         getVenueBookingDetails, plannerAdvancePayment,
         plannerFullPayment, venueAdvancePayment,
-        venueFullPayment} from '../controllers/customers/pages.controller';
+        venueFullPayment, getContactPage,
+        getAboutPage } from '../controllers/customers/pages.controller';
 import { authMiddleware, isUser } from '../middlewares/authMiddleware';
 import { validateSignup, validateLogin, ValidateVenueBooking, ValidatePlannerBooking, ValidateCheckAvailability } from '../middlewares/validateForm';
 import { loginCustomer, logout, resendOtp, signinWithGoogle, signupCustomer, verifyOtp } from '../controllers/customers/customer.controller';
@@ -24,9 +25,11 @@ import { getOrCreateChatRoom, getStartCall,  } from '../controllers/common/socke
 
 const router: Router = express.Router();
 
+
 router.get('/', authMiddleware, getCustomerHome);
 router.get('/home', authMiddleware, getCustomerHome);
-router.get('/venues', authMiddleware, getCustomerHome);
+router.get('/contact', authMiddleware, getContactPage);
+router.get('/about', authMiddleware, getAboutPage);
 router.get('/vendors/event-planners', authMiddleware, getAllEventPlanners);
 router.get('/vendors/event-planners/:slug', authMiddleware, getEventPlannerDetail);
 router.get('/vendors/venues', authMiddleware, getAllVenues);
@@ -56,6 +59,7 @@ router.post('/signup', validateSignup, signupCustomer);
 router.post('/verify-otp', verifyOtp);
 router.post('/resend-otp', resendOtpLimiter, resendOtp);
 router.post('/auth/google', signinWithGoogle);
+router.get('/contact', authMiddleware, getContactPage);
 router.get('/logout', authMiddleware, isUser, logout);
 
 

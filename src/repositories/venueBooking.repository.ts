@@ -27,11 +27,13 @@ class VenueBookingRepository extends BaseRepository<IVenueBookingDocument> {
            .exec();
     }
 
-    async getAllBookings(filter: Filter){
+    async getAllBookings(filter: Filter, skip: number = 0, limit: number = 0){
         return await VenueBooking.find({ ...filter })
            .populate('address')
            .populate('venueId')
            .populate('customerId')
+           .skip(skip) 
+           .limit(limit) 
            .exec();
     }
 

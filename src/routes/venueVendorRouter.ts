@@ -26,4 +26,6 @@ router.get('/calendar', authMiddleware, isUser, getAvailabilityInfo);
 router.patch('/calendar/add-holiday/', authMiddleware, isUser, addHoliday);
 router.patch('/calendar/add-new-event/', authMiddleware, isUser, addNewEvent);
 
+
+
 export default router

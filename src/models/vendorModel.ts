@@ -1,10 +1,10 @@
 
-import { IVendorDocument } from 'interfaces/vendor.interface';
+import { IVendorDocument, IVendor } from '../interfaces/vendor.interface';
 import mongoose, { Schema } from 'mongoose';
 
 
 
-const vendorSchema: Schema = new Schema(
+const vendorSchema: Schema = new Schema<IVendor>(
     {
         firstName: {       
             type: String, 
@@ -29,6 +29,12 @@ const vendorSchema: Schema = new Schema(
         password: { 
             type: String, 
             required: true 
+        },
+        resetPasswordToken: {
+            type: String
+        },
+        resetPasswordExpires: {
+            type: Date
         },
         role: {
             type: String,

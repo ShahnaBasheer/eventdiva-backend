@@ -37,7 +37,7 @@ const getAllVendors = asyncHandler(async(req: CustomRequest, res: Response): Pro
 
 
 const getAllVenues = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
-    const venues = await venueService.getAllVenues({});
+    const venues = await venueService.getAllVenues();
     createSuccessResponse(200, { venues } , "successfull", res, req);
 });
 

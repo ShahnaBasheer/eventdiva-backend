@@ -36,12 +36,14 @@ class VenueBookingRepository extends base_repository_1.default {
                 .exec();
         });
     }
-    getAllBookings(filter) {
-        return __awaiter(this, void 0, void 0, function* () {
+    getAllBookings(filter_1) {
+        return __awaiter(this, arguments, void 0, function* (filter, skip = 0, limit = 0) {
             return yield venueBookingModel_1.default.find(Object.assign({}, filter))
                 .populate('address')
                 .populate('venueId')
                 .populate('customerId')
+                .skip(skip)
+                .limit(limit)
                 .exec();
         });
     }

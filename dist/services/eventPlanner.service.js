@@ -30,6 +30,7 @@ const stream_1 = require("stream");
 const sharp_1 = __importDefault(require("sharp"));
 const eventsVariables_1 = require("../utils/eventsVariables");
 const important_variables_1 = require("../utils/important-variables");
+const razorpay_utils_1 = require("razorpay/dist/utils/razorpay-utils");
 class EventPlannerService {
     constructor() {
         this._eventPlannerRepository = new eventPlanner_repository_1.default();
@@ -255,9 +256,106 @@ class EventPlannerService {
             return bookings;
         });
     }
-    getAllplannerBookings(filter) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this._plannerBookingrepository.getAllBookings(Object.assign({}, filter));
+    // async getAllplannerBookings(filter: Filter): Promise<[] | null>{
+    //     return await this._plannerBookingrepository.getAllBookings({ ...filter });
+    // }
+    getAllplannerBookings(filter_1) {
+        return __awaiter(this, arguments, void 0, function* (filter, page = 1, limit = 10, status = '', allfilters) {
+            var _a;
+            console.log(page, limit, status, "page and limit");
+            let planner = null;
+            let filterQuery = {};
+            let bookings = null;
+            let completedBookingsCount = 0;
+            const skip = (page - 1) * limit;
+            try {
+                // Retrieve venue if user is provided in filter
+                if (filter.user) {
+                    planner = (yield this._eventPlannerRepository.getPlanner({}));
+                    if (planner) {
+                        filterQuery = { eventPlannerId: planner._id };
+                    }
+                }
+                // Aggregate to get filter data
+                const aggregate = [
+                    { $match: filterQuery },
+                    {
+                        $addFields: {
+                            year: { $year: "$eventDate.startDate" },
+                            month: { $month: "$eventDate.startDate" }
+                        }
+                    },
+                    {
+                        $group: {
+                            _id: null,
+                            years: { $addToSet: "$year" },
+                            months: { $addToSet: "$month" },
+                            eventTypes: { $addToSet: "$eventType" },
+                            totalCount: { $sum: 1 },
+                            venueId: { $first: "$venueId" }
+                        }
+                    },
+                    {
+                        $project: {
+                            _id: 0,
+                            years: 1,
+                            months: { $sortArray: { input: "$months", sortBy: 1 } },
+                            eventTypes: 1,
+                            totalCount: 1,
+                        }
+                    }
+                ];
+                const allBookings = (yield this._plannerBookingrepository.getAggregateData(aggregate)) || [];
+                const totalPages = Math.ceil(((_a = allBookings[0]) === null || _a === void 0 ? void 0 : _a.totalCount) / limit) || 0;
+                // Initialize match stage for booking retrieval
+                const matchStage = Object.assign({ status }, filterQuery);
+                // Apply additional filters based on the provided criteria
+                if (allfilters) {
+                    // Filter by month
+                    if (allfilters.selectedMonth !== null && (0, razorpay_utils_1.isNumber)(allfilters.selectedMonth)) {
+                        console.log(allfilters.selectedMonth);
+                        matchStage['eventDate.startDate'] = {
+                            $gte: new Date(new Date().getFullYear(), allfilters.selectedMonth - 1, 1),
+                            $lt: new Date(new Date().getFullYear(), allfilters.selectedMonth, 1)
+                        };
+                    }
+                    // Filter by year
+                    if (allfilters.selectedYear !== null && (0, razorpay_utils_1.isNumber)(allfilters.selectedYear)) {
+                        matchStage['eventDate.startDate'] = Object.assign(Object.assign({}, matchStage['eventDate.startDate']), { $gte: new Date(allfilters.selectedYear, 0, 1), $lt: new Date(allfilters.selectedYear + 1, 0, 1) });
+                    }
+                    // Filter by event type
+                    if (allfilters.selectedEventType && allfilters.selectedEventType !== "null") {
+                        matchStage.eventType = allfilters.selectedEventType;
+                    }
+                    // Filter by days
+                    if (allfilters.selectedDays) {
+                        console.log(allfilters.selectedDays);
+                        if (allfilters.selectedDays === 'single') {
+                            matchStage.isMultipleDays = false;
+                        }
+                        else if (allfilters.selectedDays === 'multiple') {
+                            matchStage.isMultipleDays = true;
+                        }
+                    }
+                }
+                console.log(matchStage);
+                // Fetch bookings based on constructed matchStage
+                if (planner) {
+                    bookings = yield this._plannerBookingrepository.getAggregateData([
+                        { $match: matchStage },
+                        { $skip: skip },
+                        { $limit: limit }
+                    ]);
+                    if (bookings) {
+                        completedBookingsCount = bookings.filter(booking => booking.status === 'completed').length;
+                    }
+                }
+                return { bookings, completed: completedBookingsCount, totalPages, filterData: allBookings[0] };
+            }
+            catch (error) {
+                console.error("Error fetching venue bookings:", error);
+                throw new customError_1.BadRequestError("Something went wrong!");
+            }
         });
     }
     plannerBooking(userInfo, slug) {
@@ -463,10 +561,12 @@ class EventPlannerService {
                 for (let date = new Date(startDate); date.getTime() <= endDate.getTime(); date.setDate(date.getDate() + 1)) {
                     datesArray.push(new Date(date));
                 }
+                console.log(datesArray);
                 const availabilityData = yield this._availabilityrepository.findOneByFilter({
                     vendorId,
                     holyDays: { $nin: datesArray } // Filter out documents where holyDays include any of the dates in datesArray
                 });
+                console.log(!!availabilityData, "hdydy");
                 if (availabilityData) {
                     // Check if any date in the range is booked
                     const isBooked = datesArray.some(date => availabilityData.bookedDates.some(bookedDate => {
@@ -489,7 +589,9 @@ class EventPlannerService {
             }
             catch (error) {
                 console.error('Error checking availability:', error);
-                throw error;
+                if (error instanceof customError_1.BadRequestError)
+                    throw error;
+                throw new customError_1.BadRequestError('Failed to check availability. Please try again later.');
             }
         });
     }

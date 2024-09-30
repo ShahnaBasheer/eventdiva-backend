@@ -46,7 +46,6 @@ const authMiddleware = (0, express_async_handler_1.default)((req, res, next) => 
             res.clearCookie(tokenKey);
             throw new customError_1.ForbiddenError("User account is blocked");
         }
-        console.log(user, role, (0, helperFunctions_1.isVendorDocument)(user));
         if (user && role === important_variables_1.UserRole.Vendor && (0, helperFunctions_1.isVendorDocument)(user)) {
             if (user.vendorType === important_variables_1.VendorType.EventPlanner) {
                 const eventPlanner = yield eventPlannerService.getEventPlanner({

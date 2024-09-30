@@ -21,12 +21,21 @@ const notificationService = new NotificationService();
 
 
 const getCustomerHome = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
-    createSuccessResponse(200, null , "successfull", res, req)
+    createSuccessResponse(200, null , "successfull", res, req);
 });
 
 
 const getAllVendors = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
-    createSuccessResponse(200, null , "successfull", res, req)
+    createSuccessResponse(200, null , "successfully", res, req);
+});
+
+
+const getContactPage = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
+    createSuccessResponse(200, null , "successfully fetch contact page!", res, req)
+});
+
+const getAboutPage = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
+    createSuccessResponse(200, null , "successfully fetch about page!", res, req)
 });
 
 
@@ -42,9 +51,38 @@ const getEventPlannerDetail = asyncHandler(async(req: CustomRequest, res: Respon
     createSuccessResponse(200, { eventPlannerData } , "successfully fetch event planner detail", res, req)
 });
 
-const getAllVenues = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
-    const venues = await venueVendorService.getAllVenues({approval: Status.Approved});
-    createSuccessResponse(200, { venues } , "successfully fetch venues", res, req)
+const getAllVenues = asyncHandler(async (req: CustomRequest, res: Response): Promise<void> => {
+    // Extract query parameters
+    let { page = 1, limit = 10, status, services, amenities, location } = req.query;
+
+    // Parse page and limit to integers
+    page = parseInt(page as string, 10);
+    limit = parseInt(limit as string, 10);
+
+    // Ensure status is a string if provided
+    status = status?.toString();
+
+    // Parse services and amenities as arrays (if they are comma-separated strings)
+    const parsedServices = services ? (services as string).split(',') : [];
+    const parsedAmenities = amenities ? (amenities as string).split(',') : [];
+
+    // Ensure location remains a string
+    const parsedLocation = location ? location.toString() : '';
+
+    // Create filters object
+    const filters = {
+        services: parsedServices.length > 0 ? parsedServices : [],
+        amenities: parsedAmenities.length > 0 ? parsedAmenities : [],
+        location: parsedLocation || null,
+    };
+
+    // Call the service with filters
+    const venues = await venueVendorService.getAllVenues(
+        page, limit, Status.Approved , filters  
+    );
+
+    // Send a success response
+    createSuccessResponse(200, { ...venues }, "Successfully fetched venues", res, req);
 });
 
 
@@ -261,6 +299,8 @@ export {
     plannerFullPayment,
     venueAdvancePayment,
     venueFullPayment,
+    getContactPage,
+    getAboutPage
 
 };
 

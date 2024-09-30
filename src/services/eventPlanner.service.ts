@@ -22,6 +22,8 @@ import { Readable } from "stream";
 import sharp from 'sharp';
 import { NotificationType } from "../utils/eventsVariables";
 import { UserRole } from "../utils/important-variables";
+import { IVendorDocument } from "interfaces/vendor.interface";
+import { isNumber } from "razorpay/dist/utils/razorpay-utils";
 
 
 class EventPlannerService {
@@ -274,9 +276,137 @@ class EventPlannerService {
     }
     
 
-    async getAllplannerBookings(filter: Filter): Promise<IEventPlannerBooking[] | null>{
-        return await this._plannerBookingrepository.getAllBookings({ ...filter });
+    // async getAllplannerBookings(filter: Filter): Promise<[] | null>{
+    //     return await this._plannerBookingrepository.getAllBookings({ ...filter });
+    // }
+
+    async getAllplannerBookings(
+        filter: { user?: IVendorDocument }, 
+        page: number = 1, 
+        limit: number = 10,
+        status: string = '',
+        allfilters?: {
+            selectedMonth: number | null,
+            selectedYear: number | null,
+            selectedEventType: string | null,
+            selectedDays: string,
+        }
+    ): Promise<{ 
+        bookings: IEventPlannerBooking[] | null, 
+        completed: number,
+        totalPages: number,
+        filterData: { years: number[], eventTypes: string[], totalCount: number, months: number[] }
+    } | null> {
+        console.log(page, limit, status, "page and limit");
+    
+        let planner: IEventPlannerDocument | null = null;
+        let filterQuery: Record<string, any> = {};
+        let bookings: IEventPlannerBooking[] | null = null;
+        let completedBookingsCount = 0;
+        const skip = (page - 1) * limit;
+    
+        try {
+            // Retrieve venue if user is provided in filter
+            if (filter.user) {
+                planner = await this._eventPlannerRepository.getPlanner({}) as IEventPlannerDocument;
+                if (planner) {
+                    filterQuery = { eventPlannerId: planner._id };
+                }
+            }
+    
+            // Aggregate to get filter data
+            const aggregate = [
+                { $match: filterQuery },
+                {
+                    $addFields: {
+                        year: { $year: "$eventDate.startDate" },
+                        month: { $month: "$eventDate.startDate" }
+                    }
+                },
+                {
+                    $group: {
+                        _id: null,
+                        years: { $addToSet: "$year" },
+                        months: { $addToSet: "$month" },
+                        eventTypes: { $addToSet: "$eventType" },
+                        totalCount: { $sum: 1 },
+                        venueId: { $first: "$venueId" }
+                    }
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        years: 1,
+                        months: { $sortArray: { input: "$months", sortBy: 1 } },
+                        eventTypes: 1,
+                        totalCount: 1,
+                    }
+                }
+            ];
+    
+            const allBookings = await this._plannerBookingrepository.getAggregateData(aggregate) || [];
+            const totalPages = Math.ceil(allBookings[0]?.totalCount / limit) || 0;
+    
+            // Initialize match stage for booking retrieval
+            const matchStage: Record<string, any> = { status, ...filterQuery };
+    
+            // Apply additional filters based on the provided criteria
+            if (allfilters) {
+                // Filter by month
+                if (allfilters.selectedMonth !== null && isNumber(allfilters.selectedMonth)) {
+                    console.log(allfilters.selectedMonth);
+                    matchStage['eventDate.startDate'] = {
+                        $gte: new Date(new Date().getFullYear(), allfilters.selectedMonth - 1, 1),
+                        $lt: new Date(new Date().getFullYear(), allfilters.selectedMonth, 1)
+                    };
+                }
+    
+                // Filter by year
+                if (allfilters.selectedYear !== null && isNumber(allfilters.selectedYear)) {
+                    matchStage['eventDate.startDate'] = {
+                        ...matchStage['eventDate.startDate'],
+                        $gte: new Date(allfilters.selectedYear, 0, 1),
+                        $lt: new Date(allfilters.selectedYear + 1, 0, 1)
+                    };
+                }
+    
+                // Filter by event type
+                if (allfilters.selectedEventType && allfilters.selectedEventType !== "null") {
+                    matchStage.eventType = allfilters.selectedEventType;
+                }
+    
+                // Filter by days
+                if (allfilters.selectedDays) {
+                    console.log(allfilters.selectedDays);
+                    if (allfilters.selectedDays === 'single') {
+                        matchStage.isMultipleDays = false;
+                    } else if (allfilters.selectedDays === 'multiple') {
+                        matchStage.isMultipleDays = true;
+                    }
+                }
+            }
+            console.log(matchStage);
+    
+            // Fetch bookings based on constructed matchStage
+            if (planner) {
+                bookings = await this._plannerBookingrepository.getAggregateData([
+                    { $match: matchStage },
+                    { $skip: skip },
+                    { $limit: limit }
+                ]);
+    
+                if (bookings) {
+                    completedBookingsCount = bookings.filter(booking => booking.status === 'completed').length;
+                }
+            }
+    
+            return { bookings, completed: completedBookingsCount, totalPages, filterData: allBookings[0] };
+        } catch (error) {
+            console.error("Error fetching venue bookings:", error);
+            throw new BadRequestError("Something went wrong!");
+        }
     }
+    
 
     async plannerBooking(userInfo: Filter, slug: string){
         let booking;
@@ -512,12 +642,12 @@ class EventPlannerService {
             for (let date = new Date(startDate); date.getTime() <= endDate.getTime(); date.setDate(date.getDate() + 1)) {
                 datesArray.push(new Date(date));
             }
-    
+            console.log(datesArray)
             const availabilityData = await this._availabilityrepository.findOneByFilter({
                 vendorId,
                 holyDays: { $nin: datesArray } // Filter out documents where holyDays include any of the dates in datesArray
             });
-    
+            console.log(!!availabilityData, "hdydy")
             if (availabilityData) {
                 // Check if any date in the range is booked
                 const isBooked = datesArray.some(date => 
@@ -543,7 +673,8 @@ class EventPlannerService {
             }
         } catch (error) {
             console.error('Error checking availability:', error);
-            throw error;
+            if(error instanceof BadRequestError) throw error;
+            throw new BadRequestError('Failed to check availability. Please try again later.')
         }
     }
 

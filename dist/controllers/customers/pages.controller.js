@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.venueFullPayment = exports.venueAdvancePayment = exports.plannerFullPayment = exports.plannerAdvancePayment = exports.getVenueBookingDetails = exports.getPlannerBookingDetails = exports.deleteNotification = exports.changeReadStatus = exports.getNotifications = exports.checkPlannerAvailability = exports.checkVenueAvailability = exports.plannerRazorPayment = exports.createPlannerBooking = exports.getPlannerBookingForm = exports.getAllBookings = exports.venueRazorPayment = exports.createVenueBooking = exports.getVenueBookingPage = exports.getVenueDetail = exports.getAllVenues = exports.getEventPlannerDetail = exports.getAllEventPlanners = exports.getAllVendors = exports.getCustomerHome = void 0;
+exports.getAboutPage = exports.getContactPage = exports.venueFullPayment = exports.venueAdvancePayment = exports.plannerFullPayment = exports.plannerAdvancePayment = exports.getVenueBookingDetails = exports.getPlannerBookingDetails = exports.deleteNotification = exports.changeReadStatus = exports.getNotifications = exports.checkPlannerAvailability = exports.checkVenueAvailability = exports.plannerRazorPayment = exports.createPlannerBooking = exports.getPlannerBookingForm = exports.getAllBookings = exports.venueRazorPayment = exports.createVenueBooking = exports.getVenueBookingPage = exports.getVenueDetail = exports.getAllVenues = exports.getEventPlannerDetail = exports.getAllEventPlanners = exports.getAllVendors = exports.getCustomerHome = void 0;
 const customer_service_1 = __importDefault(require("../../services/customer.service"));
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const responseFormatter_1 = __importDefault(require("../../utils/responseFormatter"));
@@ -31,9 +31,17 @@ const getCustomerHome = (0, express_async_handler_1.default)((req, res) => __awa
 }));
 exports.getCustomerHome = getCustomerHome;
 const getAllVendors = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    (0, responseFormatter_1.default)(200, null, "successfull", res, req);
+    (0, responseFormatter_1.default)(200, null, "successfully", res, req);
 }));
 exports.getAllVendors = getAllVendors;
+const getContactPage = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    (0, responseFormatter_1.default)(200, null, "successfully fetch contact page!", res, req);
+}));
+exports.getContactPage = getContactPage;
+const getAboutPage = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    (0, responseFormatter_1.default)(200, null, "successfully fetch about page!", res, req);
+}));
+exports.getAboutPage = getAboutPage;
 const getAllEventPlanners = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const eventPlanners = yield eventPlannerService.getAllEventPlanners({ approval: status_options_1.Status.Approved });
     (0, responseFormatter_1.default)(200, { eventPlanners }, "successfully fetch event planners", res, req);
@@ -46,8 +54,28 @@ const getEventPlannerDetail = (0, express_async_handler_1.default)((req, res) =>
 }));
 exports.getEventPlannerDetail = getEventPlannerDetail;
 const getAllVenues = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const venues = yield venueVendorService.getAllVenues({ approval: status_options_1.Status.Approved });
-    (0, responseFormatter_1.default)(200, { venues }, "successfully fetch venues", res, req);
+    // Extract query parameters
+    let { page = 1, limit = 10, status, services, amenities, location } = req.query;
+    // Parse page and limit to integers
+    page = parseInt(page, 10);
+    limit = parseInt(limit, 10);
+    // Ensure status is a string if provided
+    status = status === null || status === void 0 ? void 0 : status.toString();
+    // Parse services and amenities as arrays (if they are comma-separated strings)
+    const parsedServices = services ? services.split(',') : [];
+    const parsedAmenities = amenities ? amenities.split(',') : [];
+    // Ensure location remains a string
+    const parsedLocation = location ? location.toString() : '';
+    // Create filters object
+    const filters = {
+        services: parsedServices.length > 0 ? parsedServices : [],
+        amenities: parsedAmenities.length > 0 ? parsedAmenities : [],
+        location: parsedLocation || null,
+    };
+    // Call the service with filters
+    const venues = yield venueVendorService.getAllVenues(page, limit, status_options_1.Status.Approved, filters);
+    // Send a success response
+    (0, responseFormatter_1.default)(200, Object.assign({}, venues), "Successfully fetched venues", res, req);
 }));
 exports.getAllVenues = getAllVenues;
 const getVenueDetail = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {

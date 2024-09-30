@@ -6,6 +6,7 @@ import VendorService from '../../services/vendor.service';
 import { validationResult } from 'express-validator';
 import { BadRequestError } from '../../errors/customError';
 import VenueVendorService from '../../services/venueVendor.service';
+import { IVenueBooking } from 'interfaces/venueBooking.interface';
 
 
 const venueVendorService = new VenueVendorService();
@@ -58,8 +59,21 @@ const registerVenueVendorService = asyncHandler(async(req: CustomRequest, res: R
 
 
 const getAllVenueBookings = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
-    const bookings = await venueService.getAllBookings({vendorId: req.user.id});
-    createSuccessResponse(200, { bookings } , "successfull", res, req);
+    let { page = 1, limit = 10, status, selectedMonth, selectedYear, selectedEventType, selectedDays } = req.query;
+    page = parseInt(page as string);
+    limit = parseInt(limit as string);
+    status = status?.toString();
+
+
+    const filters = {
+        selectedMonth : selectedMonth ? parseInt(selectedMonth as string, 10) : null,
+        selectedYear : selectedYear ? parseInt(selectedYear as string, 10) : null,
+        selectedEventType : selectedEventType?.toString() || null,
+        selectedDays : selectedDays?.toString() || '',
+    }
+    
+    const bookings = await venueService.getAllvenueBookings({user: req.user}, page, limit, status, filters);
+    createSuccessResponse(200, { ...bookings } , "successfull", res, req);
 });
 
 
