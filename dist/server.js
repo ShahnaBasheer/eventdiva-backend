@@ -35,6 +35,8 @@ app.use((0, cors_1.default)({
         process.env.FRONTEND_AMPLIFY_URL || '',
         process.env.FRONTEND_URL || '',
         process.env.FRONTEND_WWW_URL || '',
+        process.env.FRONTEND_WWW_SLASH || '',
+        process.env.FRONTEND_SLASH_URL || ''
     ],
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT']
 }));
