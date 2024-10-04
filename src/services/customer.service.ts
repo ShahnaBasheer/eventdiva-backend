@@ -191,11 +191,68 @@ class CustomerService  {
         }
     }
     
+    async getCustomers(
+        page: number,
+        limit: number
+      ): Promise<{ customers: Icustomer[]; totalCount: number, totalPages: number }> {
+        try {
+          const skip = (page - 1) * limit;
+          let filterQuery: Record<string, any> = {}; // Add your custom filter logic here
+      
+          const pipeline = [
+            {
+              $match: filterQuery, // Match your filter query first
+            },
+            {
+              $lookup: {
+                from: 'addresses', // Join with 'addresses' collection
+                localField: 'address',
+                foreignField: '_id',
+                as: 'address',
+              },
+            },
+            {
+              $facet: {
+                customers: [
+                  { $skip: skip }, // Skip the documents based on the page number
+                  { $limit: limit }, // Limit the number of documents returned
+                  {
+                    $project: {
+                      firstName: 1,
+                      lastName: 1,
+                      address: 1,
+                      role: 1,
+                      email: 1,
+                      mobile: 1,
+                      isVerified: 1,
+                      isBlocked: 1,
+                      createdAt: 1,
+                    },
+                  },
+                ],
+                totalCount: [
+                  { $count: 'count' }, // Count total documents matching the query
+                ],
+              },
+            },
+          ];
+      
+          // Execute the aggregation pipeline
+          const result = await this.customerRepository.getAggregateData(pipeline) ?? [];
+      
+          // Extract customers and totalCount from the result
+          const customers = result[0]?.customers || [];
+          const totalCount = result[0]?.totalCount[0]?.count || 0; // Ensure default value in case it's missing
+          const totalPages = Math.ceil(totalCount/ limit);
 
-    async getCustomers(): Promise<Icustomer[]> {
-        return await this.customerRepository.getAllWithPopuate({});
+          console.log(customers)
+          return { customers, totalCount, totalPages };
+        } catch (error) {
+          console.error('Error fetching paginated customers:', error);
+          throw error;
+        }
     }
-
+      
     async blockUser(id: string): Promise<Icustomer | null> {
         return await this.customerRepository.block(id);
     }
@@ -252,9 +309,115 @@ class CustomerService  {
         }
     }
 
- 
+    async getCustomer(id: string, vendorType: string): Promise<Icustomer | null>{
+        const customer = await this.customerRepository.getById(id);
+        return customer;
+    }
 
-  
+    async updateCustomer(userId: string, data: any){
+        const updatedData = await this.customerRepository.update({ _id: userId }, data);
+        return updatedData;
+    }
+
+    async otpSendForUpdateEmail(user: IcustomerDocument, email: string){
+        try {
+            // 1. Validate the new email
+            const existingVendor = await this.customerRepository.getOneByFilter({ email });
+            if (existingVendor) {
+                throw new ConflictError('Email already in use');
+            }
+    
+            // 3. Generate OTPs
+            const oldEmailOtp =  await sendOtpByEmail(user?.email);
+            const newEmailOtp = await sendOtpByEmail(email);
+            
+            const customer = await this.customerRepository.update({ _id: user.id }, 
+                { otp: oldEmailOtp, otpTimestamp: new Date(),
+                  newotp: newEmailOtp, newotpTimestamp: new Date()
+                });
+                
+            return customer;
+        } catch (error) {
+            console.error('Error updating customer email:', error);
+            throw new BadRequestError('Failed to send OTP! Try again later');
+        }
+    }
+
+    async otpVerifyForEmail(user: IcustomerDocument, formValue: { otpOld: string, otpNew: string, email: string }) {
+        try {
+            const currentTime = new Date();
+    
+            // Validate old OTP
+            if (!user?.otp || !user?.otpTimestamp || user?.otp !== formValue.otpOld) {
+                throw new BadRequestError(`Invalid OTP for ${user.email}`);
+            }
+    
+            // Check if old OTP is expired
+            const otpTimestamp = new Date(user?.otpTimestamp);
+            const oldtimeDifferenceInMinutes = (currentTime.getTime() - otpTimestamp.getTime()) / (1000 * 60);
+            if (oldtimeDifferenceInMinutes > 2) {
+                throw new BadRequestError(`OTP is Expired for ${user.email}`);
+            }
+    
+            // Validate new OTP
+            if (!user?.newotp || !user?.newotpTimestamp || user?.newotp !== formValue.otpNew) {
+                throw new BadRequestError(`Invalid OTP for ${formValue.email}`);
+            }
+    
+            // Check if new OTP is expired
+            const newotpTimestamp = new Date(user?.newotpTimestamp);
+            const newtimeDifferenceInMinutes = (currentTime.getTime() - newotpTimestamp.getTime()) / (1000 * 60);
+            if (newtimeDifferenceInMinutes > 2) {
+                throw new BadRequestError(`OTP is Expired for ${formValue.email}`);
+            }
+    
+            // Update user in the database
+            const detail = await this.customerRepository.update({ email: user.email }, {
+                $set: { email: formValue.email },
+                $unset: { otpTimestamp: '', otp: '', newotpTimestamp: '', newotp: '' }
+            });
+    
+            return detail; // Return success response
+    
+        } catch (error) {
+            console.error("Error during OTP verification for email change:", error);
+            throw error;
+        }
+    }
+
+    async passwordChange(user: IcustomerDocument, formValue: any) {
+        try {
+            if(user.password){
+                const isMatch = await bcrypt.compare(formValue.currentPassword, user.password);
+                if (!isMatch) {
+                  throw new BadRequestError("Current password is incorrect.");
+                }
+          
+                // Step 2: Ensure the new password and confirm new password match
+                if (formValue.newPassword !== formValue.confirmNewPassword) {
+                  throw new BadRequestError("New password and confirm password do not match.");
+                } 
+            }
+
+            // Step 3: Hash the new password
+            const salt = await bcrypt.genSalt(10);
+            const hashedNewPassword = await bcrypt.hash(formValue.newPassword, salt);
+      
+            // Step 4: Update the password in the database
+            const details = await this.customerRepository.update({ _id: user._id }, {
+              $set: { password: hashedNewPassword }
+            });
+      
+            // Step 5: Return success message
+            return details;
+          
+        } catch (error) {
+          console.error("Error changing password:", error);
+          if(error instanceof BadRequestError) throw error;
+          else throw new BadRequestError("Failed to change password. Please try again.");
+          
+        }
+      }
 }
 
 

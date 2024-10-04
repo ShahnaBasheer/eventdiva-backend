@@ -31,10 +31,6 @@ const customerSchema: Schema = new Schema(
             type: Schema.Types.ObjectId,
             ref: 'Favorite'
         }],
-        bookings: [{
-            type: Schema.Types.ObjectId,
-            ref: 'Booking'
-        }],
         password: {
             type: String,
             required: function(this: Icustomer) {
@@ -57,6 +53,12 @@ const customerSchema: Schema = new Schema(
             type: String
         },
         otpTimestamp: {
+            type: Date
+        },
+        newotp: {
+            type: String
+        },
+        newotpTimestamp: {
             type: Date
         },
         resetPasswordToken: {

@@ -10,7 +10,7 @@ import { validationResult } from 'express-validator';
 import { BadRequestError } from '../../errors/customError';
 import { Status } from '../../utils/status-options';
 import NotificationService from '../../services/notification.service';
-
+import { parseQueryToStringArray } from '../../utils/helperFunctions';
 
 
 
@@ -40,8 +40,26 @@ const getAboutPage = asyncHandler(async(req: CustomRequest, res: Response): Prom
 
 
 const getAllEventPlanners = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
-    const eventPlanners = await eventPlannerService.getAllEventPlanners({approval: Status.Approved});
-    createSuccessResponse(200, { eventPlanners } , "successfully fetch event planners", res, req)
+    let { page = '1', limit = '10', services, location, search } = req.query;
+
+    // Convert page and limit to integers
+    const pageNumber = parseInt(page as string, 10);
+    const limitNumber = parseInt(limit as string, 10);
+    const parsedServices = parseQueryToStringArray(services);
+    const parsedLocation = location ? String(location) : '';
+    const searchItem = search ? String(search) : '';
+
+    // Create filters object
+    const filters = {
+        services: parsedServices,
+        location: parsedLocation || null,
+    };
+
+    const eventPlanners = await eventPlannerService.getAllEventPlanners(
+        pageNumber, limitNumber, Status.Approved, filters, searchItem
+    );
+
+    createSuccessResponse(200, { ...eventPlanners } , "successfully fetch event planners", res, req)
 });
 
 
@@ -51,39 +69,42 @@ const getEventPlannerDetail = asyncHandler(async(req: CustomRequest, res: Respon
     createSuccessResponse(200, { eventPlannerData } , "successfully fetch event planner detail", res, req)
 });
 
+
+
+
 const getAllVenues = asyncHandler(async (req: CustomRequest, res: Response): Promise<void> => {
     // Extract query parameters
-    let { page = 1, limit = 10, status, services, amenities, location } = req.query;
+    let { page = '1', limit = '10', services, amenities, location, venueTypes, search } = req.query;
 
-    // Parse page and limit to integers
-    page = parseInt(page as string, 10);
-    limit = parseInt(limit as string, 10);
+    // Convert page and limit to integers
+    const pageNumber = parseInt(page as string, 10);
+    const limitNumber = parseInt(limit as string, 10);
+    const searchItem = search ? String(search) : '';
 
-    // Ensure status is a string if provided
-    status = status?.toString();
 
-    // Parse services and amenities as arrays (if they are comma-separated strings)
-    const parsedServices = services ? (services as string).split(',') : [];
-    const parsedAmenities = amenities ? (amenities as string).split(',') : [];
-
-    // Ensure location remains a string
-    const parsedLocation = location ? location.toString() : '';
+    // Use the utility function to parse query parameters
+    const parsedServices = parseQueryToStringArray(services);
+    const parsedAmenities = parseQueryToStringArray(amenities);
+    const parsedVenueTypes = parseQueryToStringArray(venueTypes);
+    const parsedLocation = location ? String(location) : '';
 
     // Create filters object
     const filters = {
-        services: parsedServices.length > 0 ? parsedServices : [],
-        amenities: parsedAmenities.length > 0 ? parsedAmenities : [],
+        services: parsedServices,
+        amenities: parsedAmenities,
+        venueTypes: parsedVenueTypes,
         location: parsedLocation || null,
     };
 
     // Call the service with filters
     const venues = await venueVendorService.getAllVenues(
-        page, limit, Status.Approved , filters  
+        pageNumber, limitNumber, Status.Approved, filters, searchItem
     );
 
     // Send a success response
     createSuccessResponse(200, { ...venues }, "Successfully fetched venues", res, req);
 });
+
 
 
 const getVenueDetail = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {

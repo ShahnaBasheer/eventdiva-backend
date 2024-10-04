@@ -4,6 +4,7 @@ import { validationResult } from 'express-validator';
 import CustomerService from '../../services/customer.service';
 import { BadRequestError, UnauthorizedError  } from '../../errors/customError';
 import createSuccessResponse from '../../utils/responseFormatter';
+import { CustomRequest } from 'interfaces/request.interface';
 
 
 
@@ -94,6 +95,40 @@ const logout = asyncHandler(async (req, res) => {
 
 
 
+const getCustomerProfile = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
+    const customerDetail = await customerService.getCustomer(req?.user?.id, req.user.vendorType);
+    createSuccessResponse(200, { customerDetail } , "successfull", res, req);
+});
+
+
+const updateCustomerProfile = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
+    const { firstName, lastName, mobile} = req.body;
+    const data = {firstName, lastName,  mobile };
+    const customerDetail = await customerService.updateCustomer(req?.user?.id, data);
+    req.user = customerDetail;
+    createSuccessResponse(200, { customerDetail } , "successfull", res, req);
+});
+
+const updateEmailProfile = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
+    const { email} = req.body;
+    const customerDetail = await customerService.otpSendForUpdateEmail(req?.user, email);
+    createSuccessResponse(200, null , "OTP has been Sent Successfully!", res, req);
+});
+
+
+const verifyEmailProfile = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
+    const formValue = req.body.formValue;
+    const customerDetail = await customerService.otpVerifyForEmail(req?.user, formValue);
+    req.user = customerDetail;
+    createSuccessResponse(200, { customerDetail } , "OTP has been Sent Successfully!", res, req);
+});
+
+const passWordChangeProfile = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
+    const formValue = req.body.formValue;
+    const customerDetail = await customerService.passwordChange(req?.user, formValue);
+    createSuccessResponse(200, null , "Paasword has been Change Successfully!", res, req);
+});
+
 
 export {
     signupCustomer,
@@ -101,7 +136,13 @@ export {
     resendOtp,
     loginCustomer,
     signinWithGoogle,
-    logout
+    logout,
+    getCustomerProfile,
+    updateCustomerProfile,
+    updateEmailProfile,
+    verifyEmailProfile,
+    passWordChangeProfile
+
 };
 
 

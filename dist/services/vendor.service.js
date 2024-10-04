@@ -137,9 +137,63 @@ class VendorService {
             return vendor;
         });
     }
-    getAllVendors() {
+    getAllVendors(page, limit) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this._vendorRepository.getAll({});
+            var _a, _b, _c, _d;
+            try {
+                const skip = (page - 1) * limit;
+                let filterQuery = {}; // Add your custom filter logic here
+                const pipeline = [
+                    {
+                        $match: filterQuery, // Match your filter query first
+                    },
+                    {
+                        $lookup: {
+                            from: 'addresses', // Join with 'addresses' collection
+                            localField: 'address',
+                            foreignField: '_id',
+                            as: 'address',
+                        },
+                    },
+                    {
+                        $facet: {
+                            vendors: [
+                                { $skip: skip }, // Skip the documents based on the page number
+                                { $limit: limit }, // Limit the number of documents returned
+                                {
+                                    $project: {
+                                        firstName: 1,
+                                        lastName: 1,
+                                        vendorType: 1,
+                                        address: 1,
+                                        role: 1,
+                                        email: 1,
+                                        mobile: 1,
+                                        isVerified: 1,
+                                        isBlocked: 1,
+                                        createdAt: 1,
+                                    },
+                                },
+                            ],
+                            totalCount: [
+                                { $count: 'count' }, // Count total documents matching the query
+                            ],
+                        },
+                    },
+                ];
+                // Execute the aggregation pipeline
+                const result = (_a = yield this._vendorRepository.getAggregateData(pipeline)) !== null && _a !== void 0 ? _a : [];
+                // Extract customers and totalCount from the result
+                const vendors = ((_b = result[0]) === null || _b === void 0 ? void 0 : _b.vendors) || [];
+                const totalCount = ((_d = (_c = result[0]) === null || _c === void 0 ? void 0 : _c.totalCount[0]) === null || _d === void 0 ? void 0 : _d.count) || 0; // Ensure default value in case it's missing
+                const totalPages = Math.ceil(totalCount / limit);
+                console.log(vendors);
+                return { vendors, totalCount, totalPages };
+            }
+            catch (error) {
+                console.error('Error fetching paginated customers:', error);
+                throw error;
+            }
         });
     }
     blockUser(id) {
@@ -173,9 +227,10 @@ class VendorService {
                 // 3. Generate OTPs
                 const oldEmailOtp = yield (0, emailSend_1.sendOtpByEmail)(user === null || user === void 0 ? void 0 : user.email);
                 const newEmailOtp = yield (0, emailSend_1.sendOtpByEmail)(email);
-                yield this._vendorRepository.update({ _id: user.id }, { otp: oldEmailOtp, otpTimestamp: new Date(),
+                const vendor = yield this._vendorRepository.update({ _id: user.id }, { otp: oldEmailOtp, otpTimestamp: new Date(),
                     newotp: newEmailOtp, newotpTimestamp: new Date()
                 });
+                console.log(vendor, "vendor");
                 return true;
             }
             catch (error) {

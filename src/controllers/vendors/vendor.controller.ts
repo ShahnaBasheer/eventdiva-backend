@@ -109,8 +109,7 @@ const getVendorProfile = asyncHandler(async(req: CustomRequest, res: Response): 
 const updateVendorProfile = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
     const { firstName, lastName, mobile} = req.body;
     const data = {firstName, lastName,  mobile };
-    const vendorDetail = await vendorService.updateVendor(req?.user?.id, data);
-    console.log(vendorDetail, "ijdjj")
+    const vendorDetail = await vendorService.updateVendor(req?.user?.id, data);    
     createSuccessResponse(200, { vendorDetail } , "successfull", res, req);
 });
 
@@ -124,7 +123,6 @@ const updateEmailProfile = asyncHandler(async(req: CustomRequest, res: Response)
 const verifyEmailProfile = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
     const formValue = req.body.formValue;
     const vendorDetail = await vendorService.otpVerifyForEmail(req?.user, formValue);
-    console.log(vendorDetail, "ijdjj", formValue);
     createSuccessResponse(200, { vendorDetail } , "OTP has been Sent Successfully!", res, req);
 });
 

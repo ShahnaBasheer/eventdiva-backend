@@ -32,33 +32,51 @@ const getAdminDashBoard = (0, express_async_handler_1.default)((req, res) => __a
 }));
 exports.getAdminDashBoard = getAdminDashBoard;
 const getAllCustomers = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const customers = yield customerService.getCustomers();
-    (0, responseFormatter_1.default)(200, { customers }, "successfull", res, req);
+    let { page = 1, limit = 10 } = req.query;
+    page = parseInt(page);
+    limit = parseInt(limit);
+    const customers = yield customerService.getCustomers(page, limit);
+    (0, responseFormatter_1.default)(200, Object.assign({}, customers), "successfull", res, req);
 }));
 exports.getAllCustomers = getAllCustomers;
 const getAllVendors = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const vendors = yield vendorService.getAllVendors();
-    (0, responseFormatter_1.default)(200, { vendors }, "successfull", res, req);
+    let { page = 1, limit = 10 } = req.query;
+    page = parseInt(page);
+    limit = parseInt(limit);
+    const vendors = yield vendorService.getAllVendors(page, limit);
+    (0, responseFormatter_1.default)(200, Object.assign({}, vendors), "successfull", res, req);
 }));
 exports.getAllVendors = getAllVendors;
 const getAllVenues = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const venues = yield venueService.getAllVenues();
-    (0, responseFormatter_1.default)(200, { venues }, "successfull", res, req);
+    let { page = 1, limit = 10 } = req.query;
+    page = parseInt(page);
+    limit = parseInt(limit);
+    const venues = yield venueService.getAllVenues(page, limit);
+    (0, responseFormatter_1.default)(200, Object.assign({}, venues), "successfull", res, req);
 }));
 exports.getAllVenues = getAllVenues;
 const getAllPlanners = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const eventPlanners = yield eventPlannerService.getAllEventPlanners({});
-    (0, responseFormatter_1.default)(200, { eventPlanners }, "successfull", res, req);
+    let { page = 1, limit = 10 } = req.query;
+    page = parseInt(page);
+    limit = parseInt(limit);
+    const eventPlanners = yield eventPlannerService.getAllEventPlanners(page, limit);
+    (0, responseFormatter_1.default)(200, Object.assign({}, eventPlanners), "successfull", res, req);
 }));
 exports.getAllPlanners = getAllPlanners;
 const getAllVenuesBookings = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const bookings = yield venueService.getAllvenueBookings({});
-    (0, responseFormatter_1.default)(200, { bookings }, "successfull", res, req);
+    let { page = 1, limit = 10 } = req.query;
+    page = parseInt(page);
+    limit = parseInt(limit);
+    const bookings = yield venueService.getAllvenueBookings({}, page, limit);
+    (0, responseFormatter_1.default)(200, Object.assign({}, bookings), "successfull", res, req);
 }));
 exports.getAllVenuesBookings = getAllVenuesBookings;
 const getAllPlannersBookings = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const bookings = yield eventPlannerService.getAllplannerBookings({});
-    (0, responseFormatter_1.default)(200, { bookings }, "successfull", res, req);
+    let { page = 1, limit = 10 } = req.query;
+    page = parseInt(page);
+    limit = parseInt(limit);
+    const bookings = yield eventPlannerService.getAllplannerBookings({}, page, limit);
+    (0, responseFormatter_1.default)(200, Object.assign({}, bookings), "successfull", res, req);
 }));
 exports.getAllPlannersBookings = getAllPlannersBookings;
 const getVenueDetail = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {

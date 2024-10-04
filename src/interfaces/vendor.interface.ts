@@ -14,9 +14,9 @@ interface IVendor {
     otp?: string;
     otpTimestamp?: Date;
     newotp?: string;
+    newotpTimestamp?: Date;
     resetPasswordToken?: string
     resetPasswordExpires?: Date,
-    newotpTimestamp?: Date;
     isVerified?: boolean;
     isDeleted?: boolean;
     isBlocked?: boolean;

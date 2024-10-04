@@ -68,7 +68,7 @@ const authMiddleware = (0, express_async_handler_1.default)((req, res, next) => 
         return next();
     }
     catch (error) {
-        console.log(error, "line 75 authmiddleware");
+        console.log(error.message, "line 75 authmiddleware");
         let tokenKey;
         if (error instanceof jsonwebtoken_1.default.TokenExpiredError) {
             let refreshToken;

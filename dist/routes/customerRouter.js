@@ -40,6 +40,11 @@ router.post('/chat-room/join-room', authMiddleware_1.authMiddleware, authMiddlew
 router.get('/notifications', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.getNotifications);
 router.patch('/notifications/read', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.changeReadStatus);
 router.delete('/notifications/delete/:id', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, pages_controller_1.deleteNotification);
+router.get('/profile', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, customer_controller_1.getCustomerProfile);
+router.patch('/profile/update', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, customer_controller_1.updateCustomerProfile);
+router.patch('/profile/email/', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, customer_controller_1.updateEmailProfile);
+router.patch('/profile/email-update', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, customer_controller_1.verifyEmailProfile);
+router.patch('/profile/password-change', authMiddleware_1.authMiddleware, authMiddleware_1.isUser, customer_controller_1.passWordChangeProfile);
 router.post('/login', validateForm_1.validateLogin, customer_controller_1.loginCustomer);
 router.post('/signup', validateForm_1.validateSignup, customer_controller_1.signupCustomer);
 router.post('/verify-otp', customer_controller_1.verifyOtp);

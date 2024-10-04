@@ -16,11 +16,10 @@ import { getAllEventPlanners, getAllVenues,
         getAboutPage } from '../controllers/customers/pages.controller';
 import { authMiddleware, isUser } from '../middlewares/authMiddleware';
 import { validateSignup, validateLogin, ValidateVenueBooking, ValidatePlannerBooking, ValidateCheckAvailability } from '../middlewares/validateForm';
-import { loginCustomer, logout, resendOtp, signinWithGoogle, signupCustomer, verifyOtp } from '../controllers/customers/customer.controller';
+import { getCustomerProfile, loginCustomer, logout, passWordChangeProfile, resendOtp, signinWithGoogle, signupCustomer, updateCustomerProfile, updateEmailProfile, verifyEmailProfile, verifyOtp } from '../controllers/customers/customer.controller';
 import resendOtpLimiter from '../middlewares/rateLimit';
 import { upload } from '../middlewares/multer';
 import { getOrCreateChatRoom, getStartCall,  } from '../controllers/common/socket.controller';
-
 
 
 const router: Router = express.Router();
@@ -54,6 +53,11 @@ router.post('/chat-room/join-room', authMiddleware, isUser, getOrCreateChatRoom)
 router.get('/notifications', authMiddleware, isUser, getNotifications);
 router.patch('/notifications/read', authMiddleware, isUser, changeReadStatus);
 router.delete('/notifications/delete/:id', authMiddleware, isUser, deleteNotification);
+router.get('/profile', authMiddleware, isUser, getCustomerProfile);
+router.patch('/profile/update', authMiddleware, isUser, updateCustomerProfile);
+router.patch('/profile/email/', authMiddleware, isUser, updateEmailProfile);
+router.patch('/profile/email-update', authMiddleware, isUser, verifyEmailProfile);
+router.patch('/profile/password-change', authMiddleware, isUser, passWordChangeProfile);
 router.post('/login', validateLogin, loginCustomer);
 router.post('/signup', validateSignup, signupCustomer);
 router.post('/verify-otp', verifyOtp);

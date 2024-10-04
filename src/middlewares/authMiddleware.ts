@@ -51,6 +51,7 @@ const authMiddleware = asyncHandler(
       }
 
       if (user && role === UserRole.Vendor && isVendorDocument(user)) {
+       
         if (user.vendorType === VendorType.EventPlanner) {
           const eventPlanner = await eventPlannerService.getEventPlanner({
             vendorId: user.id,
@@ -68,11 +69,10 @@ const authMiddleware = asyncHandler(
           }
         }
       }
-
       req.user = user;
       return next();
     } catch (error: any) {
-      console.log(error, "line 75 authmiddleware");
+      console.log(error.message, "line 75 authmiddleware");
       let tokenKey;
       if (error instanceof jwt.TokenExpiredError) {
         let refreshToken;

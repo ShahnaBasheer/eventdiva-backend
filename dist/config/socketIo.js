@@ -27,14 +27,12 @@ const customers = {};
 const initializeSocket = (server) => {
     io = new socket_io_1.Server(server, {
         cors: {
-            origin: ['http://localhost:4200',
-                'https://master.d1ee9rxmukt8sl.amplifyapp.com',
-                'https://www.eventdiva.online',
-                'https://eventdiva.online',
-                'https://backend.eventdiva.online',
-                'https://www.backend.eventdiva.online',
-                'https://www.eventdiva.online/',
-                'https://eventdiva.online/',],
+            origin: [
+                process.env.LOCALHOST_URL || '',
+                process.env.FRONTEND_AMPLIFY_URL || '',
+                process.env.FRONTEND_URL || '',
+                process.env.FRONTEND_WWW_URL || '',
+            ],
             methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT'],
             allowedHeaders: ["authorization"],
             credentials: true,

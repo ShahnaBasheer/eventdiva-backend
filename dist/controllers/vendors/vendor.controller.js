@@ -110,7 +110,6 @@ const updateVendorProfile = (0, express_async_handler_1.default)((req, res) => _
     const { firstName, lastName, mobile } = req.body;
     const data = { firstName, lastName, mobile };
     const vendorDetail = yield vendorService.updateVendor((_d = req === null || req === void 0 ? void 0 : req.user) === null || _d === void 0 ? void 0 : _d.id, data);
-    console.log(vendorDetail, "ijdjj");
     (0, responseFormatter_1.default)(200, { vendorDetail }, "successfull", res, req);
 }));
 exports.updateVendorProfile = updateVendorProfile;
@@ -123,7 +122,6 @@ exports.updateEmailProfile = updateEmailProfile;
 const verifyEmailProfile = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const formValue = req.body.formValue;
     const vendorDetail = yield vendorService.otpVerifyForEmail(req === null || req === void 0 ? void 0 : req.user, formValue);
-    console.log(vendorDetail, "ijdjj", formValue);
     (0, responseFormatter_1.default)(200, { vendorDetail }, "OTP has been Sent Successfully!", res, req);
 }));
 exports.verifyEmailProfile = verifyEmailProfile;

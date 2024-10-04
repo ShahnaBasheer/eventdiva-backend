@@ -222,11 +222,8 @@ class EventPlannerService {
             throw new Error(`Failed to retrieve URLs from folder: ${message}`);
           }
         }
-      }
-      
-      
-    
-      
+    }
+        
 
     async fileStore(files: any, directory: string | undefined, fName: string | undefined){
         const processedImages: any[] = [];
@@ -262,9 +259,144 @@ class EventPlannerService {
         return this._eventPlannerRepository.getPlannerDetail({ ...filter })
     }
 
-    async getAllEventPlanners(filter: Filter){
-        return this._eventPlannerRepository.getAllWithPopuate({ ...filter })
+    // async getAllEventPlanners(filter: Filter){
+    //     return this._eventPlannerRepository.getAllWithPopuate({ ...filter })
+    // }
+
+    async getAllEventPlanners(
+        page: number = 1,
+        limit: number = 10,
+        approval?: string,
+        allfilters?: {
+          location: string | null;
+          services?: string[];
+        },
+        search?: string
+      ): Promise<{
+        eventPlanners: IEventPlannerDocument[]; // Only fetch venue names
+        totalPages: number;
+        totalCount: number,
+        filterData: { location: string[] };
+      } | null> {
+        const skip = (page - 1) * limit;
+    
+        try {
+            // Initialize the filter query
+            let filterQuery: Record<string, any> = {  };
+
+            if(approval){
+                filterQuery["approval"] = approval;
+            }
+
+            if (search) {
+                filterQuery["company"] = { $regex: search, $options: "i" }; // Case-insensitive search
+              }
+            // Count pipeline to get total count with filtering logic
+            const countPipeline = [
+              {
+                $lookup: {
+                  from: "addresses", // Ensure this matches your Address model's collection name
+                  localField: "address",
+                  foreignField: "_id",
+                  as: "location",
+                },
+              },
+              {
+                $unwind: {
+                  path: "$location",
+                  preserveNullAndEmptyArrays: true,
+                },
+              },
+              { $match: filterQuery },
+              { $unwind: {
+                  path: "$services",
+                  preserveNullAndEmptyArrays: true,
+                },
+              },
+              {
+                $group: {
+                  _id: null,
+                  locations: { $addToSet: "$location.city" },
+                  services: { $addToSet: "$services" },
+                },
+              },
+            ];
+    
+            // Fetch total venue count and aggregated data
+            const countResult = (await this._eventPlannerRepository.getAggregateData(countPipeline)) ?? [];
+            
+            // Build the filtering criteria based on the provided filters
+            if (allfilters) {
+              // Location filter
+              if (allfilters.location) {
+                filterQuery["address.city"] = allfilters.location;
+              }
+      
+              // Services filter
+              if (allfilters.services && allfilters.services.length > 0) {
+                filterQuery["services"] = { $in: allfilters.services };
+              }
+            }
+    
+            const pipeline = [
+              {
+                $lookup: {
+                  from: "addresses", // Ensure this matches your Address model's collection name
+                  localField: "address", // The field in the venue documents that contains the address ID
+                  foreignField: "_id", // The field in the addresses collection that matches the address ID
+                  as: "address", // The name of the field where the populated address will be stored
+                },
+              },
+              { $match: filterQuery, },
+              { $sort: { createdAt: -1 }, },
+              {
+                $facet: {
+                  metadata: [{ $count: "totalCount" }], // Count total matching documents
+                  planners: [
+                    { $sort: { createdAt: -1 } },
+                    {
+                      $project: {
+                        slug: 1,
+                        company: 1,
+                        contact: 1,
+                        planningFee: 1,
+                        address: { $arrayElemAt: ["$address", 0] },
+                        services: 1,
+                        coverPic: 1,
+                        approval: 1,
+                        startYear: 1,
+                      },
+                    },
+                    { $skip: skip },
+                    { $limit: limit },
+                  ],
+                },
+              },
+              {
+                $project: {
+                  planners: 1,
+                  totalCount: { $arrayElemAt: ["$metadata.totalCount", 0] },
+                },
+              },
+            ];
+    
+            // Fetch the filtered and paginated venue data
+            const plannersData: { planners: IEventPlannerDocument[], totalCount: number }[] = 
+                  (await this._eventPlannerRepository.getAggregateData(pipeline)) || [];
+            const totalPages = Math.ceil(plannersData[0]?.totalCount/ limit);
+            console.log(countResult, plannersData);
+      
+            return { 
+               eventPlanners: plannersData[0].planners,
+               totalCount:  plannersData[0].totalCount,
+               totalPages, filterData: countResult[0] 
+            };
+        } catch (error) {
+            console.error("Error fetching venues:", error);
+            throw new BadRequestError("Something went wrong!");
+        }
     }
+    
 
     async getAllBookings(filter: Filter): Promise<IEventPlannerBooking[] | null>{
         const planner = await this._eventPlannerRepository.getPlanner(filter) as IEventPlannerDocument;
@@ -308,7 +440,8 @@ class EventPlannerService {
         try {
             // Retrieve venue if user is provided in filter
             if (filter.user) {
-                planner = await this._eventPlannerRepository.getPlanner({}) as IEventPlannerDocument;
+                planner = await this._eventPlannerRepository.getPlanner({vendorId: filter?.user._id}) as IEventPlannerDocument;
+                console.log(planner,"jnjnkk")
                 if (planner) {
                     filterQuery = { eventPlannerId: planner._id };
                 }
@@ -348,7 +481,11 @@ class EventPlannerService {
             const totalPages = Math.ceil(allBookings[0]?.totalCount / limit) || 0;
     
             // Initialize match stage for booking retrieval
-            const matchStage: Record<string, any> = { status, ...filterQuery };
+            const matchStage: Record<string, any> = { ...filterQuery };
+
+            if(status){
+                matchStage['status'] = status;
+            }
     
             // Apply additional filters based on the provided criteria
             if (allfilters) {
@@ -377,7 +514,6 @@ class EventPlannerService {
     
                 // Filter by days
                 if (allfilters.selectedDays) {
-                    console.log(allfilters.selectedDays);
                     if (allfilters.selectedDays === 'single') {
                         matchStage.isMultipleDays = false;
                     } else if (allfilters.selectedDays === 'multiple') {
@@ -385,20 +521,67 @@ class EventPlannerService {
                     }
                 }
             }
-            console.log(matchStage);
+            
     
             // Fetch bookings based on constructed matchStage
-            if (planner) {
-                bookings = await this._plannerBookingrepository.getAggregateData([
-                    { $match: matchStage },
-                    { $skip: skip },
-                    { $limit: limit }
-                ]);
-    
-                if (bookings) {
-                    completedBookingsCount = bookings.filter(booking => booking.status === 'completed').length;
-                }
+            bookings = await this._plannerBookingrepository.getAggregateData([
+                { $match: matchStage },
+                {
+                    $lookup: {
+                      from: 'eventplanners', // The name of the EventPlanner collection
+                      localField: 'eventPlannerId', // The field in the Booking schema
+                      foreignField: '_id', // The field in the EventPlanner schema
+                      as: 'eventPlanner', // The name of the field to output in the result
+                    },
+                },
+                {
+                    $lookup: {
+                      from: 'customers', // The name of the Customer collection
+                      localField: 'customerId', // The field in the Booking schema
+                      foreignField: '_id', // The field in the Customer schema
+                      as: 'customer', // The name of the field to output in the result
+                    },
+                },
+                
+                { $skip: skip },
+                { $limit: limit },
+                {
+                    $project: {
+                      // Populate only the 'company' field from the eventPlanner document
+                      eventPlannerId: { $arrayElemAt: ['$eventPlanner.company', 0] }, // Extract the 'company' field from the first element of the eventPlanner array
+                      
+                      // Populate only the 'firstName' and 'lastName' fields from the customer document
+                      customerId: { 
+                        $concat: [ 
+                            { $arrayElemAt: ['$customer.firstName', 0] }, 
+                            ' ', 
+                            { $arrayElemAt: ['$customer.lastName', 0] } 
+                          ]
+                      },
+                
+                      bookingId: 1,
+                      eventType: 1,      // Include the 'eventType' field
+                      eventName: 1,      // Include the 'eventName' field
+                      totalCost: 1,      // Include the 'totalCost' field
+                      eventDate: 1,
+                      isMultipleDays: 1,
+                      guests: 1,
+                      address: 1,
+                      contact: 1,
+                      payments:1,
+                      charges: 1,
+                      status: 1,
+                      paymentStatus: 1,
+                      isDeleted: 1,
+
+                    }
+                  }
+            ]);
+
+            if (bookings) {
+                completedBookingsCount = bookings.filter(booking => booking.status === 'completed').length;
             }
+            console.log(matchStage, bookings, "jbbbbbb");
     
             return { bookings, completed: completedBookingsCount, totalPages, filterData: allBookings[0] };
         } catch (error) {

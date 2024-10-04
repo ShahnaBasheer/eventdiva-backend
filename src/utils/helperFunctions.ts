@@ -187,10 +187,18 @@ const notificationTypes = {
 
   };
 
+
+  const parseQueryToStringArray = (param: unknown): string[] => {
+    if (!param) return [];
+    if (Array.isArray(param)) return param.map(String); // Convert each item to string
+    return [String(param)];
+  };
+
 export {
     generateNewToken,
     verifyToken,
     generateOrderId,
     handleNotification,
-    isVendorDocument
+    isVendorDocument,
+    parseQueryToStringArray
 }

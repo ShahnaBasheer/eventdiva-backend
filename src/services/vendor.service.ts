@@ -5,7 +5,6 @@ import VendorRepository from '../repositories/vendor.repository';
 import { sendOtpByEmail, welcomeEmail } from '../utils/emailSend';
 import { generateRefreshVendorToken, generateVendorToken } from '../config/jwToken';
 import NotificationRepository from '../repositories/notification.repository';
-import { INotification } from '../interfaces/notification.interface';
 import { NotificationType } from '../utils/eventsVariables';
 
 
@@ -142,9 +141,69 @@ class VendorService {
     }
 
 
-    async getAllVendors(): Promise<IVendor[]> {
-        return await this._vendorRepository.getAll({});
+    async getAllVendors(
+        page: number,
+        limit: number
+      ): Promise<{ vendors: IVendor[]; totalCount: number, totalPages: number }> {
+        try {
+          const skip = (page - 1) * limit;
+          let filterQuery: Record<string, any> = {}; // Add your custom filter logic here
+      
+          const pipeline = [
+            {
+              $match: filterQuery, // Match your filter query first
+            },
+            {
+              $lookup: {
+                from: 'addresses', // Join with 'addresses' collection
+                localField: 'address',
+                foreignField: '_id',
+                as: 'address',
+              },
+            },
+            {
+              $facet: {
+                vendors: [
+                  { $skip: skip }, // Skip the documents based on the page number
+                  { $limit: limit }, // Limit the number of documents returned
+                  {
+                    $project: {
+                      firstName: 1,
+                      lastName: 1,
+                      vendorType: 1,
+                      address: 1,
+                      role: 1,
+                      email: 1,
+                      mobile: 1,
+                      isVerified: 1,
+                      isBlocked: 1,
+                      createdAt: 1,
+                    },
+                  },
+                ],
+                totalCount: [
+                  { $count: 'count' }, // Count total documents matching the query
+                ],
+              },
+            },
+          ];
+      
+          // Execute the aggregation pipeline
+          const result = await this._vendorRepository.getAggregateData(pipeline) ?? [];
+      
+          // Extract customers and totalCount from the result
+          const vendors = result[0]?.vendors || [];
+          const totalCount = result[0]?.totalCount[0]?.count || 0; // Ensure default value in case it's missing
+          const totalPages = Math.ceil(totalCount/ limit);
+
+          console.log(vendors)
+          return { vendors, totalCount, totalPages };
+        } catch (error) {
+          console.error('Error fetching paginated customers:', error);
+          throw error;
+        }
     }
+
 
     async blockUser(id: string): Promise<IVendor | null> {
         return await this._vendorRepository.block(id);
@@ -177,11 +236,12 @@ class VendorService {
             const oldEmailOtp =  await sendOtpByEmail(user?.email);
             const newEmailOtp = await sendOtpByEmail(email);
             
-            await this._vendorRepository.update({ _id: user.id }, 
+            const vendor = await this._vendorRepository.update({ _id: user.id }, 
                 { otp: oldEmailOtp, otpTimestamp: new Date(),
                   newotp: newEmailOtp, newotpTimestamp: new Date()
                 });
                 
+            console.log(vendor, "vendor")   
             return true;
         } catch (error) {
             console.error('Error updating vendor email:', error);

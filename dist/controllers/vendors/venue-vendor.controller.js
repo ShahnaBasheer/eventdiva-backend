@@ -38,7 +38,9 @@ const getVenueVendorProfile = (0, express_async_handler_1.default)((req, res) =>
 exports.getVenueVendorProfile = getVenueVendorProfile;
 const getVenueVendorService = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _c;
-    const venueVendorData = yield venueVendorService.getVenue({ vendorId: (_c = req.user) === null || _c === void 0 ? void 0 : _c.id });
+    const venueVendorData = yield venueVendorService.getVenue({
+        vendorId: (_c = req.user) === null || _c === void 0 ? void 0 : _c.id,
+    });
     (0, responseFormatter_1.default)(200, { venueVendorData }, "successfull", res, req);
 }));
 exports.getVenueVendorService = getVenueVendorService;
@@ -55,24 +57,33 @@ const registerVenueVendorService = (0, express_async_handler_1.default)((req, re
     const errors = (0, express_validator_1.validationResult)(req);
     if (!errors.isEmpty()) {
         console.log(errors.array());
-        throw new customError_1.BadRequestError('Validation failed');
+        throw new customError_1.BadRequestError("Validation failed");
     }
-    if (venueInfo && addressInfo && description && services && amenities && priceInfo && areas) {
-        yield venueVendorService.createVenue(Object.assign(Object.assign(Object.assign(Object.assign({}, venueInfo), { addressInfo }), priceInfo), { description, service: services, amenities, areas, user: req.user }), files);
+    if (venueInfo &&
+        addressInfo &&
+        description &&
+        services &&
+        amenities &&
+        priceInfo &&
+        areas) {
+        yield venueVendorService.createVenue(Object.assign(Object.assign(Object.assign(Object.assign({}, venueInfo), { addressInfo }), priceInfo), { description, service: services, amenities,
+            areas, user: req.user }), files);
     }
     (0, responseFormatter_1.default)(200, null, "successfull", res, req);
 }));
 exports.registerVenueVendorService = registerVenueVendorService;
 const getAllVenueBookings = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let { page = 1, limit = 10, status, selectedMonth, selectedYear, selectedEventType, selectedDays } = req.query;
+    let { page = 1, limit = 10, status, selectedMonth, selectedYear, selectedEventType, selectedDays, } = req.query;
     page = parseInt(page);
     limit = parseInt(limit);
     status = status === null || status === void 0 ? void 0 : status.toString();
     const filters = {
-        selectedMonth: selectedMonth ? parseInt(selectedMonth, 10) : null,
+        selectedMonth: selectedMonth
+            ? parseInt(selectedMonth, 10)
+            : null,
         selectedYear: selectedYear ? parseInt(selectedYear, 10) : null,
         selectedEventType: (selectedEventType === null || selectedEventType === void 0 ? void 0 : selectedEventType.toString()) || null,
-        selectedDays: (selectedDays === null || selectedDays === void 0 ? void 0 : selectedDays.toString()) || '',
+        selectedDays: (selectedDays === null || selectedDays === void 0 ? void 0 : selectedDays.toString()) || "",
     };
     const bookings = yield venueService.getAllvenueBookings({ user: req.user }, page, limit, status, filters);
     (0, responseFormatter_1.default)(200, Object.assign({}, bookings), "successfull", res, req);

@@ -110,12 +110,14 @@ const venueSchema: Schema = new Schema<IVenueDocument>(
         amenities: [{ 
             type: String, 
             enum: venueAmenities,
-            required: true 
+            required: true ,
+            default: []
         }],
         services: [{
             type: String,
             enums: venueServices,
-            required: true 
+            required: true, 
+            default: []
         }],
         availableDates: [{
             type: availableDateSchema

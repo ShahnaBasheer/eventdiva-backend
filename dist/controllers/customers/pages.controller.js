@@ -22,6 +22,7 @@ const express_validator_1 = require("express-validator");
 const customError_1 = require("../../errors/customError");
 const status_options_1 = require("../../utils/status-options");
 const notification_service_1 = __importDefault(require("../../services/notification.service"));
+const helperFunctions_1 = require("../../utils/helperFunctions");
 const customerService = new customer_service_1.default();
 const eventPlannerService = new eventPlanner_service_1.default();
 const venueVendorService = new venueVendor_service_1.default();
@@ -43,8 +44,20 @@ const getAboutPage = (0, express_async_handler_1.default)((req, res) => __awaite
 }));
 exports.getAboutPage = getAboutPage;
 const getAllEventPlanners = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const eventPlanners = yield eventPlannerService.getAllEventPlanners({ approval: status_options_1.Status.Approved });
-    (0, responseFormatter_1.default)(200, { eventPlanners }, "successfully fetch event planners", res, req);
+    let { page = '1', limit = '10', services, location, search } = req.query;
+    // Convert page and limit to integers
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+    const parsedServices = (0, helperFunctions_1.parseQueryToStringArray)(services);
+    const parsedLocation = location ? String(location) : '';
+    const searchItem = search ? String(search) : '';
+    // Create filters object
+    const filters = {
+        services: parsedServices,
+        location: parsedLocation || null,
+    };
+    const eventPlanners = yield eventPlannerService.getAllEventPlanners(pageNumber, limitNumber, status_options_1.Status.Approved, filters, searchItem);
+    (0, responseFormatter_1.default)(200, Object.assign({}, eventPlanners), "successfully fetch event planners", res, req);
 }));
 exports.getAllEventPlanners = getAllEventPlanners;
 const getEventPlannerDetail = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -55,25 +68,25 @@ const getEventPlannerDetail = (0, express_async_handler_1.default)((req, res) =>
 exports.getEventPlannerDetail = getEventPlannerDetail;
 const getAllVenues = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     // Extract query parameters
-    let { page = 1, limit = 10, status, services, amenities, location } = req.query;
-    // Parse page and limit to integers
-    page = parseInt(page, 10);
-    limit = parseInt(limit, 10);
-    // Ensure status is a string if provided
-    status = status === null || status === void 0 ? void 0 : status.toString();
-    // Parse services and amenities as arrays (if they are comma-separated strings)
-    const parsedServices = services ? services.split(',') : [];
-    const parsedAmenities = amenities ? amenities.split(',') : [];
-    // Ensure location remains a string
-    const parsedLocation = location ? location.toString() : '';
+    let { page = '1', limit = '10', services, amenities, location, venueTypes, search } = req.query;
+    // Convert page and limit to integers
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+    const searchItem = search ? String(search) : '';
+    // Use the utility function to parse query parameters
+    const parsedServices = (0, helperFunctions_1.parseQueryToStringArray)(services);
+    const parsedAmenities = (0, helperFunctions_1.parseQueryToStringArray)(amenities);
+    const parsedVenueTypes = (0, helperFunctions_1.parseQueryToStringArray)(venueTypes);
+    const parsedLocation = location ? String(location) : '';
     // Create filters object
     const filters = {
-        services: parsedServices.length > 0 ? parsedServices : [],
-        amenities: parsedAmenities.length > 0 ? parsedAmenities : [],
+        services: parsedServices,
+        amenities: parsedAmenities,
+        venueTypes: parsedVenueTypes,
         location: parsedLocation || null,
     };
     // Call the service with filters
-    const venues = yield venueVendorService.getAllVenues(page, limit, status_options_1.Status.Approved, filters);
+    const venues = yield venueVendorService.getAllVenues(pageNumber, limitNumber, status_options_1.Status.Approved, filters, searchItem);
     // Send a success response
     (0, responseFormatter_1.default)(200, Object.assign({}, venues), "Successfully fetched venues", res, req);
 }));

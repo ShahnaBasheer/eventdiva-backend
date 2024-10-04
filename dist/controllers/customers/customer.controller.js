@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.logout = exports.signinWithGoogle = exports.loginCustomer = exports.resendOtp = exports.verifyOtp = exports.signupCustomer = void 0;
+exports.passWordChangeProfile = exports.verifyEmailProfile = exports.updateEmailProfile = exports.updateCustomerProfile = exports.getCustomerProfile = exports.logout = exports.signinWithGoogle = exports.loginCustomer = exports.resendOtp = exports.verifyOtp = exports.signupCustomer = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const express_validator_1 = require("express-validator");
 const customer_service_1 = __importDefault(require("../../services/customer.service"));
@@ -91,3 +91,37 @@ const logout = (0, express_async_handler_1.default)((req, res) => __awaiter(void
     (0, responseFormatter_1.default)(200, null, 'Successfully Logout!', res);
 }));
 exports.logout = logout;
+const getCustomerProfile = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const customerDetail = yield customerService.getCustomer((_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.id, req.user.vendorType);
+    (0, responseFormatter_1.default)(200, { customerDetail }, "successfull", res, req);
+}));
+exports.getCustomerProfile = getCustomerProfile;
+const updateCustomerProfile = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _b;
+    const { firstName, lastName, mobile } = req.body;
+    const data = { firstName, lastName, mobile };
+    const customerDetail = yield customerService.updateCustomer((_b = req === null || req === void 0 ? void 0 : req.user) === null || _b === void 0 ? void 0 : _b.id, data);
+    req.user = customerDetail;
+    (0, responseFormatter_1.default)(200, { customerDetail }, "successfull", res, req);
+}));
+exports.updateCustomerProfile = updateCustomerProfile;
+const updateEmailProfile = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email } = req.body;
+    const customerDetail = yield customerService.otpSendForUpdateEmail(req === null || req === void 0 ? void 0 : req.user, email);
+    (0, responseFormatter_1.default)(200, null, "OTP has been Sent Successfully!", res, req);
+}));
+exports.updateEmailProfile = updateEmailProfile;
+const verifyEmailProfile = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const formValue = req.body.formValue;
+    const customerDetail = yield customerService.otpVerifyForEmail(req === null || req === void 0 ? void 0 : req.user, formValue);
+    req.user = customerDetail;
+    (0, responseFormatter_1.default)(200, { customerDetail }, "OTP has been Sent Successfully!", res, req);
+}));
+exports.verifyEmailProfile = verifyEmailProfile;
+const passWordChangeProfile = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const formValue = req.body.formValue;
+    const customerDetail = yield customerService.passwordChange(req === null || req === void 0 ? void 0 : req.user, formValue);
+    (0, responseFormatter_1.default)(200, null, "Paasword has been Change Successfully!", res, req);
+}));
+exports.passWordChangeProfile = passWordChangeProfile;

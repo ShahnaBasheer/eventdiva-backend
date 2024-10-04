@@ -13,6 +13,8 @@ interface Icustomer{
     bookings?: Schema.Types.ObjectId[];
     otp?: string;
     otpTimestamp?: Date;
+    newotp?: string;
+    newotpTimestamp?: Date;
     resetPasswordToken?: string;
     resetPasswordExpires?: Date;
     role?: string;

@@ -52,10 +52,6 @@ const customerSchema = new mongoose_1.Schema({
             type: mongoose_1.Schema.Types.ObjectId,
             ref: 'Favorite'
         }],
-    bookings: [{
-            type: mongoose_1.Schema.Types.ObjectId,
-            ref: 'Booking'
-        }],
     password: {
         type: String,
         required: function () {
@@ -78,6 +74,12 @@ const customerSchema = new mongoose_1.Schema({
         type: String
     },
     otpTimestamp: {
+        type: Date
+    },
+    newotp: {
+        type: String
+    },
+    newotpTimestamp: {
         type: Date
     },
     resetPasswordToken: {

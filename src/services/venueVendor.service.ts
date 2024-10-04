@@ -294,11 +294,13 @@ class VenueVendorService {
       location: string | null;
       services?: string[];
       amenities?: string[];
-    }
+      venueTypes?: string[];
+    },
+    search?: string
   ): Promise<{
     venues: IVenueDocument[]; // Only fetch venue names
-    totalCount: number;
     totalPages: number;
+    totalCount: number;
     filterData: { location: string[] };
   } | null> {
     const skip = (page - 1) * limit;
@@ -307,78 +309,14 @@ class VenueVendorService {
       // Initialize the filter query
       let filterQuery: Record<string, any> = {};
 
-      // Build the filtering criteria based on the provided filters
-      if (allfilters) {
-        // Location filter
-        if (allfilters.location) {
-          filterQuery["location.city"] = allfilters.location;
-        }
-
-        // Services filter
-        if (allfilters.services && allfilters.services.length > 0) {
-          filterQuery["services"] = { $all: allfilters.services };
-        }
-
-        // Amenities filter
-        if (allfilters.amenities && allfilters.amenities.length > 0) {
-          filterQuery["amenities"] = { $all: allfilters.amenities };
-        }
+      if (approval) {
+        filterQuery["approval"] = approval;
       }
 
-      // Execute the count pipeline
-      const totalCount = await this._venueVendorRepository.getCount(
-        filterQuery
-      );
-
-      // Aggregation pipeline for fetching venue names and their full addresses based on filters
-      // Aggregation pipeline for fetching venue names and their full addresses based on filters
-      const pipeline = [
-        {
-          $lookup: {
-            from: "addresses", // Ensure this matches your Address model's collection name
-            localField: "address", // The field in the venue documents that contains the address ID
-            foreignField: "_id", // The field in the addresses collection that matches the address ID
-            as: "address", // The name of the field where the populated address will be stored
-          },
-        },
-        {
-          $match: filterQuery, // Apply the dynamic filters to the venues
-        },
-        {
-          $project: {
-            // Include all fields from the IVenue interface
-            vendorId: 1,
-            slug: 1,
-            venueName: 1,
-            venueType: 1,
-            contact: 1,
-            address: { $arrayElemAt: ["$address", 0] }, // Extract the first address from the array
-            description: 1,
-            amenities: 1,
-            rent: 1,
-            rooms: 1,
-            decorStartingPrice: 1,
-            services: 1,
-            platePrice: 1,
-            capacity: 1,
-            coverPic: 1,
-            isDeleted: 1,
-            createdAt: 1,
-            updatedAt: 1,
-          },
-        },
-        {
-          $skip: skip, // Pagination: skip the documents for the previous pages
-        },
-        {
-          $limit: limit, // Pagination: limit the number of documents for the current page
-        },
-      ];
-
-      // Fetch the filtered and paginated venue data
-      const venues =
-        (await this._venueVendorRepository.getAggregateData(pipeline)) || [];
-
+      if (search) {
+        filterQuery["venueName"] = { $regex: search, $options: "i" }; // Case-insensitive search
+      }
+      
       // Count pipeline to get total count with filtering logic
       const countPipeline = [
         {
@@ -395,18 +333,14 @@ class VenueVendorService {
             preserveNullAndEmptyArrays: true,
           },
         },
+        { $match: filterQuery },
         {
-          $match: filterQuery, // Apply the same filter query for counting
-        },
-        {
-          // Unwind the services array to flatten them
           $unwind: {
             path: "$services",
             preserveNullAndEmptyArrays: true,
           },
         },
         {
-          // Unwind the amenities array to flatten them
           $unwind: {
             path: "$amenities",
             preserveNullAndEmptyArrays: true,
@@ -418,6 +352,7 @@ class VenueVendorService {
             locations: { $addToSet: "$location.city" },
             services: { $addToSet: "$services" },
             amenities: { $addToSet: "$amenities" },
+            venueTypes: { $addToSet: "$venueType" },
           },
         },
       ];
@@ -426,11 +361,91 @@ class VenueVendorService {
       const countResult =
         (await this._venueVendorRepository.getAggregateData(countPipeline)) ??
         [];
-      const totalPages = Math.ceil(totalCount / limit);
 
-      console.log(countResult[0]);
+      // Build the filtering criteria based on the provided filters
+      if (allfilters) {
+        // Location filter
+        if (allfilters.location) {
+          filterQuery["address.city"] = allfilters.location;
+        }
 
-      return { venues, totalCount, totalPages, filterData: countResult[0] };
+        // Services filter
+        if (allfilters.services && allfilters.services.length > 0) {
+          filterQuery["services"] = { $in: allfilters.services };
+        }
+
+        // Amenities filter
+        if (allfilters.amenities && allfilters.amenities.length > 0) {
+          filterQuery["amenities"] = { $in: allfilters.amenities };
+        }
+
+        if (allfilters.venueTypes && allfilters.venueTypes.length > 0) {
+          filterQuery["venueType"] = { $in: allfilters.venueTypes };
+        }
+      }
+
+      console.log(filterQuery, "hhjjk");
+
+      const pipeline = [
+        {
+          $lookup: {
+            from: "addresses", // Ensure this matches your Address model's collection name
+            localField: "address", // The field in the venue documents that contains the address ID
+            foreignField: "_id", // The field in the addresses collection that matches the address ID
+            as: "address", // The name of the field where the populated address will be stored
+          },
+        },
+        { $match: filterQuery },
+        { $sort: { createdAt: -1 } },
+        {
+          $facet: {
+            metadata: [{ $count: "totalCount" }], // Count total matching documents
+            venues: [
+              { $sort: { createdAt: -1 } },
+              {
+                $project: {
+                  slug: 1,
+                  venueName: 1,
+                  venueType: 1,
+                  startYear: 1,
+                  contact: 1,
+                  approval: 1,
+                  address: { $arrayElemAt: ["$address", 0] },
+                  amenities: 1,
+                  rent: 1,
+                  rooms: 1,
+                  decorStartingPrice: 1,
+                  services: 1,
+                  platePrice: 1,
+                  capacity: 1,
+                  coverPic: 1,
+                },
+              },
+              { $skip: skip },
+              { $limit: limit },
+            ],
+          },
+        },
+        {
+          $project: {
+            venues: 1,
+            totalCount: { $arrayElemAt: ["$metadata.totalCount", 0] },
+          },
+        },
+      ];
+
+      // Fetch the filtered and paginated venue data
+      const venuesData: { venues: IVenueDocument[]; totalCount: number }[] =
+        (await this._venueVendorRepository.getAggregateData(pipeline)) || [];
+      const totalPages = Math.ceil(venuesData[0]?.totalCount / limit);
+      console.log(countResult, "jjjk");
+
+      return {
+        venues: venuesData[0].venues,
+        totalCount: venuesData[0].totalCount,
+        totalPages,
+        filterData: countResult[0],
+      };
     } catch (error) {
       console.error("Error fetching venues:", error);
       throw new BadRequestError("Something went wrong!");
@@ -470,9 +485,9 @@ class VenueVendorService {
     try {
       // Retrieve venue if user is provided in filter
       if (filter.user) {
-        venue = (await this._venueVendorRepository.getVenue(
-          {}
-        )) as IVenueDocument;
+        venue = (await this._venueVendorRepository.getVenue({
+          vendorId: filter.user?._id,
+        })) as IVenueDocument;
         if (venue) {
           filterQuery = { venueId: venue._id };
         }
@@ -513,7 +528,11 @@ class VenueVendorService {
       const totalPages = Math.ceil(allBookings[0]?.totalCount / limit) || 0;
 
       // Initialize match stage for booking retrieval
-      const matchStage: Record<string, any> = { status, ...filterQuery };
+      const matchStage: Record<string, any> = { ...filterQuery };
+
+      if (status) {
+        matchStage["status"] = status;
+      }
 
       // Apply additional filters based on the provided criteria
       if (allfilters) {
@@ -570,18 +589,16 @@ class VenueVendorService {
       console.log(matchStage);
 
       // Fetch bookings based on constructed matchStage
-      if (venue) {
-        bookings = await this._venueBookingrepository.getAggregateData([
-          { $match: matchStage },
-          { $skip: skip },
-          { $limit: limit },
-        ]);
+      bookings = await this._venueBookingrepository.getAggregateData([
+        { $match: matchStage },
+        { $skip: skip },
+        { $limit: limit },
+      ]);
 
-        if (bookings) {
-          completedBookingsCount = bookings.filter(
-            (booking) => booking.status === "completed"
-          ).length;
-        }
+      if (bookings) {
+        completedBookingsCount = bookings.filter(
+          (booking) => booking.status === "completed"
+        ).length;
       }
 
       return {
@@ -1201,7 +1218,7 @@ class VenueVendorService {
   async generateFullPayment(
     bookingId: string,
     fullPaymentCharges: {
-      planningFee: number;
+      venueRental: number;
       charges: { chargeName: string; amount: number }[];
     }
   ): Promise<{
@@ -1232,14 +1249,14 @@ class VenueVendorService {
     // Add the new calculated charges to the existing totalCost
     const updatedTotalCost =
       bookingDetail.totalCost +
-      fullPaymentCharges.planningFee +
+      fullPaymentCharges.venueRental +
       totalServiceCharges;
 
     // Perform the update operation
     const bookingData = await this._venueBookingrepository.update(
       { bookingId }, // Find booking by bookingId
       {
-        "charges.fullPayment.veneuRental": fullPaymentCharges.planningFee, // Update planningFee
+        "charges.fullPayment.veneuRental": fullPaymentCharges.venueRental, // Update planningFee
         "charges.fullPayment.servicesCharges": serviceCharges, // Update servicesCharges with mapped values
         totalCost: updatedTotalCost, // Update totalCost by adding new charges to existing totalCost
       }
@@ -1247,7 +1264,7 @@ class VenueVendorService {
 
     return {
       bookingData,
-      fullPayment: fullPaymentCharges.planningFee + totalServiceCharges,
+      fullPayment: fullPaymentCharges.venueRental + totalServiceCharges,
     };
   }
 }

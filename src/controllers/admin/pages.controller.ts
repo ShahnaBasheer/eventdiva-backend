@@ -25,37 +25,55 @@ const getAdminDashBoard = asyncHandler(async(req: CustomRequest, res: Response):
 
 
 const getAllCustomers = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
-    const customers = await customerService.getCustomers();
-    createSuccessResponse(200, { customers } , "successfull", res, req);
+    let { page = 1, limit = 10 } = req.query;
+    page = parseInt(page as string);
+    limit = parseInt(limit as string);
+    const customers = await customerService.getCustomers(page, limit);
+    createSuccessResponse(200, { ...customers } , "successfull", res, req);
 });
 
 const getAllVendors = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
-    const vendors = await vendorService.getAllVendors();
-    createSuccessResponse(200, { vendors } , "successfull", res, req);
+    let { page = 1, limit = 10 } = req.query;
+    page = parseInt(page as string);
+    limit = parseInt(limit as string);
+    const vendors = await vendorService.getAllVendors(page, limit);
+    createSuccessResponse(200, { ...vendors } , "successfull", res, req);
 });
 
 
 
 const getAllVenues = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
-    const venues = await venueService.getAllVenues();
-    createSuccessResponse(200, { venues } , "successfull", res, req);
+    let { page = 1, limit = 10 } = req.query;
+    page = parseInt(page as string);
+    limit = parseInt(limit as string);
+    const venues = await venueService.getAllVenues(page, limit);
+    createSuccessResponse(200, { ...venues } , "successfull", res, req);
 });
 
 
 const getAllPlanners = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
-    const eventPlanners = await eventPlannerService.getAllEventPlanners({});
-    createSuccessResponse(200, { eventPlanners } , "successfull", res, req);
+    let { page = 1, limit = 10 } = req.query;
+    page = parseInt(page as string);
+    limit = parseInt(limit as string);
+    const eventPlanners = await eventPlannerService.getAllEventPlanners(page, limit);
+    createSuccessResponse(200, { ...eventPlanners } , "successfull", res, req);
 });
 
 const getAllVenuesBookings = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
-    const bookings = await venueService.getAllvenueBookings({});
-    createSuccessResponse(200, { bookings } , "successfull", res, req);
+    let { page = 1, limit = 10 } = req.query;
+    page = parseInt(page as string);
+    limit = parseInt(limit as string);
+    const bookings = await venueService.getAllvenueBookings({}, page, limit);
+    createSuccessResponse(200, { ...bookings } , "successfull", res, req);
 });
 
 
 const getAllPlannersBookings = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
-    const bookings = await eventPlannerService.getAllplannerBookings({});
-    createSuccessResponse(200, { bookings } , "successfull", res, req);
+    let { page = 1, limit = 10 } = req.query;
+    page = parseInt(page as string);
+    limit = parseInt(limit as string);
+    const bookings = await eventPlannerService.getAllplannerBookings({}, page, limit);
+    createSuccessResponse(200, { ...bookings } , "successfull", res, req);
 });
 
 
@@ -70,6 +88,7 @@ const getVenueDetail = asyncHandler(async(req: CustomRequest, res: Response): Pr
 const getEventPlannerDetail = asyncHandler(async(req: CustomRequest, res: Response): Promise<void> => {
     const { slug } = req.params;
     const eventPlannerData = await eventPlannerService.getEventPlanner({ slug });
+    
     createSuccessResponse(200, { eventPlannerData } , "successfully fetch event planner detail", res, req)
 });
 

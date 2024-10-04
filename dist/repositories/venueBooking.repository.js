@@ -13,7 +13,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const base_repository_1 = __importDefault(require("./base.repository"));
-;
 const venueBookingModel_1 = __importDefault(require("../models/venueBookingModel"));
 class VenueBookingRepository extends base_repository_1.default {
     constructor() {
@@ -23,7 +22,7 @@ class VenueBookingRepository extends base_repository_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             const booking = yield venueBookingModel_1.default.create(data);
             if (!booking) {
-                throw new Error('Failed to register booking');
+                throw new Error("Failed to register booking");
             }
             return booking;
         });
@@ -31,17 +30,17 @@ class VenueBookingRepository extends base_repository_1.default {
     getOne(filter) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield venueBookingModel_1.default.findOne(Object.assign({}, filter))
-                .populate('address')
-                .populate('venueId')
+                .populate("address")
+                .populate("venueId")
                 .exec();
         });
     }
     getAllBookings(filter_1) {
         return __awaiter(this, arguments, void 0, function* (filter, skip = 0, limit = 0) {
             return yield venueBookingModel_1.default.find(Object.assign({}, filter))
-                .populate('address')
-                .populate('venueId')
-                .populate('customerId')
+                .populate("address")
+                .populate("venueId")
+                .populate("customerId")
                 .skip(skip)
                 .limit(limit)
                 .exec();
@@ -50,8 +49,8 @@ class VenueBookingRepository extends base_repository_1.default {
     getBookings(filter) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield venueBookingModel_1.default.find(Object.assign({}, filter))
-                .populate('address')
-                .populate('venueId')
+                .populate("address")
+                .populate("venueId")
                 .sort({ createdAt: -1 })
                 .exec();
         });
@@ -59,9 +58,9 @@ class VenueBookingRepository extends base_repository_1.default {
     getOneBooking(filter) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield venueBookingModel_1.default.findOne(Object.assign({}, filter))
-                .populate('address')
-                .populate('venueId')
-                .populate('customerId')
+                .populate("address")
+                .populate("venueId")
+                .populate("customerId")
                 .exec();
         });
     }

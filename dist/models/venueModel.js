@@ -122,12 +122,14 @@ const venueSchema = new mongoose_1.Schema({
     amenities: [{
             type: String,
             enum: venueVariables_1.venueAmenities,
-            required: true
+            required: true,
+            default: []
         }],
     services: [{
             type: String,
             enums: venueVariables_1.venueServices,
-            required: true
+            required: true,
+            default: []
         }],
     availableDates: [{
             type: availableDateSchema

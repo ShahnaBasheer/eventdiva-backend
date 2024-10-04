@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isVendorDocument = exports.handleNotification = exports.generateOrderId = exports.verifyToken = exports.generateNewToken = void 0;
+exports.parseQueryToStringArray = exports.isVendorDocument = exports.handleNotification = exports.generateOrderId = exports.verifyToken = exports.generateNewToken = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const customer_service_1 = __importDefault(require("../services/customer.service"));
 const admin_service_1 = __importDefault(require("../services/admin.service"));
@@ -164,3 +164,11 @@ const handleNotification = (data) => __awaiter(void 0, void 0, void 0, function*
     return notification;
 });
 exports.handleNotification = handleNotification;
+const parseQueryToStringArray = (param) => {
+    if (!param)
+        return [];
+    if (Array.isArray(param))
+        return param.map(String); // Convert each item to string
+    return [String(param)];
+};
+exports.parseQueryToStringArray = parseQueryToStringArray;

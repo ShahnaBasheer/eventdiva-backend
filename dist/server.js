@@ -30,14 +30,11 @@ const server = http_1.default.createServer(app);
 (0, socketIo_1.initializeSocket)(server);
 app.use((0, cors_1.default)({
     credentials: true,
-    origin: ['http://localhost:4200',
-        'https://master.d1ee9rxmukt8sl.amplifyapp.com',
-        'https://www.eventdiva.online',
-        'https://eventdiva.online',
-        'https://backend.eventdiva.online',
-        'https://www.backend.eventdiva.online',
-        'https://www.eventdiva.online/',
-        'https://eventdiva.online/',
+    origin: [
+        process.env.LOCALHOST_URL || '',
+        process.env.FRONTEND_AMPLIFY_URL || '',
+        process.env.FRONTEND_URL || '',
+        process.env.FRONTEND_WWW_URL || '',
     ],
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT']
 }));
@@ -63,3 +60,11 @@ server.listen(port, () => {
     console.log(`Server is running on port successfully ${port}...`);
 });
 exports.default = app;
+// 'http://localhost:4200', 
+//     'https://master.d1ee9rxmukt8sl.amplifyapp.com', 
+//     'https://www.eventdiva.online', 
+//     'https://eventdiva.online',
+//     'https://backend.eventdiva.online',
+//     'https://www.backend.eventdiva.online',
+//     'https://www.eventdiva.online/', 
+//     'https://eventdiva.online/',
