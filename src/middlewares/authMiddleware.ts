@@ -36,7 +36,7 @@ const authMiddleware = asyncHandler(
       }
 
       const decoded = jwt.decode(accessToken) as JwtPayload;
-      role = decoded.role;
+      role = decoded["role"];
 
       const user = await verifyToken(accessToken, role!, 1);
       if (!user) throw new UnauthorizedError("User not found!");
@@ -44,14 +44,14 @@ const authMiddleware = asyncHandler(
       if ((user as IcustomerDocument | IVendorDocument).isBlocked) {
         let tokenKey =
           role === UserRole.Customer
-            ? process.env.CUSTOMER_REFRESH
-            : process.env.VENDOR_REFRESH;
+            ? process.env["CUSTOMER_REFRESH"]
+            : process.env["VENDOR_REFRESH"];
         res.clearCookie(tokenKey!);
         throw new ForbiddenError("User account is blocked");
       }
 
       if (user && role === UserRole.Vendor && isVendorDocument(user)) {
-       
+
         if (user.vendorType === VendorType.EventPlanner) {
           const eventPlanner = await eventPlannerService.getEventPlanner({
             vendorId: user.id,
@@ -78,11 +78,11 @@ const authMiddleware = asyncHandler(
         let refreshToken;
 
         if (role === UserRole.Admin) {
-          tokenKey = process.env.ADMIN_REFRESH;
+          tokenKey = process.env["ADMIN_REFRESH"];
         } else if (role === UserRole.Customer) {
-          tokenKey = process.env.CUSTOMER_REFRESH;
+          tokenKey = process.env["CUSTOMER_REFRESH"];
         } else if (role === UserRole.Vendor) {
-          tokenKey = process.env.VENDOR_REFRESH;
+          tokenKey = process.env["VENDOR_REFRESH"];
         }
         refreshToken = req?.cookies[tokenKey!];
 
@@ -118,7 +118,7 @@ const authMiddleware = asyncHandler(
       } else if (error instanceof ForbiddenError) {
         throw error;
       }
-      
+
       return next();
     }
   }
@@ -146,14 +146,14 @@ const authenticateSocket = async (
   let role: string | undefined;
 
   try {
-    const token = socket.handshake.auth.token || socket.handshake.query.token;
+    const token = socket.handshake.auth["token"] || socket.handshake.query["token"];
 
     if (!token) {
       return next(new UnauthorizedError("Not authorized: no token provided"));
     }
 
     const decoded = jwt.decode(token) as JwtPayload;
-    role = decoded.role;
+    role = decoded["role"];
 
     const user = await tokenVerify(token, role!, 1);
     socket.user = user; // Attach the user to the socket
@@ -166,8 +166,8 @@ const authenticateSocket = async (
       // Handle token expiration based on role
       tokenKey =
         role === UserRole.Customer
-          ? process.env.CUSTOMER_REFRESH
-          : process.env.VENDOR_REFRESH;
+          ? process.env["CUSTOMER_REFRESH"]
+          : process.env["VENDOR_REFRESH"];
 
       const refreshToken = socket.handshake.headers.cookie
         ?.split("; ")
@@ -201,7 +201,7 @@ const validateSocketUser = async (socket: CustomSocket) => {
     throw new UnauthorizedError("User not authenticated");
   }
   let role = socket.user.role;
-  const token = socket.handshake.auth.token || socket.handshake.query.token;
+  const token = socket.handshake.auth["token"] || socket.handshake.query["token"];
 
   try {
     const user = await tokenVerify(token, socket.user.role!, 1);
@@ -211,8 +211,8 @@ const validateSocketUser = async (socket: CustomSocket) => {
     if (error instanceof jwt.TokenExpiredError) {
       tokenKey =
         role === UserRole.Customer
-          ? process.env.CUSTOMER_REFRESH
-          : process.env.VENDOR_REFRESH;
+          ? process.env["CUSTOMER_REFRESH"]
+          : process.env["VENDOR_REFRESH"];
 
       const refreshToken = socket.handshake.headers.cookie
         ?.split("; ")

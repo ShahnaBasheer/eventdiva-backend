@@ -5,7 +5,7 @@ import path from 'path';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import dotenv from 'dotenv';
-import cors from 'cors'; 
+import cors from 'cors';
 import { initializeSocket } from './config/socketIo';
 
 
@@ -33,14 +33,14 @@ initializeSocket(server);
 app.use(cors({
   credentials: true,
   origin: [
-        process.env.LOCALHOST_URL || '',
-        process.env.FRONTEND_AMPLIFY_URL || '',
-        process.env.FRONTEND_URL || '',
-        process.env.FRONTEND_WWW_URL || '',
-        process.env.FRONTEND_WWW_SLASH || '',
-        process.env.FRONTEND_SLASH_URL || '',
-        process.env.BACKEND_WWW_URL || '' ,
-        process.env.BACKEND_URL || ''
+        process.env['LOCALHOST_URL'] || '',
+        process.env['FRONTEND_AMPLIFY_URL'] || '',
+        process.env['FRONTEND_URL'] || '',
+        process.env['FRONTEND_WWW_URL'] || '',
+        process.env['FRONTEND_WWW_SLASH'] || '',
+        process.env['FRONTEND_SLASH_URL'] || '',
+        process.env['BACKEND_WWW_URL'] || '' ,
+        process.env['BACKEND_URL'] || ''
     ],
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT']
 }));
@@ -69,7 +69,7 @@ app.use(errorHandler)
 
 
 // Start server
-const port = process.env.PORT || 3000;
+const port = process.env['PORT'] || 3000;
 server.listen(port, () => {
   console.log(`Server is running on port successfully ${port}...`);
 });
@@ -79,11 +79,11 @@ export default app;
 
 
 
-// 'http://localhost:4200', 
-//     'https://master.d1ee9rxmukt8sl.amplifyapp.com', 
-//     'https://www.eventdiva.online', 
+// 'http://localhost:4200',
+//     'https://master.d1ee9rxmukt8sl.amplifyapp.com',
+//     'https://www.eventdiva.online',
 //     'https://eventdiva.online',
 //     'https://backend.eventdiva.online',
 //     'https://www.backend.eventdiva.online',
-//     'https://www.eventdiva.online/', 
+//     'https://www.eventdiva.online/',
 //     'https://eventdiva.online/',
