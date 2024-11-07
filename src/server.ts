@@ -48,8 +48,8 @@ app.use(cors({
 // Middleware setup
 app.use(cookieParser())
 app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '100mb' })); // Increase limit to 100MB
+app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.static(path.join(__dirname, 'public')));
 
