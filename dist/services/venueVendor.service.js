@@ -541,6 +541,7 @@ class VenueVendorService {
     }
     razorPayment(razorPayData) {
         return __awaiter(this, void 0, void 0, function* () {
+            var _a;
             const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = razorPayData;
             const CryptoJS = require("crypto-js");
             let bookedData;
@@ -551,11 +552,18 @@ class VenueVendorService {
             if (!bookedData) {
                 throw new customError_1.BadRequestError("Booking data not found. Payment verification failed.");
             }
+            const index = ((_a = bookedData.payments) === null || _a === void 0 ? void 0 : _a.length) - 1;
             if (generatedSignature === razorpay_signature) {
-                bookedData.payments[0].status = status_options_1.Status.Paid;
+                bookedData.payments[index].status = status_options_1.Status.Paid;
+                if (index === 1) {
+                    bookedData.paymentStatus = status_options_1.Status.Advance;
+                }
+                else if (index === 2) {
+                    bookedData.paymentStatus = status_options_1.Status.Paid;
+                }
             }
             else {
-                bookedData.payments[0].status = status_options_1.Status.Failed;
+                bookedData.payments[index].status = status_options_1.Status.Failed;
                 throw new customError_1.BadRequestError("Invalid payment signature. Potential fraud attempt.");
             }
             yield bookedData.save();

@@ -100,16 +100,16 @@ const deleteNotification = (0, express_async_handler_1.default)((req, res) => __
 }));
 exports.deleteNotification = deleteNotification;
 const getVendorProfile = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _c;
-    const vendorDetail = yield vendorService.getVendor((_c = req === null || req === void 0 ? void 0 : req.user) === null || _c === void 0 ? void 0 : _c.id, req.user.vendorType);
+    var _a;
+    const vendorDetail = yield vendorService.getVendor((_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.id, req.user.vendorType);
     (0, responseFormatter_1.default)(200, { vendorDetail }, "successfull", res, req);
 }));
 exports.getVendorProfile = getVendorProfile;
 const updateVendorProfile = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _d;
+    var _a;
     const { firstName, lastName, mobile } = req.body;
     const data = { firstName, lastName, mobile };
-    const vendorDetail = yield vendorService.updateVendor((_d = req === null || req === void 0 ? void 0 : req.user) === null || _d === void 0 ? void 0 : _d.id, data);
+    const vendorDetail = yield vendorService.updateVendor((_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.id, data);
     (0, responseFormatter_1.default)(200, { vendorDetail }, "successfull", res, req);
 }));
 exports.updateVendorProfile = updateVendorProfile;

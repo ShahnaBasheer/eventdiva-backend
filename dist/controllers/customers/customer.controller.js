@@ -98,10 +98,10 @@ const getCustomerProfile = (0, express_async_handler_1.default)((req, res) => __
 }));
 exports.getCustomerProfile = getCustomerProfile;
 const updateCustomerProfile = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b;
+    var _a;
     const { firstName, lastName, mobile } = req.body;
     const data = { firstName, lastName, mobile };
-    const customerDetail = yield customerService.updateCustomer((_b = req === null || req === void 0 ? void 0 : req.user) === null || _b === void 0 ? void 0 : _b.id, data);
+    const customerDetail = yield customerService.updateCustomer((_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.id, data);
     req.user = customerDetail;
     (0, responseFormatter_1.default)(200, { customerDetail }, "successfull", res, req);
 }));

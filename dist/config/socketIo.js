@@ -89,7 +89,7 @@ const initializeSocket = (server) => {
             }
         });
         // Handle end call event
-        socket.on('end-call', (_b) => __awaiter(void 0, [_b], void 0, function* ({ roomId }) {
+        socket.on('end-call', (_a) => __awaiter(void 0, [_a], void 0, function* ({ roomId }) {
             try {
                 yield (0, authMiddleware_1.validateSocketUser)(socket);
                 if (socket.customerId && customers[socket.customerId]) {
@@ -198,10 +198,10 @@ const initializeSocket = (server) => {
         }));
         // Handle message sending
         socket.on('send-message', (data) => __awaiter(void 0, void 0, void 0, function* () {
-            var _c;
+            var _a;
             try {
                 const { chatRoomId, message, name } = data;
-                const userRole = ((_c = socket.user) === null || _c === void 0 ? void 0 : _c.role) || '';
+                const userRole = ((_a = socket.user) === null || _a === void 0 ? void 0 : _a.role) || '';
                 if (socket.rooms.has(chatRoomId) && socket.user) {
                     const chat = yield chatroomService.addNewMessage(socket.user.id, message, userRole, chatRoomId);
                     if (chat) {

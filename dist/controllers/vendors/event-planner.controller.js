@@ -29,15 +29,15 @@ const getEventPlannerDashboard = (0, express_async_handler_1.default)((req, res)
 }));
 exports.getEventPlannerDashboard = getEventPlannerDashboard;
 const getEventPlannerService = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b;
-    const eventPlannerData = yield eventPlannerService.getEventPlanner({ vendorId: (_b = req.user) === null || _b === void 0 ? void 0 : _b.id });
+    var _a;
+    const eventPlannerData = yield eventPlannerService.getEventPlanner({ vendorId: (_a = req.user) === null || _a === void 0 ? void 0 : _a.id });
     (0, responseFormatter_1.default)(200, { eventPlannerData }, "successfull", res, req);
 }));
 exports.getEventPlannerService = getEventPlannerService;
 const registerEventPlannerService = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _c, _d;
-    const companyInfo = (_c = req.body) === null || _c === void 0 ? void 0 : _c.companyInfo;
-    const addressInfo = (_d = req.body) === null || _d === void 0 ? void 0 : _d.addressInfo;
+    var _a, _b;
+    const companyInfo = (_a = req.body) === null || _a === void 0 ? void 0 : _a.companyInfo;
+    const addressInfo = (_b = req.body) === null || _b === void 0 ? void 0 : _b.addressInfo;
     const description = req.body.description;
     const services = req.body.services;
     const plannedCities = req.body.plannedCities;
@@ -75,10 +75,10 @@ const getPlannerBookingDetails = (0, express_async_handler_1.default)((req, res)
 }));
 exports.getPlannerBookingDetails = getPlannerBookingDetails;
 const changeBookingStatus = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _e;
+    var _a;
     const { bookingId } = req.params;
     const { status } = req.body;
-    const bookingData = yield eventPlannerService.changeBookingStatus(bookingId, status, (_e = req.user) === null || _e === void 0 ? void 0 : _e.id);
+    const bookingData = yield eventPlannerService.changeBookingStatus(bookingId, status, (_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
     (0, responseFormatter_1.default)(200, { bookingData }, "successfull", res, req);
 }));
 exports.changeBookingStatus = changeBookingStatus;
@@ -90,23 +90,23 @@ const generateAdvancePayment = (0, express_async_handler_1.default)((req, res) =
 }));
 exports.generateAdvancePayment = generateAdvancePayment;
 const getAvailabilityInfo = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _f;
-    const availabilityData = yield eventPlannerService.getAvailabilityInfo((_f = req === null || req === void 0 ? void 0 : req.user) === null || _f === void 0 ? void 0 : _f.id);
+    var _a;
+    const availabilityData = yield eventPlannerService.getAvailabilityInfo((_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.id);
     console.log(availabilityData, "availability data");
     (0, responseFormatter_1.default)(200, { availabilityData }, "successfull", res, req);
 }));
 exports.getAvailabilityInfo = getAvailabilityInfo;
 const addHoliday = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _g;
+    var _a;
     const { date } = req.body;
-    const holiday = yield eventPlannerService.addHoliday((_g = req.user) === null || _g === void 0 ? void 0 : _g.id, date);
+    const holiday = yield eventPlannerService.addHoliday((_a = req.user) === null || _a === void 0 ? void 0 : _a.id, date);
     (0, responseFormatter_1.default)(200, null, "Holiday added successfully", res, req);
 }));
 exports.addHoliday = addHoliday;
 const addNewEvent = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _h;
+    var _a;
     const { formValue } = req.body;
-    const holiday = yield eventPlannerService.addNewEvent((_h = req.user) === null || _h === void 0 ? void 0 : _h.id, formValue);
+    const holiday = yield eventPlannerService.addNewEvent((_a = req.user) === null || _a === void 0 ? void 0 : _a.id, formValue);
     (0, responseFormatter_1.default)(200, null, "Holiday added successfully", res, req);
 }));
 exports.addNewEvent = addNewEvent;

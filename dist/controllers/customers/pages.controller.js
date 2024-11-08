@@ -128,8 +128,8 @@ const venueRazorPayment = (0, express_async_handler_1.default)((req, res) => __a
 }));
 exports.venueRazorPayment = venueRazorPayment;
 const getAllBookings = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _c;
-    const allBookings = yield customerService.getAllBookings((_c = req.user) === null || _c === void 0 ? void 0 : _c.id);
+    var _a;
+    const allBookings = yield customerService.getAllBookings((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
     (0, responseFormatter_1.default)(200, { allBookings }, "successfully fetch all bookings", res, req);
 }));
 exports.getAllBookings = getAllBookings;
@@ -140,11 +140,11 @@ const getPlannerBookingForm = (0, express_async_handler_1.default)((req, res) =>
 }));
 exports.getPlannerBookingForm = getPlannerBookingForm;
 const createPlannerBooking = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _d, _e, _f;
+    var _a, _b, _c;
     const { slug } = req.params;
-    const eventInfo = (_d = req.body) === null || _d === void 0 ? void 0 : _d.eventInfo;
-    const addressInfo = (_e = req.body) === null || _e === void 0 ? void 0 : _e.addressInfo;
-    const paymentInfo = (_f = req.body) === null || _f === void 0 ? void 0 : _f.paymentInfo;
+    const eventInfo = (_a = req.body) === null || _a === void 0 ? void 0 : _a.eventInfo;
+    const addressInfo = (_b = req.body) === null || _b === void 0 ? void 0 : _b.addressInfo;
+    const paymentInfo = (_c = req.body) === null || _c === void 0 ? void 0 : _c.paymentInfo;
     let data;
     const errors = (0, express_validator_1.validationResult)(req);
     if (!errors.isEmpty()) {
@@ -177,8 +177,8 @@ const checkPlannerAvailability = (0, express_async_handler_1.default)((req, res)
 }));
 exports.checkPlannerAvailability = checkPlannerAvailability;
 const getNotifications = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _g, _h;
-    const data = yield notificationService.getNotifications((_g = req.user) === null || _g === void 0 ? void 0 : _g.id, (_h = req.user) === null || _h === void 0 ? void 0 : _h.role);
+    var _a, _b;
+    const data = yield notificationService.getNotifications((_a = req.user) === null || _a === void 0 ? void 0 : _a.id, (_b = req.user) === null || _b === void 0 ? void 0 : _b.role);
     (0, responseFormatter_1.default)(200, { notifications: data.notifications, readCount: data.readCount }, "successfull", res, req);
 }));
 exports.getNotifications = getNotifications;
@@ -194,28 +194,28 @@ const deleteNotification = (0, express_async_handler_1.default)((req, res) => __
 }));
 exports.deleteNotification = deleteNotification;
 const getPlannerBookingDetails = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _j, _k, _l, _m, _o;
+    var _a, _b, _c, _d, _e;
     const { bookingId } = req.params;
     const bookingData = yield eventPlannerService.getOneBooking(bookingId);
     let fullPayment = 0;
     // Calculate the total sum of amounts
     if (bookingData) {
-        const totalServiceCharges = ((_l = (_k = (_j = bookingData === null || bookingData === void 0 ? void 0 : bookingData.charges) === null || _j === void 0 ? void 0 : _j.fullPayment) === null || _k === void 0 ? void 0 : _k.servicesCharges) === null || _l === void 0 ? void 0 : _l.reduce((sum, charge) => sum + charge.cost, 0)) || 0;
-        fullPayment = (((_o = (_m = bookingData === null || bookingData === void 0 ? void 0 : bookingData.charges) === null || _m === void 0 ? void 0 : _m.fullPayment) === null || _o === void 0 ? void 0 : _o.planningFee) || 0) + totalServiceCharges;
+        const totalServiceCharges = ((_c = (_b = (_a = bookingData === null || bookingData === void 0 ? void 0 : bookingData.charges) === null || _a === void 0 ? void 0 : _a.fullPayment) === null || _b === void 0 ? void 0 : _b.servicesCharges) === null || _c === void 0 ? void 0 : _c.reduce((sum, charge) => sum + charge.cost, 0)) || 0;
+        fullPayment = (((_e = (_d = bookingData === null || bookingData === void 0 ? void 0 : bookingData.charges) === null || _d === void 0 ? void 0 : _d.fullPayment) === null || _e === void 0 ? void 0 : _e.planningFee) || 0) + totalServiceCharges;
     }
     console.log(fullPayment);
     (0, responseFormatter_1.default)(200, { bookingData, fullPayment }, "successfully fetch planner detail for booking", res, req);
 }));
 exports.getPlannerBookingDetails = getPlannerBookingDetails;
 const getVenueBookingDetails = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _p, _q, _r, _s, _t;
+    var _a, _b, _c, _d, _e;
     const { bookingId } = req.params;
     const bookingData = yield venueVendorService.getOneBooking(bookingId);
     let fullPayment = 0;
     // Calculate the total sum of amounts
     if (bookingData) {
-        const totalServiceCharges = ((_r = (_q = (_p = bookingData === null || bookingData === void 0 ? void 0 : bookingData.charges) === null || _p === void 0 ? void 0 : _p.fullPayment) === null || _q === void 0 ? void 0 : _q.servicesCharges) === null || _r === void 0 ? void 0 : _r.reduce((sum, charge) => sum + charge.cost, 0)) || 0;
-        fullPayment = (((_t = (_s = bookingData === null || bookingData === void 0 ? void 0 : bookingData.charges) === null || _s === void 0 ? void 0 : _s.fullPayment) === null || _t === void 0 ? void 0 : _t.venueRental) || 0) + totalServiceCharges;
+        const totalServiceCharges = ((_c = (_b = (_a = bookingData === null || bookingData === void 0 ? void 0 : bookingData.charges) === null || _a === void 0 ? void 0 : _a.fullPayment) === null || _b === void 0 ? void 0 : _b.servicesCharges) === null || _c === void 0 ? void 0 : _c.reduce((sum, charge) => sum + charge.cost, 0)) || 0;
+        fullPayment = (((_e = (_d = bookingData === null || bookingData === void 0 ? void 0 : bookingData.charges) === null || _d === void 0 ? void 0 : _d.fullPayment) === null || _e === void 0 ? void 0 : _e.venueRental) || 0) + totalServiceCharges;
     }
     console.log(fullPayment);
     (0, responseFormatter_1.default)(200, { bookingData, fullPayment }, "successfully fetch planner detail for booking", res, req);

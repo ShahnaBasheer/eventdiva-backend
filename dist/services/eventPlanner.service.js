@@ -910,7 +910,7 @@ class EventPlannerService {
     payAdvancepayment(bookingId) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a;
-            // Step 1: Fetch booking details
+            // Step 1: Fetch booking details    
             const bookingDetail = yield this._plannerBookingrepository.getOne({ bookingId });
             if (!bookingDetail) {
                 throw new customError_1.BadRequestError('No Booking Detail Found!');

@@ -1033,7 +1033,7 @@ class EventPlannerService {
     }
    
     async payAdvancepayment(bookingId: string) {
-        // Step 1: Fetch booking details
+        // Step 1: Fetch booking details    
         const bookingDetail = await this._plannerBookingrepository.getOne({ bookingId });
     
         if (!bookingDetail) {

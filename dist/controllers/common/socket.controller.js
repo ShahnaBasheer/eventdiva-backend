@@ -51,8 +51,8 @@ const getAllChatRooms = (0, express_async_handler_1.default)((req, res) => __awa
 }));
 exports.getAllChatRooms = getAllChatRooms;
 const getUnreadAllMessages = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b;
-    const unread = yield chatroomservice.getAllUreadMessage((_b = req === null || req === void 0 ? void 0 : req.user) === null || _b === void 0 ? void 0 : _b.id);
+    var _a;
+    const unread = yield chatroomservice.getAllUreadMessage((_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.id);
     (0, responseFormatter_1.default)(200, { count: unread }, "successfull", res, req);
 }));
 exports.getUnreadAllMessages = getUnreadAllMessages;

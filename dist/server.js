@@ -31,22 +31,22 @@ const server = http_1.default.createServer(app);
 app.use((0, cors_1.default)({
     credentials: true,
     origin: [
-        process.env.LOCALHOST_URL || '',
-        process.env.FRONTEND_AMPLIFY_URL || '',
-        process.env.FRONTEND_URL || '',
-        process.env.FRONTEND_WWW_URL || '',
-        process.env.FRONTEND_WWW_SLASH || '',
-        process.env.FRONTEND_SLASH_URL || '',
-        process.env.BACKEND_WWW_URL || '',
-        process.env.BACKEND_URL || ''
+        process.env['LOCALHOST_URL'] || '',
+        process.env['FRONTEND_AMPLIFY_URL'] || '',
+        process.env['FRONTEND_URL'] || '',
+        process.env['FRONTEND_WWW_URL'] || '',
+        process.env['FRONTEND_WWW_SLASH'] || '',
+        process.env['FRONTEND_SLASH_URL'] || '',
+        process.env['BACKEND_WWW_URL'] || '',
+        process.env['BACKEND_URL'] || ''
     ],
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT']
 }));
 // Middleware setup
 app.use((0, cookie_parser_1.default)());
 app.use((0, morgan_1.default)('dev'));
-app.use(express_1.default.json());
-app.use(express_1.default.urlencoded({ extended: true }));
+app.use(express_1.default.json({ limit: '100mb' })); // Increase limit to 100MB
+app.use(express_1.default.urlencoded({ extended: true, limit: '100mb' }));
 app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, 'uploads')));
 app.use(express_1.default.static(path_1.default.join(__dirname, 'public')));
 // Routes setup
@@ -59,16 +59,16 @@ app.use('/vendor/venue-vendor', venueVendorRouter_1.default);
 app.use(errorHandler_1.notFoundHandler);
 app.use(errorHandler_1.errorHandler);
 // Start server
-const port = process.env.PORT || 3000;
+const port = process.env['PORT'] || 3000;
 server.listen(port, () => {
     console.log(`Server is running on port successfully ${port}...`);
 });
 exports.default = app;
-// 'http://localhost:4200', 
-//     'https://master.d1ee9rxmukt8sl.amplifyapp.com', 
-//     'https://www.eventdiva.online', 
+// 'http://localhost:4200',
+//     'https://master.d1ee9rxmukt8sl.amplifyapp.com',
+//     'https://www.eventdiva.online',
 //     'https://eventdiva.online',
 //     'https://backend.eventdiva.online',
 //     'https://www.backend.eventdiva.online',
-//     'https://www.eventdiva.online/', 
+//     'https://www.eventdiva.online/',
 //     'https://eventdiva.online/',

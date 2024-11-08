@@ -714,11 +714,16 @@ class VenueVendorService {
         "Booking data not found. Payment verification failed."
       );
     }
-
+    const index = bookedData.payments?.length-1;
     if (generatedSignature === razorpay_signature) {
-      bookedData.payments[0].status = Status.Paid;
+      bookedData.payments[index].status = Status.Paid;
+      if(index === 1){
+        bookedData.paymentStatus = Status.Advance;
+      } else if(index === 2){
+          bookedData.paymentStatus = Status.Paid;
+      }
     } else {
-      bookedData.payments[0].status = Status.Failed;
+      bookedData.payments[index].status = Status.Failed;
       throw new BadRequestError(
         "Invalid payment signature. Potential fraud attempt."
       );

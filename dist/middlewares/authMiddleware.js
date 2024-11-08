@@ -35,14 +35,14 @@ const authMiddleware = (0, express_async_handler_1.default)((req, res, next) => 
             throw new customError_1.UnauthorizedError("Not authorized: no access token");
         }
         const decoded = jsonwebtoken_1.default.decode(accessToken);
-        role = decoded.role;
+        role = decoded["role"];
         const user = yield (0, helperFunctions_1.verifyToken)(accessToken, role, 1);
         if (!user)
             throw new customError_1.UnauthorizedError("User not found!");
         if (user.isBlocked) {
             let tokenKey = role === important_variables_1.UserRole.Customer
-                ? process.env.CUSTOMER_REFRESH
-                : process.env.VENDOR_REFRESH;
+                ? process.env["CUSTOMER_REFRESH"]
+                : process.env["VENDOR_REFRESH"];
             res.clearCookie(tokenKey);
             throw new customError_1.ForbiddenError("User account is blocked");
         }
@@ -73,13 +73,13 @@ const authMiddleware = (0, express_async_handler_1.default)((req, res, next) => 
         if (error instanceof jsonwebtoken_1.default.TokenExpiredError) {
             let refreshToken;
             if (role === important_variables_1.UserRole.Admin) {
-                tokenKey = process.env.ADMIN_REFRESH;
+                tokenKey = process.env["ADMIN_REFRESH"];
             }
             else if (role === important_variables_1.UserRole.Customer) {
-                tokenKey = process.env.CUSTOMER_REFRESH;
+                tokenKey = process.env["CUSTOMER_REFRESH"];
             }
             else if (role === important_variables_1.UserRole.Vendor) {
-                tokenKey = process.env.VENDOR_REFRESH;
+                tokenKey = process.env["VENDOR_REFRESH"];
             }
             refreshToken = req === null || req === void 0 ? void 0 : req.cookies[tokenKey];
             if (!refreshToken && role === important_variables_1.UserRole.Customer)
@@ -125,15 +125,15 @@ const isUser = (0, express_async_handler_1.default)((req, res, next) => __awaite
 exports.isUser = isUser;
 // WebSocket Authentication Middleware
 const authenticateSocket = (socket, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b, _c;
+    var _a, _b;
     let role;
     try {
-        const token = socket.handshake.auth.token || socket.handshake.query.token;
+        const token = socket.handshake.auth["token"] || socket.handshake.query["token"];
         if (!token) {
             return next(new customError_1.UnauthorizedError("Not authorized: no token provided"));
         }
         const decoded = jsonwebtoken_1.default.decode(token);
-        role = decoded.role;
+        role = decoded["role"];
         const user = yield tokenVerify(token, role, 1);
         socket.user = user; // Attach the user to the socket
         return next();
@@ -145,9 +145,9 @@ const authenticateSocket = (socket, next) => __awaiter(void 0, void 0, void 0, f
             // Handle token expiration based on role
             tokenKey =
                 role === important_variables_1.UserRole.Customer
-                    ? process.env.CUSTOMER_REFRESH
-                    : process.env.VENDOR_REFRESH;
-            const refreshToken = (_c = (_b = socket.handshake.headers.cookie) === null || _b === void 0 ? void 0 : _b.split("; ").find((cookie) => cookie.startsWith(tokenKey))) === null || _c === void 0 ? void 0 : _c.split("=")[1];
+                    ? process.env["CUSTOMER_REFRESH"]
+                    : process.env["VENDOR_REFRESH"];
+            const refreshToken = (_b = (_a = socket.handshake.headers.cookie) === null || _a === void 0 ? void 0 : _a.split("; ").find((cookie) => cookie.startsWith(tokenKey))) === null || _b === void 0 ? void 0 : _b.split("=")[1];
             if (!refreshToken)
                 return next(new customError_1.UnauthorizedError("Refresh token not found!"));
             try {
@@ -173,12 +173,12 @@ const authenticateSocket = (socket, next) => __awaiter(void 0, void 0, void 0, f
 });
 exports.authenticateSocket = authenticateSocket;
 const validateSocketUser = (socket) => __awaiter(void 0, void 0, void 0, function* () {
-    var _d, _e;
+    var _a, _b;
     if (!socket.user) {
         throw new customError_1.UnauthorizedError("User not authenticated");
     }
     let role = socket.user.role;
-    const token = socket.handshake.auth.token || socket.handshake.query.token;
+    const token = socket.handshake.auth["token"] || socket.handshake.query["token"];
     try {
         const user = yield tokenVerify(token, socket.user.role, 1);
         socket.user = user;
@@ -188,9 +188,9 @@ const validateSocketUser = (socket) => __awaiter(void 0, void 0, void 0, functio
         if (error instanceof jsonwebtoken_1.default.TokenExpiredError) {
             tokenKey =
                 role === important_variables_1.UserRole.Customer
-                    ? process.env.CUSTOMER_REFRESH
-                    : process.env.VENDOR_REFRESH;
-            const refreshToken = (_e = (_d = socket.handshake.headers.cookie) === null || _d === void 0 ? void 0 : _d.split("; ").find((cookie) => cookie.startsWith(tokenKey))) === null || _e === void 0 ? void 0 : _e.split("=")[1];
+                    ? process.env["CUSTOMER_REFRESH"]
+                    : process.env["VENDOR_REFRESH"];
+            const refreshToken = (_b = (_a = socket.handshake.headers.cookie) === null || _a === void 0 ? void 0 : _a.split("; ").find((cookie) => cookie.startsWith(tokenKey))) === null || _b === void 0 ? void 0 : _b.split("=")[1];
             if (!refreshToken) {
                 throw new customError_1.UnauthorizedError("Refresh token not found!");
             }
