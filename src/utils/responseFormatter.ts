@@ -1,8 +1,10 @@
 import { Response } from 'express';
 import { CustomRequest } from '../interfaces/request.interface';
-import CustomerService from '../services/customer.service';
-import AdminService from '../services/admin.service';
-import VendorService from '../services/vendor.service';
+import UserService from '../services/user.service';
+import VendorRepository from '../repositories/vendor.repository';
+import AdminRepository from '../repositories/admin.repository';
+import CustomerRepository from '../repositories/customer.repository';
+import NotificationRepository from '../repositories/notification.repository';
 
 
 interface ResponseData {
@@ -12,9 +14,13 @@ interface ResponseData {
 }
   
 
-const customerService = new CustomerService();
-const adminService = new AdminService();
-const vendorService = new VendorService();
+
+const userService = new UserService(
+    new VendorRepository(),
+    new AdminRepository(),
+    new CustomerRepository(),
+    new NotificationRepository()
+);
 
 
 const createSuccessResponse = <T>(statusCode: number, info: T, message: string, res: Response, req?: CustomRequest): void => {
@@ -24,13 +30,7 @@ const createSuccessResponse = <T>(statusCode: number, info: T, message: string, 
     if(req) {
         if(req.token) data.token = req.token;
         if(req.user){
-            if(req.user?.role == 'customer'){
-                data.user = customerService.extractUserData(req.user);
-            } else if(req.user?.role == 'admin'){
-                data.user = adminService.extractUserData(req.user);
-            } else if(req.user?.role == 'vendor'){
-                data.user = vendorService.extractUserData(req.user);
-            }
+            data.user = userService.extractUserData(req.user);
         }     
     }
     res.status(statusCode).json({ status: 'success', data , message });

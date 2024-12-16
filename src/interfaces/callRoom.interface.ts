@@ -1,5 +1,5 @@
 // src/models/CallRoom.ts
-import mongoose, { Schema, Document } from 'mongoose';
+import  { Document } from 'mongoose';
 
 interface ICallRoom {
     callRoomId: string;

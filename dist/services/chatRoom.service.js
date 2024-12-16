@@ -14,16 +14,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const customError_1 = require("../errors/customError");
-const chatRoom_repository_1 = __importDefault(require("../repositories/chatRoom.repository"));
 const mongoose_1 = __importDefault(require("mongoose"));
-const customer_repository_1 = __importDefault(require("../repositories/customer.repository"));
-const vendor_repository_1 = __importDefault(require("../repositories/vendor.repository"));
 const important_variables_1 = require("../utils/important-variables");
 class ChatRoomService {
-    constructor() {
-        this._chatroomrepository = new chatRoom_repository_1.default();
-        this._customerepository = new customer_repository_1.default();
-        this._vendorepository = new vendor_repository_1.default();
+    constructor(_chatroomrepository, _customerepository, _vendorepository) {
+        this._chatroomrepository = _chatroomrepository;
+        this._customerepository = _customerepository;
+        this._vendorepository = _vendorepository;
     }
     createRoomOrFind(user, receiverId) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -42,7 +39,7 @@ class ChatRoomService {
                 }
                 else if ((user === null || user === void 0 ? void 0 : user.role) === important_variables_1.UserRole.Vendor) {
                     vendorId = user.id;
-                    console.log(receiverId);
+                    console.log(receiverId, "jjjjj");
                     let customer = yield this._customerepository.getById(receiverId);
                     if (customer) {
                         customerId = customer.id;

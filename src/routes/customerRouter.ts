@@ -1,70 +1,67 @@
 
 
 import express, { Router } from 'express';
-import { getAllEventPlanners, getAllVenues, 
-        getCustomerHome, getEventPlannerDetail, 
-        getVenueDetail, getVenueBookingPage,
-        createVenueBooking, getAllBookings, 
-        venueRazorPayment, getPlannerBookingForm,
-        createPlannerBooking, plannerRazorPayment,
-        checkVenueAvailability, checkPlannerAvailability,
-        getNotifications, changeReadStatus,
-        deleteNotification, getPlannerBookingDetails,
-        getVenueBookingDetails, plannerAdvancePayment,
-        plannerFullPayment, venueAdvancePayment,
-        venueFullPayment, getContactPage,
-        getAboutPage } from '../controllers/customers/pages.controller';
-import { authMiddleware, isUser } from '../middlewares/authMiddleware';
+import { authMiddleware, requireRole, setRole } from '../middlewares/authMiddleware';
 import { validateSignup, validateLogin, ValidateVenueBooking, ValidatePlannerBooking, ValidateCheckAvailability } from '../middlewares/validateForm';
-import { getCustomerProfile, loginCustomer, logout, passWordChangeProfile, resendOtp, signinWithGoogle, signupCustomer, updateCustomerProfile, updateEmailProfile, verifyEmailProfile, verifyOtp } from '../controllers/customers/customer.controller';
+import customerController from '../controllers/customer.controller';
 import resendOtpLimiter from '../middlewares/rateLimit';
 import { upload } from '../middlewares/multer';
-import { getOrCreateChatRoom, getStartCall,  } from '../controllers/common/socket.controller';
-
+import socketController from '../controllers/socket.controller';
+import { UserRole } from '../utils/important-variables';
+import authController from '../controllers/auth.controller';
+import commonController from '../controllers/common.controller';
 
 const router: Router = express.Router();
 
 
-router.get('/', authMiddleware, getCustomerHome);
-router.get('/home', authMiddleware, getCustomerHome);
-router.get('/contact', authMiddleware, getContactPage);
-router.get('/about', authMiddleware, getAboutPage);
-router.get('/vendors/event-planners', authMiddleware, getAllEventPlanners);
-router.get('/vendors/event-planners/:slug', authMiddleware, getEventPlannerDetail);
-router.get('/vendors/venues', authMiddleware, getAllVenues);
-router.get('/vendors/venues/:slug', authMiddleware, getVenueDetail);
-router.get('/vendors/venues/booking/:slug', authMiddleware, isUser, getVenueBookingPage);
-router.post('/venues/booking/payment/:slug', authMiddleware, isUser, upload, ValidateVenueBooking, createVenueBooking);
-router.post('/venues/booking/razorpay', authMiddleware,isUser, venueRazorPayment);
-router.post('/venues/check-availability/:slug', authMiddleware, isUser, ValidateCheckAvailability, checkVenueAvailability)
-router.get('/vendors/event-planners/booking/:slug', authMiddleware, isUser, getPlannerBookingForm);
-router.post('/event-planners/booking/payment/:slug', authMiddleware, isUser, ValidatePlannerBooking, createPlannerBooking);
-router.post('/event-planners/booking/razorpay', authMiddleware,isUser, plannerRazorPayment);
-router.post('/event-planners/check-availability/:slug', authMiddleware, isUser, ValidateCheckAvailability, checkPlannerAvailability)
-router.get('/bookings', authMiddleware, isUser, getAllBookings);
-router.get('/bookings/event-planner/details/:bookingId', authMiddleware, isUser, getPlannerBookingDetails);
-router.get('/bookings/event-planner/advancepayment/:bookingId', authMiddleware, isUser, plannerAdvancePayment);
-router.get('/bookings/event-planner/fullpayment/:bookingId', authMiddleware, isUser, plannerFullPayment);
-router.get('/bookings/venue/details/:bookingId', authMiddleware, isUser, getVenueBookingDetails);
-router.get('/bookings/venue/advancepayment/:bookingId', authMiddleware, isUser, venueAdvancePayment);
-router.get('/bookings/venue/fullpayment/:bookingId', authMiddleware, isUser, venueFullPayment);
-router.post('/video-call/start-call', authMiddleware, isUser, getStartCall);
-router.post('/chat-room/join-room', authMiddleware, isUser, getOrCreateChatRoom);
-router.get('/notifications', authMiddleware, isUser, getNotifications);
-router.patch('/notifications/read', authMiddleware, isUser, changeReadStatus);
-router.delete('/notifications/delete/:id', authMiddleware, isUser, deleteNotification);
-router.get('/profile', authMiddleware, isUser, getCustomerProfile);
-router.patch('/profile/update', authMiddleware, isUser, updateCustomerProfile);
-router.patch('/profile/email/', authMiddleware, isUser, updateEmailProfile);
-router.patch('/profile/email-update', authMiddleware, isUser, verifyEmailProfile);
-router.patch('/profile/password-change', authMiddleware, isUser, passWordChangeProfile);
-router.post('/login', validateLogin, loginCustomer);
-router.post('/signup', validateSignup, signupCustomer);
-router.post('/verify-otp', verifyOtp);
-router.post('/resend-otp', resendOtpLimiter, resendOtp);
-router.post('/auth/google', signinWithGoogle);
-router.get('/contact', authMiddleware, getContactPage);
-router.get('/logout', authMiddleware, isUser, logout);
+
+router.post('/login', setRole(UserRole.Customer), validateLogin, authController.login);
+router.post('/signup', setRole(UserRole.Customer), validateSignup, authController.signup);
+router.post('/verify-otp', setRole(UserRole.Customer), authController.verifyOtp);
+router.post('/resend-otp', setRole(UserRole.Customer), resendOtpLimiter, authController.resendOtp);
+router.post('/auth/google', setRole(UserRole.Customer), authController.signinWithGoogle);
+
+
+
+router.use(authMiddleware);
+router.get('/', customerController.getCustomerHome);
+router.get('/home', customerController.getCustomerHome);
+router.get('/contact', customerController.getContactPage);
+router.get('/about', customerController.getAboutPage);
+router.get('/vendors/event-planners', customerController.getAllEventPlanners);
+router.get('/vendors/event-planners/:slug', commonController.getEventPlanner);
+router.get('/vendors/venues', customerController.getAllVenues);
+router.get('/vendors/venues/:slug', commonController.getVenue);
+
+router.use(requireRole(UserRole.Customer));
+
+
+router.get('/vendors/venues/booking/:slug', customerController.getVenueBookingPage);
+router.post('/venues/booking/payment/:slug', upload, ValidateVenueBooking, customerController.createVenueBooking);
+router.post('/venues/booking/razorpay', customerController.venueRazorPayment);
+router.post('/venues/check-availability/:slug', ValidateCheckAvailability, customerController.checkVenueAvailability)
+router.get('/vendors/event-planners/booking/:slug', customerController.getPlannerBookingForm);
+router.post('/event-planners/booking/payment/:slug', ValidatePlannerBooking, customerController.createPlannerBooking);
+router.post('/event-planners/booking/razorpay', customerController.plannerRazorPayment);
+router.post('/event-planners/check-availability/:slug', ValidateCheckAvailability, customerController.checkPlannerAvailability)
+router.get('/bookings', customerController.getAllBookings);
+router.get('/bookings/event-planner/details/:bookingId', customerController.getPlannerBookingDetails);
+router.get('/bookings/event-planner/advancepayment/:bookingId', customerController.plannerAdvancePayment);
+router.get('/bookings/event-planner/fullpayment/:bookingId', customerController.plannerFullPayment);
+router.get('/bookings/venue/details/:bookingId', customerController.getVenueBookingDetails);
+router.get('/bookings/venue/advancepayment/:bookingId', customerController.venueAdvancePayment);
+router.get('/bookings/venue/fullpayment/:bookingId', customerController.venueFullPayment);
+router.post('/video-call/start-call', socketController.getStartCall);
+router.post('/chat-room/join-room', socketController.getOrCreateChatRoom);
+router.get('/notifications', customerController.getNotifications);
+router.patch('/notifications/read', customerController.changeReadStatus);
+router.delete('/notifications/delete/:id', customerController.deleteNotification);
+router.get('/profile', customerController.getCustomerProfile);
+router.patch('/profile/update', customerController.updateCustomerProfile);
+router.patch('/profile/email/', customerController.updateEmailProfile);
+router.patch('/profile/email-update', customerController.verifyEmailProfile);
+router.patch('/profile/password-change', customerController.passwordChangeProfile);
+router.get('/logout', authController.logout);
 
 
 

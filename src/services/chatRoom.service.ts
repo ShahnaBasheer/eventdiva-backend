@@ -1,31 +1,27 @@
 
 // src/services/VideoCallService.ts
 
-import { IcustomerDocument } from "../interfaces/user.interface";
 import { BadRequestError } from "../errors/customError";
-import { IVendorDocument } from "../interfaces/vendor.interface";
 import ChatroomRepository from "../repositories/chatRoom.repository";
-import { IChatroom, IChatroomDocument, IMessage } from "../interfaces/chatRoom.interface";
+import { IChatroomDocument, IMessage } from "../interfaces/chatRoom.interface";
 import mongoose from 'mongoose';
 import CustomerRepository from "../repositories/customer.repository";
 import VendorRepository from "../repositories/vendor.repository";
-import { UserRole } from '../utils/important-variables';
+import { UserRole, VCDocType } from '../utils/important-variables';
 
 
 
 class ChatRoomService {
 
-    private _chatroomrepository!: ChatroomRepository;
-    private _customerepository!: CustomerRepository;
-    private _vendorepository!: VendorRepository;
+    
 
-    constructor() {
-        this._chatroomrepository = new ChatroomRepository();
-        this._customerepository = new CustomerRepository();
-        this._vendorepository = new VendorRepository();
-    }
+    constructor(
+        private _chatroomrepository: ChatroomRepository,
+        private _customerepository: CustomerRepository,
+        private _vendorepository: VendorRepository,
+    ) {}
 
-   async createRoomOrFind(user: IcustomerDocument | IVendorDocument, receiverId: string): Promise<IChatroomDocument> {
+   async createRoomOrFind(user: VCDocType, receiverId: string): Promise<IChatroomDocument> {
         try {
             let customerId = '';
             let vendorId = '';
@@ -39,7 +35,7 @@ class ChatRoomService {
                 }
             } else if(user?.role === UserRole.Vendor){
                 vendorId = user.id;
-                console.log(receiverId)
+                console.log(receiverId, "jjjjj")
                 let customer = await this._customerepository.getById(receiverId);
                 if(customer){
                     customerId = customer.id;

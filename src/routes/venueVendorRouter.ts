@@ -1,30 +1,24 @@
 import express, { Router } from 'express';
-import { authMiddleware, isUser } from '../middlewares/authMiddleware';
-import { getVenueVendorDashboard, getVenueVendorProfile, 
-       getVenueVendorService, registerVenueVendorService,
-       getAllVenueBookings, getVenueBookingDetails, 
-       changeBookingStatus, generateAdvancePayment,
-       getAvailabilityInfo, addHoliday, addNewEvent,
-       generateFullPayment
-    } from '../controllers/vendors/venue-vendor.controller';
+import venueController from '../controllers/vendors/venue-vendor.controller';
+import commonController from '../controllers/common.controller';
 import { upload } from '../middlewares/multer';
 import { ValidateVenue } from '../middlewares/validateForm';
-
 
 const router: Router = express.Router();
 
 
-router.get('/dashboard', authMiddleware, isUser, getVenueVendorDashboard);
-router.get('/service', authMiddleware, isUser, getVenueVendorService);
-router.post('/venue-register', authMiddleware, isUser, upload, ValidateVenue, registerVenueVendorService);
-router.get('/bookings', authMiddleware, isUser, getAllVenueBookings);
-router.get('/bookings/details/:bookingId', authMiddleware, isUser, getVenueBookingDetails);
-router.patch('/bookings/details/:bookingId/change-status/', authMiddleware, isUser, changeBookingStatus);
-router.patch('/bookings/advance-payment/', authMiddleware, isUser, generateAdvancePayment);
-router.patch('/bookings/full-payment/', authMiddleware, isUser, generateFullPayment);
-router.get('/calendar', authMiddleware, isUser, getAvailabilityInfo);
-router.patch('/calendar/add-holiday/', authMiddleware, isUser, addHoliday);
-router.patch('/calendar/add-new-event/', authMiddleware, isUser, addNewEvent);
+
+router.get('/dashboard', venueController.getVenueVendorDashboard);
+router.get('/service', commonController.getVenue);
+router.post('/venue-register', upload, ValidateVenue, venueController.registerVenueVendorService);
+router.get('/bookings', venueController.getAllVenueBookings);
+router.get('/bookings/details/:bookingId', venueController.getVenueBookingDetails);
+router.patch('/bookings/details/:bookingId/change-status/', venueController.changeBookingStatus);
+router.patch('/bookings/advance-payment/', venueController.generateAdvancePayment);
+router.patch('/bookings/full-payment/', venueController.generateFullPayment);
+router.get('/calendar', venueController.getAvailabilityInfo);
+router.patch('/calendar/add-holiday/', venueController.addHoliday);
+// router.patch('/calendar/add-new-event/', controller.addNewEvent);
 
 
 

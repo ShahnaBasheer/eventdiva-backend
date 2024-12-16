@@ -21,6 +21,8 @@ import vendorRouter from './routes/vendorRouter';
 import eventPlannerRouter from './routes/eventPlannerRouter';
 import venueVendorRouter from './routes/venueVendorRouter';
 import { errorHandler, notFoundHandler }  from './middlewares/errorHandler';
+import { authMiddleware, requireRole } from './middlewares/authMiddleware';
+import { UserRole } from './utils/important-variables';
 
 
 // Create the Express application
@@ -57,6 +59,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api', customerRouter);
 app.use('/admin', adminRouter);
 app.use('/vendor', vendorRouter);
+app.use(authMiddleware, requireRole(UserRole.Vendor));
 app.use('/vendor/event-planner', eventPlannerRouter);
 app.use('/vendor/venue-vendor', venueVendorRouter);
 

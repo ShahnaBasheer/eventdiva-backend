@@ -23,6 +23,8 @@ const vendorRouter_1 = __importDefault(require("./routes/vendorRouter"));
 const eventPlannerRouter_1 = __importDefault(require("./routes/eventPlannerRouter"));
 const venueVendorRouter_1 = __importDefault(require("./routes/venueVendorRouter"));
 const errorHandler_1 = require("./middlewares/errorHandler");
+const authMiddleware_1 = require("./middlewares/authMiddleware");
+const important_variables_1 = require("./utils/important-variables");
 // Create the Express application
 const app = (0, express_1.default)();
 const server = http_1.default.createServer(app);
@@ -53,6 +55,7 @@ app.use(express_1.default.static(path_1.default.join(__dirname, 'public')));
 app.use('/api', customerRouter_1.default);
 app.use('/admin', adminRouter_1.default);
 app.use('/vendor', vendorRouter_1.default);
+app.use(authMiddleware_1.authMiddleware, (0, authMiddleware_1.requireRole)(important_variables_1.UserRole.Vendor));
 app.use('/vendor/event-planner', eventPlannerRouter_1.default);
 app.use('/vendor/venue-vendor', venueVendorRouter_1.default);
 // Error handler

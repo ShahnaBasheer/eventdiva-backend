@@ -1,35 +1,33 @@
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import { IcustomerDocument } from "../interfaces/user.interface";
-import CustomerService from "../services/customer.service";
-import AdminService from '../services/admin.service';
 import { IAdminDocument } from '../interfaces/admin.interface';
-import VendorService from '../services/vendor.service';
 import { IVendor, IVendorDocument } from '../interfaces/vendor.interface';
-import { generateAdminToken, generateCustomerToken, generateVendorToken } from '../config/jwToken';
-import NotificationService from '../services/notification.service';
+import { generateAdminToken, generateCustomerToken, generateRefreshAdminToken, generateRefreshCustomerToken, generateRefreshVendorToken, generateVendorToken } from '../config/jwToken';
 import { NotificationType } from './eventsVariables';
 import { INotification } from '../interfaces/notification.interface';
-import { UserRole } from './important-variables';
+import { IUserDocument, UserRole } from './important-variables';
+import UserService from '../services/user.service';
+import VendorRepository from '../repositories/vendor.repository';
+import AdminRepository from '../repositories/admin.repository';
+import CustomerRepository from '../repositories/customer.repository';
+import NotificationRepository from '../repositories/notification.repository';
+import { ICustomerDocument } from '../interfaces/customer.interface';
+import { notificationService } from '../config/dependencyContainer';
+import { Status } from './status-options';
 
 
 
-const verifyToken = async(token: string, role: string, tokenType: number): Promise<IcustomerDocument | IAdminDocument | IVendorDocument | null> =>{
+const verifyToken = async(token: string, role: UserRole, tokenType: number): Promise<IUserDocument | null> =>{
     let secretKey;
-    let service: CustomerService | AdminService | VendorService | undefined;
-
 
     switch (role) {
         case UserRole.Customer:
             secretKey = (tokenType === 1)? process.env.JWT_CUSTOMER_SECRET : process.env.JWT_REFRESH_CUSTOMER_SECRET;
-            service = new CustomerService();;
             break;
         case UserRole.Admin:
             secretKey = (tokenType === 1)? process.env.JWT_ADMIN_SECRET: process.env.JWT_REFRESH_ADMIN_SECRET;
-            service = new AdminService();
             break;
         case UserRole.Vendor:
-            secretKey = (tokenType === 1)? process.env.JWT_VENDOR_SECRET: process.env.JWT_REFRESH_VENDOR_SECRET;;
-            service = new VendorService();            
+            secretKey = (tokenType === 1)? process.env.JWT_VENDOR_SECRET: process.env.JWT_REFRESH_VENDOR_SECRET;;         
     }
     if (!secretKey) {
         throw new Error(`JWT secret is not defined for role: ${role}`);
@@ -39,12 +37,18 @@ const verifyToken = async(token: string, role: string, tokenType: number): Promi
     if (!decoded.id) {
         throw new Error(`Invalid token: no ID found`);
     } 
+    const service = new UserService(
+      new VendorRepository(),
+      new AdminRepository(),
+      new CustomerRepository(),
+      new NotificationRepository()
+    ) 
    
-    return await service!.getUserById(decoded?.id);
+    return await service.getUserById(decoded?.id, role);
 }
 
 
-const isVendorDocument = (user: IVendorDocument | IcustomerDocument | IAdminDocument): user is IVendorDocument => {
+const isVendorDocument = (user: IVendorDocument | ICustomerDocument | IAdminDocument): user is IVendorDocument => {
   return user && typeof (user  as IVendorDocument).vendorType !== undefined;
 }
 
@@ -61,6 +65,22 @@ const generateNewToken = (id: string, role: string): string => {
     return newToken;
 }
 
+
+
+const createToken = (userId: string, role: string) => {
+  let accessToken, refreshToken;
+  if(role === 'admin') {
+    accessToken = generateAdminToken(userId, role);
+    refreshToken = generateRefreshAdminToken(userId, role);
+  } else if(role === 'customer'){
+    accessToken = generateCustomerToken(userId, role);
+    refreshToken = generateRefreshCustomerToken(userId, role);
+  } else if(role === 'vendor'){
+    accessToken = generateVendorToken(userId, role);
+    refreshToken = generateRefreshVendorToken(userId, role);
+  }
+  return { accessToken, refreshToken }
+}
 
 
 const generateOrderId = (vendor: string) => {
@@ -130,7 +150,6 @@ const notificationTypes = {
 
   const handleNotification = async (data: any) => {
       let notificationData: { message: string, link?: string };
-      const notificationService = new NotificationService();
 
 
       switch (data.type) {
@@ -194,11 +213,54 @@ const notificationTypes = {
     return [String(param)];
   };
 
+  const capitalize = (string: string) => {
+    if (!string) return ''; // Handle empty or null strings
+    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+  }
+
+  const getRefreshKey = (role: string) => {
+    if(role === UserRole.Admin) return process.env.ADMIN_REFRESH;
+    else if(role === UserRole.Customer) return process.env.CUSTOMER_REFRESH;
+    else if(role === UserRole.Vendor) return process.env.VENDOR_REFRESH;
+    return '';
+  }
+
+  const generateServiceFilter = (user: IUserDocument, slug?: string) => {
+    const filter: { vendorId?: string; slug?: string; approval?: Status } = {};
+  
+    switch (user.role) {
+      case UserRole.Vendor:
+        filter.vendorId = user.id;
+        break;
+  
+      case UserRole.Admin:
+        if (!slug) throw new Error("Slug is required for admin requests");
+        filter.slug = slug;
+        break;
+  
+      case UserRole.Customer:
+        if (!slug) throw new Error("Slug is required for customer requests");
+        filter.slug = slug;
+        filter.approval = Status.Approved;
+        break;
+  
+      default:
+        throw new Error("Invalid user role");
+    }
+  
+    return filter;
+  }
+  
+
 export {
     generateNewToken,
     verifyToken,
     generateOrderId,
     handleNotification,
     isVendorDocument,
-    parseQueryToStringArray
+    parseQueryToStringArray,
+    createToken,
+    capitalize,
+    getRefreshKey,
+    generateServiceFilter
 }

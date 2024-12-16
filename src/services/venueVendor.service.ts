@@ -26,24 +26,20 @@ import NotificationRepository from "../repositories/notification.repository";
 import cloudinary from "../config/cloudinary.config";
 import sharp from "sharp";
 import { Readable } from "stream";
-import { IVendor, IVendorDocument } from "../interfaces/vendor.interface";
+import { IVendorDocument } from "../interfaces/vendor.interface";
 import { isNumber } from "razorpay/dist/utils/razorpay-utils";
-import { count } from "console";
+
 
 class VenueVendorService {
-  private _venueVendorRepository: VenueVendorRepository;
-  private _addressRepository: AddressRepository;
-  private _venueBookingrepository: VenueBookingRepository;
-  private _availabilityrepository: AvailabilityRepository;
-  private _notificationrepository: NotificationRepository;
+  
 
-  constructor() {
-    this._venueVendorRepository = new VenueVendorRepository();
-    this._addressRepository = new AddressRepository();
-    this._venueBookingrepository = new VenueBookingRepository();
-    this._availabilityrepository = new AvailabilityRepository();
-    this._notificationrepository = new NotificationRepository();
-  }
+  constructor(
+    private _venueVendorRepository: VenueVendorRepository,
+    private _addressRepository: AddressRepository,
+    private _venueBookingrepository: VenueBookingRepository,
+    private _availabilityrepository: AvailabilityRepository,
+    private _notificationrepository: NotificationRepository,
+  ) { }
 
   async createVenue(userInfo: Filter, files: any) {
     if (!files?.coverPic) throw new ConflictError("Cover Picture is required");
@@ -280,10 +276,6 @@ class VenueVendorService {
 
   async getVenue(filter: Filter): Promise<IVenue | IVenueDocument | null> {
     return await this._venueVendorRepository.getVenueDetail({ ...filter });
-  }
-
-  async get(filter: Filter): Promise<IVenue[] | IVenueDocument[] | null> {
-    return await this._venueVendorRepository.getAllWithPopuate({ ...filter });
   }
 
   async getAllVenues(

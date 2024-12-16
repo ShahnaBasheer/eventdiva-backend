@@ -1,13 +1,15 @@
 import { Schema, Document } from 'mongoose';
 
-
-interface Icustomer{
+interface ICustomer {
     firstName: string;
     lastName: string;
     email: string;
+    mobile?: string;
+    role?: string;
+}
+interface ICustomerData extends ICustomer{
     password?: string;
     googleId?: string;
-    mobile?: string;
     address?: Schema.Types.ObjectId;
     favorites?: Schema.Types.ObjectId[];
     bookings?: Schema.Types.ObjectId[];
@@ -17,7 +19,6 @@ interface Icustomer{
     newotpTimestamp?: Date;
     resetPasswordToken?: string;
     resetPasswordExpires?: Date;
-    role?: string;
     isVerified?: boolean;
     isPhoneVerified?: boolean;
     isDeleted?: boolean;
@@ -27,9 +28,10 @@ interface Icustomer{
 }
 
 
-interface IcustomerDocument extends Icustomer, Document {}
+interface ICustomerDocument extends ICustomerData, Document {}
 
 export { 
-    Icustomer, 
-    IcustomerDocument 
+    ICustomer, 
+    ICustomerData,
+    ICustomerDocument 
 };

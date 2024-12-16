@@ -1,4 +1,4 @@
-import  { Icustomer, IcustomerDocument } from '../interfaces/user.interface';
+import  { ICustomerData, ICustomerDocument } from '../interfaces/customer.interface';
 import mongoose, { Schema } from 'mongoose';
 
 
@@ -33,11 +33,11 @@ const customerSchema: Schema = new Schema(
         }],
         password: {
             type: String,
-            required: function(this: Icustomer) {
+            required: function(this: ICustomerData) {
                 return !this.googleId; // Only required if googleId is not present
               },
               validate: {
-                validator: function(this: Icustomer, value: string) {
+                validator: function(this: ICustomerData, value: string) {
                   // If googleId is present, password can be optional
                   return this.googleId || value;
                 },
@@ -107,6 +107,6 @@ customerSchema.pre('save', function(next) {
 
 
 
-const Customer = mongoose.model<IcustomerDocument>('Customer', customerSchema);
+const Customer = mongoose.model<ICustomerDocument>('Customer', customerSchema);
 
 export default Customer

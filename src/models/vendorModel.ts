@@ -1,10 +1,10 @@
 
-import { IVendorDocument, IVendor } from '../interfaces/vendor.interface';
+import { IVendorDocument, IVendorData } from '../interfaces/vendor.interface';
 import mongoose, { Schema } from 'mongoose';
 
 
 
-const vendorSchema: Schema = new Schema<IVendor>(
+const vendorSchema: Schema = new Schema<IVendorData>(
     {
         firstName: {       
             type: String, 

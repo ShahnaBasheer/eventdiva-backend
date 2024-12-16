@@ -9,11 +9,8 @@ import VideoCallRepository from "../repositories/videoCall.repository";
 
 class VideoCallService {
 
-    private _videocallrepository!: VideoCallRepository;
+    constructor(private _videocallrepository: VideoCallRepository) { }
 
-    constructor() {
-        this._videocallrepository = new VideoCallRepository();
-    }
    async initiateCall(userId: string, vendorId: string): Promise<string> {
         try {
             const callRoomId = `room_${Date.now()}`;

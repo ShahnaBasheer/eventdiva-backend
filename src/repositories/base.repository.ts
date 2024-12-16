@@ -7,7 +7,7 @@ import { NotFoundError } from '../errors/customError';
 
 
 
-class BaseRepository<T extends Document> implements IBaseRepository<T> {
+export default abstract class BaseRepository<T extends Document> implements IBaseRepository<T> {
     private model: Model<T>;
   
     constructor(model: Model<T>) {
@@ -42,9 +42,6 @@ class BaseRepository<T extends Document> implements IBaseRepository<T> {
         return await this.model.find({...filter},{ password: 0, googleId: 0, }).exec();
     }
 
-    async getAllWithPopuate(filter: FilterQuery<T>): Promise<T[]> {
-        return await this.model.find({...filter},{ password: 0, googleId: 0, }).populate('address').exec();
-    }
   
     async getById(id: string): Promise<T | null> {
         return await this.model.findById(id).exec();
@@ -61,14 +58,6 @@ class BaseRepository<T extends Document> implements IBaseRepository<T> {
 
     async getByEmail(email: string): Promise<T | null> {
         return await this.model.findOne({ email }).exec();
-    }
-
-    async block(id: string): Promise<T | null>{
-        return await this.model.findByIdAndUpdate(id,{isBlocked : true},{new:true})
-    }
-
-    async unblock(id: string): Promise<T | null>{
-        return await this.model.findByIdAndUpdate(id,{isBlocked : false},{new:true})
     }
 
     async getAllVendors(filter: FilterQuery<T>): Promise<T [] | null> {
@@ -92,4 +81,4 @@ class BaseRepository<T extends Document> implements IBaseRepository<T> {
     }
 }
 
-export default BaseRepository;
+

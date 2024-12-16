@@ -5,7 +5,7 @@ import Razorpay from 'razorpay';
 import fs from 'fs';
 import path from 'path';
 import slugify from 'slugify';
-import { BadRequestError, ConflictError, CustomError, UnauthorizedError } from "../errors/customError";
+import { BadRequestError, ConflictError, CustomError } from "../errors/customError";
 import { Filter } from "../interfaces/utilities.interface";
 import PlannerBookingRepository from "../repositories/plannerBooking.repository";
 import { IEventPlannerBooking } from "../interfaces/eventPlannerBooking.interface";
@@ -27,20 +27,15 @@ import { isNumber } from "razorpay/dist/utils/razorpay-utils";
 
 
 class EventPlannerService {
-    private _eventPlannerRepository: EventPlannerRepository;
-    private _addressRepository: AddressRepository;
-    private _plannerBookingrepository: PlannerBookingRepository;
-    private _availabilityrepository : AvailabilityRepository;
-    private _notificationrepository: NotificationRepository;
+    
 
-
-    constructor() {
-        this._eventPlannerRepository = new EventPlannerRepository();
-        this._addressRepository = new AddressRepository();
-        this._plannerBookingrepository = new PlannerBookingRepository();
-        this._availabilityrepository = new AvailabilityRepository();
-        this._notificationrepository = new NotificationRepository();
-    }
+    constructor(
+        private _eventPlannerRepository: EventPlannerRepository,
+        private _addressRepository: AddressRepository,
+        private _plannerBookingrepository: PlannerBookingRepository,
+        private _availabilityrepository : AvailabilityRepository,
+        private _notificationrepository: NotificationRepository
+    ) { }
 
     async createEventPlanner(userInfo: Filter, files: any): Promise< IEventPlanner | null >{
        
@@ -384,7 +379,6 @@ class EventPlannerService {
             const plannersData: { planners: IEventPlannerDocument[], totalCount: number }[] = 
                   (await this._eventPlannerRepository.getAggregateData(pipeline)) || [];
             const totalPages = Math.ceil(plannersData[0]?.totalCount/ limit);
-            console.log(countResult, plannersData);
       
             return { 
                eventPlanners: plannersData[0].planners,

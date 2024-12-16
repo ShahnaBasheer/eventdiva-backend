@@ -1,21 +1,18 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import asyncHandler from "express-async-handler";
-import { ForbiddenError, UnauthorizedError } from "../errors/customError";
+import { ForbiddenError, NotFoundError, UnauthorizedError } from "../errors/customError";
 import {
   generateNewToken,
   verifyToken,
   isVendorDocument,
 } from "../utils/helperFunctions";
 import { CustomRequest, CustomSocket } from "../interfaces/request.interface";
-import { IcustomerDocument } from "../interfaces/user.interface";
-import { IVendorDocument } from "../interfaces/vendor.interface";
-import EventPlannerService from "../services/eventPlanner.service";
-import VenueVendorService from "../services/venueVendor.service";
-import { UserRole, VendorType } from "../utils/important-variables";
+import { IUserDocument, UserRole, VCDocType, VendorType } from "../utils/important-variables";
+import { eventPlannerService, venueVendorService } from "../config/dependencyContainer";
 
-const eventPlannerService = new EventPlannerService();
-const venueVendorService = new VenueVendorService();
+
+
 
 const authMiddleware = asyncHandler(
   async (
@@ -23,7 +20,7 @@ const authMiddleware = asyncHandler(
     res: Response,
     next: NextFunction
   ): Promise<void> => {
-    let role: string | undefined;
+    let role: UserRole| undefined;
     try {
       const authorizationHeader = req.headers?.authorization;
       if (!authorizationHeader || !authorizationHeader.startsWith("Bearer ")) {
@@ -32,7 +29,7 @@ const authMiddleware = asyncHandler(
 
       const accessToken = authorizationHeader.split(" ")[1];
       if (!accessToken) {
-        throw new UnauthorizedError("Not authorized: no access token");
+        throw new UnauthorizedError("Authentication failed!");
       }
 
       const decoded = jwt.decode(accessToken) as JwtPayload;
@@ -41,7 +38,7 @@ const authMiddleware = asyncHandler(
       const user = await verifyToken(accessToken, role!, 1);
       if (!user) throw new UnauthorizedError("User not found!");
 
-      if ((user as IcustomerDocument | IVendorDocument).isBlocked) {
+      if ((user as VCDocType).isBlocked) {
         let tokenKey =
           role === UserRole.Customer
             ? process.env["CUSTOMER_REFRESH"]
@@ -72,7 +69,7 @@ const authMiddleware = asyncHandler(
       req.user = user;
       return next();
     } catch (error: any) {
-      console.log(error.message, "line 75 authmiddleware");
+      console.log(error);
       let tokenKey;
       if (error instanceof jwt.TokenExpiredError) {
         let refreshToken;
@@ -98,7 +95,7 @@ const authMiddleware = asyncHandler(
           const user = await verifyToken(refreshToken, role!, 2);
           if (!user) throw new UnauthorizedError("User not found!");
 
-          if ((user as IcustomerDocument | IVendorDocument).isBlocked) {
+          if ((user as VCDocType).isBlocked) {
             throw new ForbiddenError("User account is blocked");
           }
 
@@ -124,26 +121,28 @@ const authMiddleware = asyncHandler(
   }
 );
 
-// Check ifCustomer is authorized
-const isUser = asyncHandler(
-  async (
-    req: CustomRequest,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    if (req?.user) {
-      return next();
+
+const requireRole = (role: UserRole) => {
+  return (req: CustomRequest, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      throw new UnauthorizedError("Authentication failed!");
     }
-    throw new UnauthorizedError("Authorization Failed!");
-  }
-);
+
+    if (role !== req.user.role) {
+      throw new ForbiddenError("Access denied")
+    }
+
+    return next();
+  };
+};
+
 
 // WebSocket Authentication Middleware
 const authenticateSocket = async (
   socket: CustomSocket,
   next: (err?: any) => void
 ) => {
-  let role: string | undefined;
+  let role: UserRole | undefined;
 
   try {
     const token = socket.handshake.auth["token"] || socket.handshake.query["token"];
@@ -174,7 +173,7 @@ const authenticateSocket = async (
         .find((cookie) => cookie.startsWith(tokenKey!))
         ?.split("=")[1];
       if (!refreshToken)
-        return next(new UnauthorizedError("Refresh token not found!"));
+        return next(new UnauthorizedError("Refreshtoken not found!"));
 
       try {
         const user = await tokenVerify(refreshToken, role!, 2);
@@ -200,11 +199,11 @@ const validateSocketUser = async (socket: CustomSocket) => {
   if (!socket.user) {
     throw new UnauthorizedError("User not authenticated");
   }
-  let role = socket.user.role;
+  let role: UserRole | undefined = socket.user.role as UserRole;
   const token = socket.handshake.auth["token"] || socket.handshake.query["token"];
 
   try {
-    const user = await tokenVerify(token, socket.user.role!, 1);
+    const user = await tokenVerify(token, role!, 1);
     socket.user = user;
   } catch (error) {
     let tokenKey;
@@ -219,7 +218,7 @@ const validateSocketUser = async (socket: CustomSocket) => {
         .find((cookie) => cookie.startsWith(tokenKey!))
         ?.split("=")[1];
       if (!refreshToken) {
-        throw new UnauthorizedError("Refresh token not found!");
+        throw new UnauthorizedError("Refreshtoken not found!");
       }
 
       try {
@@ -240,17 +239,50 @@ const validateSocketUser = async (socket: CustomSocket) => {
   return true;
 };
 
-async function tokenVerify(token: string, role: string, num: number) {
+async function tokenVerify(token: string, role: UserRole, num: number): Promise<IUserDocument> {
   const user = await verifyToken(token, role, num);
   if (!user) {
     throw new UnauthorizedError("User not found!");
   }
 
-  if ((user as IcustomerDocument | IVendorDocument).isBlocked) {
+  if ((user as VCDocType).isBlocked) {
     throw new ForbiddenError("User account is blocked");
   }
 
   return user;
 }
 
-export { authMiddleware, isUser, authenticateSocket, validateSocketUser };
+const setRole = (role: string) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+      req.body.role = role; // Attach role to the request body
+      next();
+  };
+};
+
+export { authMiddleware, requireRole, authenticateSocket, validateSocketUser, setRole };
+
+
+
+// Check ifCustomer is authorized
+// const isUser = asyncHandler(
+//   async (
+//     req: CustomRequest,
+//     res: Response,
+//     next: NextFunction
+//   ): Promise<void> => {
+//     if (req?.user) {
+//       return next();
+//     }
+
+//     if (!req.user) {
+//       throw new NotFoundError("Unauthorized: No user data available");
+//     }
+
+//     if (req.user.role === role) {
+//        throw new ForbiddenError("Forbidden: Access denied");
+//     }
+
+//     next();
+//     throw new UnauthorizedError("Unauthorized: No user data available");
+//   }
+// );

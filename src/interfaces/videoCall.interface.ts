@@ -1,12 +1,7 @@
-
+import { ICallRoomDocument } from "./callRoom.interface";
 
 export interface IVideoCallRepository {
-    initializeConnection(): void;
-    createOffer(): Promise<RTCSessionDescriptionInit>;
-    createAnswer(): Promise<RTCSessionDescriptionInit>;
-    setRemoteDescription(description: RTCSessionDescriptionInit): Promise<void>;
-    addIceCandidate(candidate: RTCIceCandidateInit): Promise<void>;
-    onIceCandidate(callback: (candidate: RTCIceCandidate) => void): void;
-    onTrack(callback: (event: RTCTrackEvent) => void): void;
+  createCallRoom(callRoomId: string, userId: string, vendorId: string): Promise<ICallRoomDocument>;
+  checkRoomExists(callRoomId: string): Promise<boolean>;
+  addUserToCallRoom(callRoomId: string, vendorId: string): Promise<ICallRoomDocument | null>;
 }
-  

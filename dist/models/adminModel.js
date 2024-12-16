@@ -26,11 +26,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 // Define the Admin schema
 const adminSchema = new mongoose_1.Schema({
-    fullName: {
+    firstName: {
         type: String,
-        required: true,
-        unique: true,
-        trim: true
+        required: true
+    },
+    lastName: {
+        type: String,
+        required: true
     },
     email: {
         type: String,

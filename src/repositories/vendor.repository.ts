@@ -1,6 +1,6 @@
 import Vendor from '../models/vendorModel';
 import BaseRepository from '../repositories/base.repository';
-import { IVendor, IVendorDocument } from '../interfaces/vendor.interface';
+import { IVendorDocument } from '../interfaces/vendor.interface';
 
 
 
@@ -11,10 +11,13 @@ class VendorRepository extends BaseRepository<IVendorDocument>{
     }
 
 
-    async getVendor(id: string){
-        return await Vendor.findById(id).exec(); 
+    async block(vendorId: string): Promise<IVendorDocument | null> {
+        return await Vendor.findByIdAndUpdate(vendorId, { isBlocked: true }, {new:true});
     }
     
+    async unblock(vendorId: string): Promise<IVendorDocument | null> {
+        return await Vendor.findByIdAndUpdate(vendorId, { isBlocked: false }, {new:true});
+    }
     
 
     

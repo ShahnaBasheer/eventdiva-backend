@@ -18,9 +18,14 @@ class VendorRepository extends base_repository_1.default {
     constructor() {
         super(vendorModel_1.default);
     }
-    getVendor(id) {
+    block(vendorId) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield vendorModel_1.default.findById(id).exec();
+            return yield vendorModel_1.default.findByIdAndUpdate(vendorId, { isBlocked: true }, { new: true });
+        });
+    }
+    unblock(vendorId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield vendorModel_1.default.findByIdAndUpdate(vendorId, { isBlocked: false }, { new: true });
         });
     }
 }

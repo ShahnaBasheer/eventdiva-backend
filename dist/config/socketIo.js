@@ -8,19 +8,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getIO = exports.initializeSocket = void 0;
 // src/socket.ts
 const socket_io_1 = require("socket.io");
-const chatRoom_service_1 = __importDefault(require("../services/chatRoom.service"));
 const helperFunctions_1 = require("../utils/helperFunctions");
 const eventsVariables_1 = require("../utils/eventsVariables");
 const authMiddleware_1 = require("../middlewares/authMiddleware");
 const important_variables_1 = require("../utils/important-variables");
-const chatroomService = new chatRoom_service_1.default();
+const dependencyContainer_1 = require("./dependencyContainer");
 let io;
 const vendors = {}; // Mapping vendor IDs to their respective socket connections
 const customers = {};
@@ -183,7 +179,7 @@ const initializeSocket = (server) => {
             try {
                 yield (0, authMiddleware_1.validateSocketUser)(socket);
                 if (socket.user) {
-                    const response = yield chatroomService.createRoomOrFind(socket.user, data.receiverId);
+                    const response = yield dependencyContainer_1.chatroomservice.createRoomOrFind(socket.user, data.receiverId);
                     console.log("user is there", !!response, response.id);
                     if (socket.rooms.has(response.id)) {
                         return;
@@ -203,7 +199,7 @@ const initializeSocket = (server) => {
                 const { chatRoomId, message, name } = data;
                 const userRole = ((_a = socket.user) === null || _a === void 0 ? void 0 : _a.role) || '';
                 if (socket.rooms.has(chatRoomId) && socket.user) {
-                    const chat = yield chatroomService.addNewMessage(socket.user.id, message, userRole, chatRoomId);
+                    const chat = yield dependencyContainer_1.chatroomservice.addNewMessage(socket.user.id, message, userRole, chatRoomId);
                     if (chat) {
                         const connectedSockets = io.sockets.adapter.rooms.get(chatRoomId);
                         if (connectedSockets && connectedSockets.size > 1) {

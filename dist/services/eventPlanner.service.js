@@ -12,18 +12,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const address_repository_1 = __importDefault(require("../repositories/address.repository"));
-const eventPlanner_repository_1 = __importDefault(require("../repositories/eventPlanner.repository"));
 const razorpay_1 = __importDefault(require("razorpay"));
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const slugify_1 = __importDefault(require("slugify"));
 const customError_1 = require("../errors/customError");
-const plannerBooking_repository_1 = __importDefault(require("../repositories/plannerBooking.repository"));
 const helperFunctions_1 = require("../utils/helperFunctions");
 const status_options_1 = require("../utils/status-options");
-const availability_repository_1 = __importDefault(require("../repositories/availability.repository"));
-const notification_repository_1 = __importDefault(require("../repositories/notification.repository"));
 const socketIo_1 = require("../config/socketIo");
 const cloudinary_config_1 = __importDefault(require("../config/cloudinary.config"));
 const stream_1 = require("stream");
@@ -32,12 +27,12 @@ const eventsVariables_1 = require("../utils/eventsVariables");
 const important_variables_1 = require("../utils/important-variables");
 const razorpay_utils_1 = require("razorpay/dist/utils/razorpay-utils");
 class EventPlannerService {
-    constructor() {
-        this._eventPlannerRepository = new eventPlanner_repository_1.default();
-        this._addressRepository = new address_repository_1.default();
-        this._plannerBookingrepository = new plannerBooking_repository_1.default();
-        this._availabilityrepository = new availability_repository_1.default();
-        this._notificationrepository = new notification_repository_1.default();
+    constructor(_eventPlannerRepository, _addressRepository, _plannerBookingrepository, _availabilityrepository, _notificationrepository) {
+        this._eventPlannerRepository = _eventPlannerRepository;
+        this._addressRepository = _addressRepository;
+        this._plannerBookingrepository = _plannerBookingrepository;
+        this._availabilityrepository = _availabilityrepository;
+        this._notificationrepository = _notificationrepository;
     }
     createEventPlanner(userInfo, files) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -344,7 +339,6 @@ class EventPlannerService {
                 // Fetch the filtered and paginated venue data
                 const plannersData = (yield this._eventPlannerRepository.getAggregateData(pipeline)) || [];
                 const totalPages = Math.ceil(((_b = plannersData[0]) === null || _b === void 0 ? void 0 : _b.totalCount) / limit);
-                console.log(countResult, plannersData);
                 return {
                     eventPlanners: plannersData[0].planners,
                     totalCount: plannersData[0].totalCount,

@@ -21,7 +21,7 @@ class VideoCallRepository extends base_repository_1.default {
     }
     createCallRoom(callRoomId, userId, vendorId) {
         return __awaiter(this, void 0, void 0, function* () {
-            return videoCallModel_1.default.create({ callRoomId, userId, vendorId, participants: [userId] });
+            return yield videoCallModel_1.default.create({ callRoomId, userId, vendorId, participants: [userId] });
         });
     }
     checkRoomExists(callRoomId) {
@@ -32,7 +32,7 @@ class VideoCallRepository extends base_repository_1.default {
     }
     addUserToCallRoom(callRoomId, vendorId) {
         return __awaiter(this, void 0, void 0, function* () {
-            return videoCallModel_1.default.updateOne({ callRoomId }, { $push: { participants: vendorId } });
+            return yield videoCallModel_1.default.findOneAndUpdate({ callRoomId }, { $push: { participants: vendorId } }, { new: true }).exec();
         });
     }
 }

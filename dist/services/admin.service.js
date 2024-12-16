@@ -8,82 +8,51 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const bcrypt_1 = __importDefault(require("bcrypt"));
 const customError_1 = require("../errors/customError");
-const jwToken_1 = require("../config/jwToken");
-const admin_repository_1 = __importDefault(require("../repositories/admin.repository"));
-const customer_repository_1 = __importDefault(require("../repositories/customer.repository"));
-const vendor_repository_1 = __importDefault(require("../repositories/vendor.repository"));
-const plannerBooking_repository_1 = __importDefault(require("../repositories/plannerBooking.repository"));
-const venueBooking_repository_1 = __importDefault(require("../repositories/venueBooking.repository"));
 class AdminService {
-    constructor() {
-        this.adminRepository = new admin_repository_1.default();
-        this.customerRepository = new customer_repository_1.default();
-        this.vendorRepository = new vendor_repository_1.default();
-        this._plannerBookingrepository = new plannerBooking_repository_1.default();
-        this._venueBookingrepository = new venueBooking_repository_1.default();
-    }
-    createUser(user) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const salt = yield bcrypt_1.default.genSalt(10);
-            const hashedPassword = yield bcrypt_1.default.hash(user.password, salt);
-            // Convert the plain object to a Mongoose document
-            return yield this.adminRepository.create(Object.assign(Object.assign({}, user), { password: hashedPassword }));
-        });
-    }
-    comparePassword(enteredPassword, password) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield bcrypt_1.default.compare(enteredPassword, password);
-        });
+    constructor(_adminRepository, _customerRepository, _vendorRepository, _plannerBookingrepository, _venueBookingrepository) {
+        this._adminRepository = _adminRepository;
+        this._customerRepository = _customerRepository;
+        this._vendorRepository = _vendorRepository;
+        this._plannerBookingrepository = _plannerBookingrepository;
+        this._venueBookingrepository = _venueBookingrepository;
     }
     getUserById(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.adminRepository.getById(id);
+            return yield this._adminRepository.getById(id);
         });
     }
-    loginUser(email, password) {
+    getRepositoryByRole(role) {
+        if (role === 'vendor')
+            return this._vendorRepository;
+        if (role === 'customer')
+            return this._customerRepository;
+        throw new customError_1.BadRequestError('Invalid role');
+    }
+    blockUser(userId, role) {
         return __awaiter(this, void 0, void 0, function* () {
-            const user = yield this.adminRepository.getOneByFilter({ email });
-            if (user && (user === null || user === void 0 ? void 0 : user.password) && (yield this.comparePassword(password, user === null || user === void 0 ? void 0 : user.password))) {
-                const accessToken = (0, jwToken_1.generateAdminToken)(user.id, user.role);
-                const refreshToken = (0, jwToken_1.generateRefreshAdminToken)(user.id, user.role);
-                const admin = this.extractUserData(user);
-                console.log(admin, "knnkkn");
-                return { accessToken, refreshToken, admin };
+            if (!role || !userId) {
+                throw new customError_1.UnauthorizedError("userId and role must be provided");
             }
-            else {
-                throw new customError_1.UnauthorizedError('Invalid email or password');
-            }
+            const repository = this.getRepositoryByRole(role);
+            return yield repository.block(userId);
         });
     }
-    signupAdmin(user) {
+    unblockUser(userId, role) {
         return __awaiter(this, void 0, void 0, function* () {
-            const existingUser = yield this.adminRepository.getOneByFilter({ email: user.email });
-            if (existingUser) {
-                throw new customError_1.ConflictError("Email already exists");
+            if (!role || !userId) {
+                throw new customError_1.UnauthorizedError("userId and role must be provided");
             }
-            yield this.createUser(user);
-            return true;
+            const repository = this.getRepositoryByRole(role);
+            return yield repository.unblock(userId);
         });
-    }
-    extractUserData(user) {
-        const extracted = {
-            fullName: user.fullName,
-            email: user.email,
-            role: user.role,
-        };
-        return extracted;
     }
     getDashboardData() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const totalUsers = yield this.customerRepository.getCount({});
-                const totalVendors = yield this.vendorRepository.getCount({});
+                const totalUsers = yield this._customerRepository.getCount({});
+                const totalVendors = yield this._vendorRepository.getCount({});
                 const totalPlannerBookings = yield this._plannerBookingrepository.getCount({});
                 const totalVenueBookings = yield this._venueBookingrepository.getCount({});
                 // const allPlannerBookings = await this._plannerBookingrepository.find({ type: 'planner' });
@@ -134,3 +103,40 @@ class AdminService {
     }
 }
 exports.default = AdminService;
+// async loginUser(email: string, password: string): Promise<any>{
+//     const user = await this._adminRepository.getOneByFilter({ email });
+//     if(user && user?.password && await this.comparePassword(password, user?.password)){
+//         const accessToken = generateAdminToken(user.id!, user.role!)
+//         const refreshToken = generateRefreshAdminToken(user.id!, user.role!)
+//         const admin = this.extractUserData(user);
+//         return { accessToken, refreshToken, admin };
+//     } else {
+//         throw new UnauthorizedError('Invalid email or password') 
+//     }
+// }
+// async signupAdmin(user: IAdmin): Promise<boolean> {
+//     const existingUser = await this._adminRepository.getOneByFilter({email: user.email});
+//     if (existingUser) {
+//         throw new ConflictError("Email already exists");
+//     } 
+//     await this.createUser(user);
+//     return true;
+// }
+// extractUserData(user: IAdmin){
+//     const extracted = {
+//         firstName: user.firstName,
+//         lastName: user.lastName,
+//         email: user.email,
+//         role: user.role,
+//     };
+//     return extracted;
+// }
+// private async createUser(user: IAdminData): Promise<IAdmin> {
+//     const salt = await bcrypt.genSalt(10);
+//     const hashedPassword = await bcrypt.hash(user.password as string, salt);
+//     // Convert the plain object to a Mongoose document
+//     return await this._adminRepository.create({ ...user, password: hashedPassword });
+// }
+// private async comparePassword(enteredPassword: string, password: string){
+//     return await bcrypt.compare(enteredPassword, password);
+// }

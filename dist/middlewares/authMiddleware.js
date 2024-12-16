@@ -12,16 +12,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validateSocketUser = exports.authenticateSocket = exports.isUser = exports.authMiddleware = void 0;
+exports.setRole = exports.validateSocketUser = exports.authenticateSocket = exports.requireRole = exports.authMiddleware = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const customError_1 = require("../errors/customError");
 const helperFunctions_1 = require("../utils/helperFunctions");
-const eventPlanner_service_1 = __importDefault(require("../services/eventPlanner.service"));
-const venueVendor_service_1 = __importDefault(require("../services/venueVendor.service"));
 const important_variables_1 = require("../utils/important-variables");
-const eventPlannerService = new eventPlanner_service_1.default();
-const venueVendorService = new venueVendor_service_1.default();
+const dependencyContainer_1 = require("../config/dependencyContainer");
 const authMiddleware = (0, express_async_handler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     let role;
@@ -32,7 +29,7 @@ const authMiddleware = (0, express_async_handler_1.default)((req, res, next) => 
         }
         const accessToken = authorizationHeader.split(" ")[1];
         if (!accessToken) {
-            throw new customError_1.UnauthorizedError("Not authorized: no access token");
+            throw new customError_1.UnauthorizedError("Authentication failed!");
         }
         const decoded = jsonwebtoken_1.default.decode(accessToken);
         role = decoded["role"];
@@ -48,7 +45,7 @@ const authMiddleware = (0, express_async_handler_1.default)((req, res, next) => 
         }
         if (user && role === important_variables_1.UserRole.Vendor && (0, helperFunctions_1.isVendorDocument)(user)) {
             if (user.vendorType === important_variables_1.VendorType.EventPlanner) {
-                const eventPlanner = yield eventPlannerService.getEventPlanner({
+                const eventPlanner = yield dependencyContainer_1.eventPlannerService.getEventPlanner({
                     vendorId: user.id,
                 });
                 if (eventPlanner) {
@@ -56,7 +53,7 @@ const authMiddleware = (0, express_async_handler_1.default)((req, res, next) => 
                 }
             }
             else if (user.vendorType === important_variables_1.VendorType.VenueVendor) {
-                const venueVendor = yield venueVendorService.getVenue({
+                const venueVendor = yield dependencyContainer_1.venueVendorService.getVenue({
                     vendorId: user.id,
                 });
                 if (venueVendor) {
@@ -68,7 +65,7 @@ const authMiddleware = (0, express_async_handler_1.default)((req, res, next) => 
         return next();
     }
     catch (error) {
-        console.log(error.message, "line 75 authmiddleware");
+        console.log(error);
         let tokenKey;
         if (error instanceof jsonwebtoken_1.default.TokenExpiredError) {
             let refreshToken;
@@ -115,14 +112,18 @@ const authMiddleware = (0, express_async_handler_1.default)((req, res, next) => 
     }
 }));
 exports.authMiddleware = authMiddleware;
-// Check ifCustomer is authorized
-const isUser = (0, express_async_handler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    if (req === null || req === void 0 ? void 0 : req.user) {
+const requireRole = (role) => {
+    return (req, res, next) => {
+        if (!req.user) {
+            throw new customError_1.UnauthorizedError("Authentication failed!");
+        }
+        if (role !== req.user.role) {
+            throw new customError_1.ForbiddenError("Access denied");
+        }
         return next();
-    }
-    throw new customError_1.UnauthorizedError("Authorization Failed!");
-}));
-exports.isUser = isUser;
+    };
+};
+exports.requireRole = requireRole;
 // WebSocket Authentication Middleware
 const authenticateSocket = (socket, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -149,7 +150,7 @@ const authenticateSocket = (socket, next) => __awaiter(void 0, void 0, void 0, f
                     : process.env["VENDOR_REFRESH"];
             const refreshToken = (_b = (_a = socket.handshake.headers.cookie) === null || _a === void 0 ? void 0 : _a.split("; ").find((cookie) => cookie.startsWith(tokenKey))) === null || _b === void 0 ? void 0 : _b.split("=")[1];
             if (!refreshToken)
-                return next(new customError_1.UnauthorizedError("Refresh token not found!"));
+                return next(new customError_1.UnauthorizedError("Refreshtoken not found!"));
             try {
                 const user = yield tokenVerify(refreshToken, role, 2);
                 const newToken = (0, helperFunctions_1.generateNewToken)(user.id, user.role);
@@ -180,7 +181,7 @@ const validateSocketUser = (socket) => __awaiter(void 0, void 0, void 0, functio
     let role = socket.user.role;
     const token = socket.handshake.auth["token"] || socket.handshake.query["token"];
     try {
-        const user = yield tokenVerify(token, socket.user.role, 1);
+        const user = yield tokenVerify(token, role, 1);
         socket.user = user;
     }
     catch (error) {
@@ -192,7 +193,7 @@ const validateSocketUser = (socket) => __awaiter(void 0, void 0, void 0, functio
                     : process.env["VENDOR_REFRESH"];
             const refreshToken = (_b = (_a = socket.handshake.headers.cookie) === null || _a === void 0 ? void 0 : _a.split("; ").find((cookie) => cookie.startsWith(tokenKey))) === null || _b === void 0 ? void 0 : _b.split("=")[1];
             if (!refreshToken) {
-                throw new customError_1.UnauthorizedError("Refresh token not found!");
+                throw new customError_1.UnauthorizedError("Refreshtoken not found!");
             }
             try {
                 const user = yield tokenVerify(refreshToken, role, 2);
@@ -225,3 +226,30 @@ function tokenVerify(token, role, num) {
         return user;
     });
 }
+const setRole = (role) => {
+    return (req, res, next) => {
+        req.body.role = role; // Attach role to the request body
+        next();
+    };
+};
+exports.setRole = setRole;
+// Check ifCustomer is authorized
+// const isUser = asyncHandler(
+//   async (
+//     req: CustomRequest,
+//     res: Response,
+//     next: NextFunction
+//   ): Promise<void> => {
+//     if (req?.user) {
+//       return next();
+//     }
+//     if (!req.user) {
+//       throw new NotFoundError("Unauthorized: No user data available");
+//     }
+//     if (req.user.role === role) {
+//        throw new ForbiddenError("Forbidden: Access denied");
+//     }
+//     next();
+//     throw new UnauthorizedError("Unauthorized: No user data available");
+//   }
+// );

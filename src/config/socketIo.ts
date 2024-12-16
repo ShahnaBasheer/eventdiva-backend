@@ -2,16 +2,13 @@
 import { Server } from 'socket.io';
 import http from 'http';
 import { CustomSocket } from '../interfaces/request.interface';
-import ChatRoomService from '../services/chatRoom.service';
 import { handleNotification } from '../utils/helperFunctions';
 import { NotificationType } from '../utils/eventsVariables';
 import { authenticateSocket, validateSocketUser } from '../middlewares/authMiddleware';
-import { Icustomer, IcustomerDocument } from '../interfaces/user.interface';
+import { ICustomerDocument } from '../interfaces/customer.interface';
 import { IVendorDocument } from '../interfaces/vendor.interface';
 import { UserRole } from '../utils/important-variables';
-
-const chatroomService =  new ChatRoomService();
-
+import { chatroomservice } from './dependencyContainer';
 
 
 let io: Server;
@@ -183,7 +180,7 @@ const initializeSocket = (server: http.Server) => {
             try {
                 await validateSocketUser(socket);
                 if(socket.user){
-                  const response = await chatroomService.createRoomOrFind(socket.user as (IVendorDocument | IcustomerDocument), data.receiverId)
+                  const response = await chatroomservice.createRoomOrFind(socket.user as (IVendorDocument | ICustomerDocument), data.receiverId)
                   console.log("user is there", !!response, response.id)
                   if (socket.rooms.has(response.id)) {
                       return;
@@ -205,7 +202,7 @@ const initializeSocket = (server: http.Server) => {
               
                 
                 if (socket.rooms.has(chatRoomId) && socket.user) {
-                    const chat = await chatroomService.addNewMessage(socket.user.id, message, userRole, chatRoomId);
+                    const chat = await chatroomservice.addNewMessage(socket.user.id, message, userRole, chatRoomId);
                     if (chat) {
                         const connectedSockets = io.sockets.adapter.rooms.get(chatRoomId);
                         if (connectedSockets && connectedSockets.size > 1) {

@@ -1,16 +1,18 @@
 import { Schema, Document } from 'mongoose';
 
-
-interface IVendor {
+interface IVendor{
     firstName: string;
     lastName: string;
     email: string;
-    mobile?: string;
     vendorType: 'event-planner' | 'venue-vendor' | 'photographer' | 'food-vendor';
+    role: string;
+    serviceName?: string;
+    mobile?: string;
+}
+
+interface IVendorData extends IVendor {
     password?: string;
     address?: Schema.Types.ObjectId;
-    role?: string;
-    serviceName?: string;
     otp?: string;
     otpTimestamp?: Date;
     newotp?: string;
@@ -24,10 +26,11 @@ interface IVendor {
     updatedAt?: Date;
 }
 
-interface IVendorDocument extends IVendor, Document {}
+interface IVendorDocument extends IVendorData, Document {}
 
 export { 
     IVendor, 
+    IVendorData,
     IVendorDocument
 };
 

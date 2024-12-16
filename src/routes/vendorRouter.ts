@@ -1,42 +1,38 @@
 
 import express, { Router } from 'express';
-import { authMiddleware, isUser } from '../middlewares/authMiddleware';
+import { authMiddleware, requireRole, setRole} from '../middlewares/authMiddleware';
 import { validateLogin, validateVendorSignup } from '../middlewares/validateForm';
-import { loginVendor, logout, resendOtp, 
-       signupVendor, verifyOtp, 
-       getNotifications, changeReadStatus, 
-       deleteNotification,
-       getVendorProfile, updateVendorProfile,
-       updateEmailProfile, verifyEmailProfile,
-       passWordChangeProfile
-     } from '../controllers/vendors/vendor.controller';
+import vendorController from '../controllers/vendor.controller';
 import resendOtpLimiter from '../middlewares/rateLimit';
-import { getJoinCall, getOrCreateChatRoom, getAllChatRooms,
-    getUnreadAllMessages
- } from '../controllers/common/socket.controller';
+import socketController from '../controllers/socket.controller';
+import { UserRole } from '../utils/important-variables';
+import authController from '../controllers/auth.controller';
 
 
 
 const router: Router = express.Router();
 
 
-router.post('/login', validateLogin, loginVendor);
-router.post('/signup', validateVendorSignup, signupVendor);
-router.post('/verify-otp', verifyOtp);
-router.post('/resend-otp', resendOtpLimiter, resendOtp);
-router.get('/logout', authMiddleware, isUser, logout);
-router.post('/video-call/join-call', authMiddleware, isUser, getJoinCall);
-router.get('/chat-room/', authMiddleware, isUser, getAllChatRooms);
-router.post('/chat-room/join-room', authMiddleware, isUser, getOrCreateChatRoom)
-router.get('/notifications', authMiddleware, isUser, getNotifications);
-router.get('/unread-messages', authMiddleware, isUser, getUnreadAllMessages);
-router.patch('/notifications/read', authMiddleware, isUser, changeReadStatus);
-router.delete('/notifications/delete/:id', authMiddleware, isUser, deleteNotification);
-router.get('/profile', authMiddleware, isUser, getVendorProfile);
-router.patch('/profile/update', authMiddleware, isUser, updateVendorProfile);
-router.patch('/profile/email/', authMiddleware, isUser, updateEmailProfile);
-router.patch('/profile/email-update', authMiddleware, isUser, verifyEmailProfile);
-router.patch('/profile/password-change', authMiddleware, isUser, passWordChangeProfile);
+router.post('/login', setRole(UserRole.Vendor), validateLogin, authController.login);
+router.post('/signup', setRole(UserRole.Vendor), validateVendorSignup, authController.signup);
+router.post('/verify-otp', setRole(UserRole.Vendor), authController.verifyOtp);
+router.post('/resend-otp', setRole(UserRole.Vendor), resendOtpLimiter, authController.resendOtp);
+
+router.use(authMiddleware, requireRole(UserRole.Vendor));
+
+router.get('/logout', authController.logout);
+router.post('/video-call/join-call', socketController.getJoinCall);
+router.get('/chat-room/', socketController.getAllChatRooms);
+router.post('/chat-room/join-room', socketController.getOrCreateChatRoom)
+router.get('/notifications', vendorController.getNotifications);
+router.get('/unread-messages', socketController.getUnreadAllMessages);
+router.patch('/notifications/read', vendorController.changeReadStatus);
+router.delete('/notifications/delete/:id', vendorController.deleteNotification);
+router.get('/profile', vendorController.getVendorProfile);
+router.patch('/profile/update', vendorController.updateVendorProfile);
+router.patch('/profile/email/', vendorController.updateEmailProfile);
+router.patch('/profile/email-update', vendorController.verifyEmailProfile);
+router.patch('/profile/password-change', vendorController.passwordChangeProfile);
 
 export default router
 

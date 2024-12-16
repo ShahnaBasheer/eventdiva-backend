@@ -4,13 +4,15 @@ import mongoose, { Schema } from 'mongoose';
 
 // Define the Admin schema
 const adminSchema: Schema<IAdminDocument> = new Schema({
-    fullName: {
+  firstName: {
+    type: String,
+    required: true
+  },
+  lastName: {
       type: String,
-      required: true,
-      unique: true,
-      trim: true
-    },
-    email: {
+      required: true
+  },
+  email: {
       type: String,
       required: true,
       unique: true,

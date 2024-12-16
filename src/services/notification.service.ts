@@ -1,33 +1,23 @@
 
-import { BadRequestError, CustomError, NotFoundError } from "../errors/customError";
-import mongoose from 'mongoose';
+import { BadRequestError } from "../errors/customError";
 import NotificationRepository from "../repositories/notification.repository";
 import { notificationTypes } from "../utils/eventsVariables";
 import { INotification } from "../interfaces/notification.interface";
 import VendorRepository from "../repositories/vendor.repository";
 import AdminRepository from "../repositories/admin.repository";
 import CustomerRepository from "../repositories/customer.repository";
-import { Icustomer, IcustomerDocument } from "../interfaces/user.interface";
-import { IAdmin, IAdminDocument } from "../interfaces/admin.interface";
-import { IVendor, IVendorDocument } from "../interfaces/vendor.interface";
+import { IUserDocument } from "utils/important-variables";
 
 
 
 class NotificationService {
 
-    private _notificationrepository!: NotificationRepository;
-    private _vendorRepository!: VendorRepository;
-    private _adminRepository!: AdminRepository;
-    private _customerRepository!: CustomerRepository;
- 
-    constructor() {
-        this._notificationrepository = new NotificationRepository();
-        this._vendorRepository = new VendorRepository();
-        this._adminRepository = new AdminRepository();
-        this._customerRepository = new CustomerRepository();
-
-        
-    }
+    constructor(
+        private _notificationrepository: NotificationRepository,
+        private _vendorRepository: VendorRepository,
+        private _adminRepository: AdminRepository,
+        private _customerRepository: CustomerRepository,
+    ) {}
 
     Capitalize(val: string){
         return val.charAt(0).toUpperCase() + val.slice(1).toLowerCase();
@@ -39,7 +29,7 @@ class NotificationService {
             const userIdString = data.userId.toString();
             const role = this.Capitalize(data.userType);
 
-            let user: IcustomerDocument | IAdminDocument | IVendorDocument | null = null;
+            let user: IUserDocument | null = null;
 
             if(role === 'Vendor'){
                 user = await this._vendorRepository.getById(userIdString);

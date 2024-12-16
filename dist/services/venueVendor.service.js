@@ -12,29 +12,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const address_repository_1 = __importDefault(require("../repositories/address.repository"));
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const slugify_1 = __importDefault(require("slugify"));
 const customError_1 = require("../errors/customError");
-const venueVendor_repository_1 = __importDefault(require("../repositories/venueVendor.repository"));
 const razorpay_1 = __importDefault(require("razorpay"));
-const venueBooking_repository_1 = __importDefault(require("../repositories/venueBooking.repository"));
 const helperFunctions_1 = require("../utils/helperFunctions");
 const status_options_1 = require("../utils/status-options");
-const availability_repository_1 = __importDefault(require("../repositories/availability.repository"));
-const notification_repository_1 = __importDefault(require("../repositories/notification.repository"));
 const cloudinary_config_1 = __importDefault(require("../config/cloudinary.config"));
 const sharp_1 = __importDefault(require("sharp"));
 const stream_1 = require("stream");
 const razorpay_utils_1 = require("razorpay/dist/utils/razorpay-utils");
 class VenueVendorService {
-    constructor() {
-        this._venueVendorRepository = new venueVendor_repository_1.default();
-        this._addressRepository = new address_repository_1.default();
-        this._venueBookingrepository = new venueBooking_repository_1.default();
-        this._availabilityrepository = new availability_repository_1.default();
-        this._notificationrepository = new notification_repository_1.default();
+    constructor(_venueVendorRepository, _addressRepository, _venueBookingrepository, _availabilityrepository, _notificationrepository) {
+        this._venueVendorRepository = _venueVendorRepository;
+        this._addressRepository = _addressRepository;
+        this._venueBookingrepository = _venueBookingrepository;
+        this._availabilityrepository = _availabilityrepository;
+        this._notificationrepository = _notificationrepository;
     }
     createVenue(userInfo, files) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -217,11 +212,6 @@ class VenueVendorService {
     getVenue(filter) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this._venueVendorRepository.getVenueDetail(Object.assign({}, filter));
-        });
-    }
-    get(filter) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this._venueVendorRepository.getAllWithPopuate(Object.assign({}, filter));
         });
     }
     getAllVenues() {

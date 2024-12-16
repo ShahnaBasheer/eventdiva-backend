@@ -1,21 +1,21 @@
 import { IEventPlannerBooking } from "./eventPlannerBooking.interface";
-import { Icustomer, IcustomerDocument } from "./user.interface";
+import { ICustomer, ICustomerDocument } from "./customer.interface";
 import { IVenueBooking } from "./venueBooking.interface";
 
 
 interface ICustomerService {
-    createUser(user: Icustomer): Promise<any>;
+    createUser(user: ICustomer): Promise<any>;
     comparePassword(enteredPassword: string, password: string): Promise<boolean>;
-    getUserById(id: string): Promise<IcustomerDocument | null>;
-    signupUser(user: Icustomer): Promise<boolean>;
+    getUserById(id: string): Promise<ICustomerDocument | null>;
+    signupUser(user: ICustomer): Promise<boolean>;
     otpVerification(email: string, otp: string): Promise<boolean>;
     resendOTP(email: string): Promise<boolean>;
     loginUser(email: string, password: string): Promise<any>;
     verifyWithGoogle(idToken: string): Promise<any>;
-    getCustomers(): Promise<Icustomer[]>;
-    blockUser(id: string): Promise<Icustomer | null>;
-    unblockUser(id: string): Promise<Icustomer | null>;
-    extractUserData(user: IcustomerDocument): {
+    getCustomers(): Promise<ICustomer[]>;
+    blockUser(id: string): Promise<ICustomer | null>;
+    unblockUser(id: string): Promise<ICustomer | null>;
+    extractUserData(user: ICustomerDocument): {
         id: string;
         firstName: string;
         lastName: string;

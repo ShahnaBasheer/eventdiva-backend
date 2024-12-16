@@ -1,10 +1,14 @@
 import { Document } from 'mongoose';
 
 interface IAdmin {
-    fullName: string;
-    email: string;
-    password: string;
-    role?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+}
+
+interface IAdminData extends IAdmin{
+    password?: string;
     isDeleted?: boolean;
     isVerified?: boolean;
     createdAt?: Date;
@@ -13,9 +17,10 @@ interface IAdmin {
 
 
   
-interface IAdminDocument extends IAdmin, Document {}
+interface IAdminDocument extends IAdminData, Document {}
 
 export { 
     IAdmin, 
+    IAdminData,
     IAdminDocument
 };

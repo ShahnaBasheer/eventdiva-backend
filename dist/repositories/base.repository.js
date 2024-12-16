@@ -45,11 +45,6 @@ class BaseRepository {
             return yield this.model.find(Object.assign({}, filter), { password: 0, googleId: 0, }).exec();
         });
     }
-    getAllWithPopuate(filter) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this.model.find(Object.assign({}, filter), { password: 0, googleId: 0, }).populate('address').exec();
-        });
-    }
     getById(id) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.model.findById(id).exec();
@@ -68,16 +63,6 @@ class BaseRepository {
     getByEmail(email) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.model.findOne({ email }).exec();
-        });
-    }
-    block(id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this.model.findByIdAndUpdate(id, { isBlocked: true }, { new: true });
-        });
-    }
-    unblock(id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this.model.findByIdAndUpdate(id, { isBlocked: false }, { new: true });
         });
     }
     getAllVendors(filter) {

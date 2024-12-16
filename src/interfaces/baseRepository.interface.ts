@@ -12,7 +12,6 @@ interface IBaseRepository<T> {
     getByEmail(email: string): Promise<T | null>;
     update(filter: any, update: UpdateQuery<T>): Promise<T | null>;
     delete(id: string): Promise<T | null>;
-    block(id: string): Promise<T | null>;
 }
 
 export default IBaseRepository 

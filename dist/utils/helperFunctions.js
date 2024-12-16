@@ -12,32 +12,30 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.parseQueryToStringArray = exports.isVendorDocument = exports.handleNotification = exports.generateOrderId = exports.verifyToken = exports.generateNewToken = void 0;
+exports.generateServiceFilter = exports.getRefreshKey = exports.capitalize = exports.createToken = exports.parseQueryToStringArray = exports.isVendorDocument = exports.handleNotification = exports.generateOrderId = exports.verifyToken = exports.generateNewToken = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const customer_service_1 = __importDefault(require("../services/customer.service"));
-const admin_service_1 = __importDefault(require("../services/admin.service"));
-const vendor_service_1 = __importDefault(require("../services/vendor.service"));
 const jwToken_1 = require("../config/jwToken");
-const notification_service_1 = __importDefault(require("../services/notification.service"));
 const eventsVariables_1 = require("./eventsVariables");
 const important_variables_1 = require("./important-variables");
+const user_service_1 = __importDefault(require("../services/user.service"));
+const vendor_repository_1 = __importDefault(require("../repositories/vendor.repository"));
+const admin_repository_1 = __importDefault(require("../repositories/admin.repository"));
+const customer_repository_1 = __importDefault(require("../repositories/customer.repository"));
+const notification_repository_1 = __importDefault(require("../repositories/notification.repository"));
+const dependencyContainer_1 = require("../config/dependencyContainer");
+const status_options_1 = require("./status-options");
 const verifyToken = (token, role, tokenType) => __awaiter(void 0, void 0, void 0, function* () {
     let secretKey;
-    let service;
     switch (role) {
         case important_variables_1.UserRole.Customer:
             secretKey = (tokenType === 1) ? process.env.JWT_CUSTOMER_SECRET : process.env.JWT_REFRESH_CUSTOMER_SECRET;
-            service = new customer_service_1.default();
-            ;
             break;
         case important_variables_1.UserRole.Admin:
             secretKey = (tokenType === 1) ? process.env.JWT_ADMIN_SECRET : process.env.JWT_REFRESH_ADMIN_SECRET;
-            service = new admin_service_1.default();
             break;
         case important_variables_1.UserRole.Vendor:
             secretKey = (tokenType === 1) ? process.env.JWT_VENDOR_SECRET : process.env.JWT_REFRESH_VENDOR_SECRET;
             ;
-            service = new vendor_service_1.default();
     }
     if (!secretKey) {
         throw new Error(`JWT secret is not defined for role: ${role}`);
@@ -46,7 +44,8 @@ const verifyToken = (token, role, tokenType) => __awaiter(void 0, void 0, void 0
     if (!decoded.id) {
         throw new Error(`Invalid token: no ID found`);
     }
-    return yield service.getUserById(decoded === null || decoded === void 0 ? void 0 : decoded.id);
+    const service = new user_service_1.default(new vendor_repository_1.default(), new admin_repository_1.default(), new customer_repository_1.default(), new notification_repository_1.default());
+    return yield service.getUserById(decoded === null || decoded === void 0 ? void 0 : decoded.id, role);
 });
 exports.verifyToken = verifyToken;
 const isVendorDocument = (user) => {
@@ -67,6 +66,23 @@ const generateNewToken = (id, role) => {
     return newToken;
 };
 exports.generateNewToken = generateNewToken;
+const createToken = (userId, role) => {
+    let accessToken, refreshToken;
+    if (role === 'admin') {
+        accessToken = (0, jwToken_1.generateAdminToken)(userId, role);
+        refreshToken = (0, jwToken_1.generateRefreshAdminToken)(userId, role);
+    }
+    else if (role === 'customer') {
+        accessToken = (0, jwToken_1.generateCustomerToken)(userId, role);
+        refreshToken = (0, jwToken_1.generateRefreshCustomerToken)(userId, role);
+    }
+    else if (role === 'vendor') {
+        accessToken = (0, jwToken_1.generateVendorToken)(userId, role);
+        refreshToken = (0, jwToken_1.generateRefreshVendorToken)(userId, role);
+    }
+    return { accessToken, refreshToken };
+};
+exports.createToken = createToken;
 const generateOrderId = (vendor) => {
     const prefix = 'BK' + vendor; // Order ID prefix
     const uniqueNumber = Math.floor(Math.random() * 10000); // Generate a random number
@@ -121,7 +137,6 @@ const notificationTypes = {
 };
 const handleNotification = (data) => __awaiter(void 0, void 0, void 0, function* () {
     let notificationData;
-    const notificationService = new notification_service_1.default();
     switch (data.type) {
         case eventsVariables_1.NotificationType.MESSAGE:
             notificationData = notificationTypes.new_message(data.name, data.message);
@@ -154,7 +169,7 @@ const handleNotification = (data) => __awaiter(void 0, void 0, void 0, function*
             console.log('Unknown notification type:', data.type);
             return;
     }
-    const notification = yield notificationService.addNotification({
+    const notification = yield dependencyContainer_1.notificationService.addNotification({
         userId: data.userId,
         message: notificationData.message,
         link: notificationData.link,
@@ -172,3 +187,42 @@ const parseQueryToStringArray = (param) => {
     return [String(param)];
 };
 exports.parseQueryToStringArray = parseQueryToStringArray;
+const capitalize = (string) => {
+    if (!string)
+        return ''; // Handle empty or null strings
+    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+};
+exports.capitalize = capitalize;
+const getRefreshKey = (role) => {
+    if (role === important_variables_1.UserRole.Admin)
+        return process.env.ADMIN_REFRESH;
+    else if (role === important_variables_1.UserRole.Customer)
+        return process.env.CUSTOMER_REFRESH;
+    else if (role === important_variables_1.UserRole.Vendor)
+        return process.env.VENDOR_REFRESH;
+    return '';
+};
+exports.getRefreshKey = getRefreshKey;
+const generateServiceFilter = (user, slug) => {
+    const filter = {};
+    switch (user.role) {
+        case important_variables_1.UserRole.Vendor:
+            filter.vendorId = user.id;
+            break;
+        case important_variables_1.UserRole.Admin:
+            if (!slug)
+                throw new Error("Slug is required for admin requests");
+            filter.slug = slug;
+            break;
+        case important_variables_1.UserRole.Customer:
+            if (!slug)
+                throw new Error("Slug is required for customer requests");
+            filter.slug = slug;
+            filter.approval = status_options_1.Status.Approved;
+            break;
+        default:
+            throw new Error("Invalid user role");
+    }
+    return filter;
+};
+exports.generateServiceFilter = generateServiceFilter;
