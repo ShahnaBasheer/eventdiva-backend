@@ -33,7 +33,7 @@ const MessageSchema = new mongoose_1.Schema({
     },
     senderType: {
         type: String,
-        enum: ['Vendor', 'Customer'],
+        enum: ['vendor', 'customer'],
         required: true
     },
     content: {

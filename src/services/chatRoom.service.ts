@@ -1,20 +1,18 @@
 
 // src/services/VideoCallService.ts
 
-import { BadRequestError } from "../errors/customError";
+import { BadRequestError, NotFoundError } from "../errors/customError";
 import ChatroomRepository from "../repositories/chatRoom.repository";
 import { IChatroomDocument, IMessage } from "../interfaces/chatRoom.interface";
 import mongoose from 'mongoose';
 import CustomerRepository from "../repositories/customer.repository";
 import VendorRepository from "../repositories/vendor.repository";
 import { UserRole, VCDocType } from '../utils/important-variables';
+import Chatroom from "../models/chatRoomModel";
 
 
 
 class ChatRoomService {
-
-    
-
     constructor(
         private _chatroomrepository: ChatroomRepository,
         private _customerepository: CustomerRepository,
@@ -35,7 +33,6 @@ class ChatRoomService {
                 }
             } else if(user?.role === UserRole.Vendor){
                 vendorId = user.id;
-                console.log(receiverId, "jjjjj")
                 let customer = await this._customerepository.getById(receiverId);
                 if(customer){
                     customerId = customer.id;
@@ -57,9 +54,9 @@ class ChatRoomService {
 
     async addNewMessage(senderId: string, message: string, userRole: string, roomId: string){
         try {
-            let role: 'Vendor' | 'Customer' = 'Customer';
-            if(userRole.toLowerCase() === 'vendor'){
-                role = 'Vendor';
+            let role: UserRole = UserRole.Customer;
+            if(userRole.toLowerCase() === UserRole.Vendor){
+                role = UserRole.Vendor;
             }
 
             const newMessage: IMessage = {
@@ -78,7 +75,7 @@ class ChatRoomService {
 
     async getAllChats(vendorId: string){
         try {
-            return await this._chatroomrepository.getAllChats({ vendorId })
+            return await this._chatroomrepository.getAllChats({ vendorId: new mongoose.Types.ObjectId(vendorId) })
         } catch(error: any){
             console.log("error in fetching", error?.message);
             throw new BadRequestError('Error in Fetching Allchats');
@@ -90,7 +87,16 @@ class ChatRoomService {
         const unreadMessages = await this._chatroomrepository.getAllUnreadMessages(vendorId);
         return unreadMessages;
     }
+
+    async markMessagesAsRead(messageIds: string[], roomId: string){
+        const result = await this._chatroomrepository.markMessagesRead(messageIds, roomId)
+    
+        if (result?.modifiedCount < 0) {
+            throw new NotFoundError(`No matching message found to update in chatroom ${roomId}.`);
+        }
+        return result;
+    }
 }
 
 
-export  default ChatRoomService
+export  default ChatRoomService;

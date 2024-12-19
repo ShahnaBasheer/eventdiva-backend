@@ -157,7 +157,7 @@ const initializeSocket = (server: http.Server) => {
 
                     const ringingTimeout = setTimeout(async () => {
                         const notification = await handleNotification({ 
-                            ...data, userId: vendorId, role: 'vendor',
+                            ...data, userId: vendorId, role: UserRole.Vendor,
                             type: NotificationType.MISSED_CALL, name
                         });
                         vendorSocket.emit('loaded-notification', { notification });
@@ -180,13 +180,13 @@ const initializeSocket = (server: http.Server) => {
             try {
                 await validateSocketUser(socket);
                 if(socket.user){
-                  const response = await chatroomservice.createRoomOrFind(socket.user as (IVendorDocument | ICustomerDocument), data.receiverId)
-                  console.log("user is there", !!response, response.id)
-                  if (socket.rooms.has(response.id)) {
+                  const res = await chatroomservice.createRoomOrFind(socket.user as (IVendorDocument | ICustomerDocument), data.receiverId)
+                  console.log("user is there", !!res, res.id)
+                  if (socket.rooms.has(res.id)) {
                       return;
                   }
-                  socket.join(response.id);
-                  socket.emit('user-joined', { receiverId: data.receiverId, response });
+                  socket.join(res.id);
+                  socket.emit('user-joined', { receiverId: data.receiverId, res });
                 }
                 
             } catch (error: any) {
@@ -199,8 +199,7 @@ const initializeSocket = (server: http.Server) => {
             try {
                 const { chatRoomId, message, name } = data;
                 const userRole = socket.user?.role || '';
-              
-                
+            
                 if (socket.rooms.has(chatRoomId) && socket.user) {
                     const chat = await chatroomservice.addNewMessage(socket.user.id, message, userRole, chatRoomId);
                     if (chat) {
@@ -210,10 +209,10 @@ const initializeSocket = (server: http.Server) => {
                         } else {
                             let receiverSocket;
                             let receiverId = '';
-                            if (userRole === 'vendor') {
+                            if (userRole === UserRole.Vendor) {
                                 receiverId = chat.customerId.toString();
                                 receiverSocket = customers[receiverId];
-                            } else if (userRole === 'customer') {
+                            } else if (userRole === UserRole.Customer) {
                                 receiverId = chat.vendorId.toString();
                                 receiverSocket = vendors[receiverId];
                             }
@@ -238,7 +237,6 @@ const initializeSocket = (server: http.Server) => {
         // Save notifications
         socket.on('save-notifications', async (data) => {
             try {
-                console.log("save notification is triggered", socket)
                 const notification = await handleNotification(data);
                 if (notification) {
                     const receiverSocket = data.role === UserRole.Vendor ? vendors[data.userId] : customers[data.userId];
@@ -257,7 +255,9 @@ const initializeSocket = (server: http.Server) => {
                 await validateSocketUser(socket);
                 if (socket.rooms.has(data.chatRoomId)) {
                     socket.leave(data.chatRoomId);
-                    socket.emit('user-left', { receiverId: data.receiverId });
+                    console.log(data.userRole);
+                    
+                    socket.emit('user-left', { roomId: data.chatRoomId, role: data.userRole });
                 }
             } catch (error: any) {
                 handleSocketError(socket, error);

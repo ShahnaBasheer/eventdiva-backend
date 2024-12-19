@@ -39,7 +39,6 @@ class ChatRoomService {
                 }
                 else if ((user === null || user === void 0 ? void 0 : user.role) === important_variables_1.UserRole.Vendor) {
                     vendorId = user.id;
-                    console.log(receiverId, "jjjjj");
                     let customer = yield this._customerepository.getById(receiverId);
                     if (customer) {
                         customerId = customer.id;
@@ -63,9 +62,9 @@ class ChatRoomService {
     addNewMessage(senderId, message, userRole, roomId) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                let role = 'Customer';
-                if (userRole.toLowerCase() === 'vendor') {
-                    role = 'Vendor';
+                let role = important_variables_1.UserRole.Customer;
+                if (userRole.toLowerCase() === important_variables_1.UserRole.Vendor) {
+                    role = important_variables_1.UserRole.Vendor;
                 }
                 const newMessage = {
                     senderId: new mongoose_1.default.Types.ObjectId(senderId),
@@ -84,7 +83,7 @@ class ChatRoomService {
     getAllChats(vendorId) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                return yield this._chatroomrepository.getAllChats({ vendorId });
+                return yield this._chatroomrepository.getAllChats({ vendorId: new mongoose_1.default.Types.ObjectId(vendorId) });
             }
             catch (error) {
                 console.log("error in fetching", error === null || error === void 0 ? void 0 : error.message);
@@ -96,6 +95,15 @@ class ChatRoomService {
         return __awaiter(this, void 0, void 0, function* () {
             const unreadMessages = yield this._chatroomrepository.getAllUnreadMessages(vendorId);
             return unreadMessages;
+        });
+    }
+    markMessagesAsRead(messageIds, roomId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const result = yield this._chatroomrepository.markMessagesRead(messageIds, roomId);
+            if ((result === null || result === void 0 ? void 0 : result.modifiedCount) < 0) {
+                throw new customError_1.NotFoundError(`No matching message found to update in chatroom ${roomId}.`);
+            }
+            return result;
         });
     }
 }

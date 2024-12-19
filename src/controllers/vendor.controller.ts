@@ -16,33 +16,8 @@ class VendorController {
     private notificationService: NotificationService
 ){}
 
-  
-  
-
-
-  getNotifications = asyncHandler(async (req: CustomRequest, res: Response): Promise<void> => {
-    const data = await this.notificationService.getNotifications(req.user.id, req.user.role);
-    createSuccessResponse(
-      200,
-      { notifications: data.notifications, readCount: data.readCount },
-      'Successfully retrieved notifications',
-      res,
-      req
-    );
-  });
-
-  changeReadStatus = asyncHandler(async (req: CustomRequest, res: Response): Promise<void> => {
-    const notification = await this.notificationService.updateReadStatus(req.body.id);
-    createSuccessResponse(200, { notification }, 'Read status updated successfully', res, req);
-  });
-
-  deleteNotification = asyncHandler(async (req: CustomRequest, res: Response): Promise<void> => {
-    const notification = await this.notificationService.deleteNotification(req.params.id);
-    createSuccessResponse(200, { notification }, 'Notification deleted successfully', res, req);
-  });
-
+ 
   getVendorProfile = asyncHandler(async (req: CustomRequest, res: Response): Promise<void> => {
-    console.log(req.user, "vendor")
     const vendorDetail = req.user;
     createSuccessResponse(200, { vendorDetail }, 'Vendor profile retrieved successfully', res, req);
   });

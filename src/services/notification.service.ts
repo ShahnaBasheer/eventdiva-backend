@@ -1,12 +1,13 @@
 
-import { BadRequestError } from "../errors/customError";
+import { BadRequestError, NotFoundError } from "../errors/customError";
 import NotificationRepository from "../repositories/notification.repository";
 import { notificationTypes } from "../utils/eventsVariables";
 import { INotification } from "../interfaces/notification.interface";
 import VendorRepository from "../repositories/vendor.repository";
 import AdminRepository from "../repositories/admin.repository";
 import CustomerRepository from "../repositories/customer.repository";
-import { IUserDocument } from "utils/important-variables";
+import { IUserDocument } from "../utils/important-variables";
+import { capitalize } from "../utils/helperFunctions";
 
 
 
@@ -75,11 +76,14 @@ class NotificationService {
 
     async updateReadStatus(id: string): Promise<INotification | null>{
        const notification = await this._notificationrepository.update({ _id: id }, {isRead: true});
+       if(!notification){
+        throw new NotFoundError('Notification is not found or could not be updated')
+       }
        return notification;
     }
 
     async deleteNotification(id: string){
-        if(!id) throw new BadRequestError('Id is missing or Invalid!')
+        if(!id) throw new BadRequestError('Id is missing or Invalid!');
         return await this._notificationrepository.delete(id);
     }
 }

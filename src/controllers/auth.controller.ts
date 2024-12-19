@@ -44,7 +44,7 @@ class AuthController {
     }
   });
 
-  signup = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  signup = asyncHandler(async (req: CustomRequest, res: Response): Promise<void> => {
     const { firstName, lastName, email, password } = req.body;
     const data: { email: string, password: string, firstName: string, lastName: string, vendorType?: string } 
         = { email, password, firstName, lastName };

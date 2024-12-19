@@ -184,19 +184,6 @@ class CustomerController {
             const isAvailable = yield this.eventPlannerService.checkAvailability({ eventType, isMultipleDays, startDate, endDate, startTime, endTime }, slug);
             (0, responseFormatter_1.default)(200, { isAvailable }, "successfull", res, req);
         }));
-        this.getNotifications = (0, express_async_handler_1.default)((req, res) => __awaiter(this, void 0, void 0, function* () {
-            var _a, _b;
-            const data = yield this.notificationService.getNotifications((_a = req.user) === null || _a === void 0 ? void 0 : _a.id, (_b = req.user) === null || _b === void 0 ? void 0 : _b.role);
-            (0, responseFormatter_1.default)(200, { notifications: data.notifications, readCount: data.readCount }, "successfull", res, req);
-        }));
-        this.changeReadStatus = (0, express_async_handler_1.default)((req, res) => __awaiter(this, void 0, void 0, function* () {
-            const notification = yield this.notificationService.updateReadStatus(req.body.id);
-            (0, responseFormatter_1.default)(200, { notification }, "successfull", res, req);
-        }));
-        this.deleteNotification = (0, express_async_handler_1.default)((req, res) => __awaiter(this, void 0, void 0, function* () {
-            const notification = yield this.notificationService.deleteNotification(req.params.id);
-            (0, responseFormatter_1.default)(200, { notification }, "successfull", res, req);
-        }));
         this.getPlannerBookingDetails = (0, express_async_handler_1.default)((req, res) => __awaiter(this, void 0, void 0, function* () {
             var _a, _b, _c, _d, _e;
             const { bookingId } = req.params;

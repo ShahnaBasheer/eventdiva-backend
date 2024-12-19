@@ -1,6 +1,7 @@
 
 
 import { Schema, Document, Types } from 'mongoose';
+import { UserRole } from '../utils/important-variables';
 
 
 interface IChatroom {
@@ -15,7 +16,7 @@ interface IChatroom {
 // Interface for a single message in the chatroom
  interface IMessage {
     senderId: Types.ObjectId;           
-    senderType: 'Vendor' | 'Customer';
+    senderType: UserRole;
     content: string;                    
     isRead: boolean;
     createdAt?: Date;                   

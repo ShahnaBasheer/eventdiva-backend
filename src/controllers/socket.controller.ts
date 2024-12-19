@@ -21,7 +21,7 @@ class CommunicationController {
         const { vendorId } = req.body;
         const userId = req.user.id;
         const callRoomId = await this.videoCallService.initiateCall(userId, vendorId);
-        createSuccessResponse(200, { roomId: callRoomId, vendorId }, "successful", res, req);
+        createSuccessResponse(200, { roomId: callRoomId, vendorId }, "successfull", res, req);
       }
     );
   
@@ -32,7 +32,7 @@ class CommunicationController {
         const success = await this.videoCallService.joinCall(vendorId, roomId);
         console.log(success, "success video call result");
         if (success) {
-          createSuccessResponse(200, { roomId }, "successful", res, req);
+          createSuccessResponse(200, { roomId }, "successfull", res, req);
         }
       }
     );
@@ -42,22 +42,22 @@ class CommunicationController {
         const { receiverId } = req.body;
         const roomId = await this.chatRoomService.createRoomOrFind(req.user, receiverId);
         if (roomId) {
-          createSuccessResponse(200, { receiverId, room: roomId }, "successful", res, req);
+          createSuccessResponse(200, { receiverId, room: roomId }, "successfull", res, req);
         }
       }
     );
   
     getAllChatRooms = asyncHandler(
       async (req: CustomRequest, res: Response): Promise<void> => {
-        const allChats = await this.chatRoomService.getAllChats(req.user?.id);
-        createSuccessResponse(200, { allChats }, "successful", res, req);
+        const chats = await this.chatRoomService.getAllChats(req.user?.id);
+        createSuccessResponse(200, { chats }, "successfull", res, req);
       }
     );
   
     getUnreadAllMessages = asyncHandler(
       async (req: CustomRequest, res: Response): Promise<void> => {
         const unread = await this.chatRoomService.getAllUreadMessage(req?.user?.id);
-        createSuccessResponse(200, { count: unread }, "successful", res, req);
+        createSuccessResponse(200, { count: unread }, "successfull", res, req);
       }
     );
   }

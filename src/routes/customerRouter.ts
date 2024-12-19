@@ -24,14 +24,15 @@ router.post('/auth/google', setRole(UserRole.Customer), authController.signinWit
 
 
 router.use(authMiddleware);
-router.get('/', customerController.getCustomerHome);
-router.get('/home', customerController.getCustomerHome);
-router.get('/contact', customerController.getContactPage);
-router.get('/about', customerController.getAboutPage);
-router.get('/vendors/event-planners', customerController.getAllEventPlanners);
-router.get('/vendors/event-planners/:slug', commonController.getEventPlanner);
-router.get('/vendors/venues', customerController.getAllVenues);
-router.get('/vendors/venues/:slug', commonController.getVenue);
+router.get('/', setRole(UserRole.Customer), customerController.getCustomerHome);
+router.get('/home', setRole(UserRole.Customer), customerController.getCustomerHome);
+router.get('/contact', setRole(UserRole.Customer), customerController.getContactPage);
+router.get('/about', setRole(UserRole.Customer), customerController.getAboutPage);
+router.get('/vendors/event-planners', setRole(UserRole.Customer), customerController.getAllEventPlanners);
+router.get('/vendors/event-planners/:slug', setRole(UserRole.Customer), commonController.getEventPlanner);
+router.get('/vendors/venues', setRole(UserRole.Customer), customerController.getAllVenues);
+router.get('/vendors/venues/:slug', setRole(UserRole.Customer), commonController.getVenue);
+
 
 router.use(requireRole(UserRole.Customer));
 
@@ -53,9 +54,10 @@ router.get('/bookings/venue/advancepayment/:bookingId', customerController.venue
 router.get('/bookings/venue/fullpayment/:bookingId', customerController.venueFullPayment);
 router.post('/video-call/start-call', socketController.getStartCall);
 router.post('/chat-room/join-room', socketController.getOrCreateChatRoom);
-router.get('/notifications', customerController.getNotifications);
-router.patch('/notifications/read', customerController.changeReadStatus);
-router.delete('/notifications/delete/:id', customerController.deleteNotification);
+router.get('/notifications', commonController.getNotifications);
+router.patch('/notifications/read', commonController.notificationReadStatus);
+router.delete('/notifications/delete/:id', commonController.deleteNotification);
+router.patch('/message/read', commonController.markMessageRead);
 router.get('/profile', customerController.getCustomerProfile);
 router.patch('/profile/update', customerController.updateCustomerProfile);
 router.patch('/profile/email/', customerController.updateEmailProfile);

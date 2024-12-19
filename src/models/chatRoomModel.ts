@@ -12,7 +12,7 @@ const MessageSchema: Schema = new Schema<IMessage>({
   },
   senderType: {
     type: String,  
-    enum: ['Vendor', 'Customer'], 
+    enum: ['vendor', 'customer'], 
     required: true
   },
   content: {

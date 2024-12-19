@@ -7,7 +7,7 @@ import resendOtpLimiter from '../middlewares/rateLimit';
 import socketController from '../controllers/socket.controller';
 import { UserRole } from '../utils/important-variables';
 import authController from '../controllers/auth.controller';
-
+import commonController from '../controllers/common.controller';
 
 
 const router: Router = express.Router();
@@ -24,10 +24,11 @@ router.get('/logout', authController.logout);
 router.post('/video-call/join-call', socketController.getJoinCall);
 router.get('/chat-room/', socketController.getAllChatRooms);
 router.post('/chat-room/join-room', socketController.getOrCreateChatRoom)
-router.get('/notifications', vendorController.getNotifications);
+router.get('/notifications', commonController.getNotifications);
 router.get('/unread-messages', socketController.getUnreadAllMessages);
-router.patch('/notifications/read', vendorController.changeReadStatus);
-router.delete('/notifications/delete/:id', vendorController.deleteNotification);
+router.patch('/message/read', commonController.markMessageRead);
+router.patch('/notifications/read', commonController.notificationReadStatus);
+router.delete('/notifications/delete/:id', commonController.deleteNotification);
 router.get('/profile', vendorController.getVendorProfile);
 router.patch('/profile/update', vendorController.updateVendorProfile);
 router.patch('/profile/email/', vendorController.updateEmailProfile);

@@ -397,40 +397,6 @@ class CustomerController {
     }
   );
 
-  getNotifications = asyncHandler(
-    async (req: CustomRequest, res: Response): Promise<void> => {
-      const data = await this.notificationService.getNotifications(
-        req.user?.id,
-        req.user?.role
-      );
-      createSuccessResponse(
-        200,
-        { notifications: data.notifications, readCount: data.readCount },
-        "successfull",
-        res,
-        req
-      );
-    }
-  );
-
-  changeReadStatus = asyncHandler(
-    async (req: CustomRequest, res: Response): Promise<void> => {
-      const notification = await this.notificationService.updateReadStatus(
-        req.body.id
-      );
-      createSuccessResponse(200, { notification }, "successfull", res, req);
-    }
-  );
-
-  deleteNotification = asyncHandler(
-    async (req: CustomRequest, res: Response): Promise<void> => {
-      const notification = await this.notificationService.deleteNotification(
-        req.params.id
-      );
-      createSuccessResponse(200, { notification }, "successfull", res, req);
-    }
-  );
-
   getPlannerBookingDetails = asyncHandler(
     async (req: CustomRequest, res: Response): Promise<void> => {
       const { bookingId } = req.params;

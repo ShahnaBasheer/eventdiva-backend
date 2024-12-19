@@ -228,7 +228,7 @@ const notificationTypes = {
   const generateServiceFilter = (user: IUserDocument, slug?: string) => {
     const filter: { vendorId?: string; slug?: string; approval?: Status } = {};
   
-    switch (user.role) {
+    switch (user?.role) {
       case UserRole.Vendor:
         filter.vendorId = user.id;
         break;

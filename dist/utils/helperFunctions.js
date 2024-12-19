@@ -205,7 +205,7 @@ const getRefreshKey = (role) => {
 exports.getRefreshKey = getRefreshKey;
 const generateServiceFilter = (user, slug) => {
     const filter = {};
-    switch (user.role) {
+    switch (user === null || user === void 0 ? void 0 : user.role) {
         case important_variables_1.UserRole.Vendor:
             filter.vendorId = user.id;
             break;

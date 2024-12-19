@@ -105,15 +105,14 @@ const authMiddleware = asyncHandler(
           req.token = token;
         } catch (error: any) {
           res.clearCookie(tokenKey!);
-          if (
-            error instanceof ForbiddenError ||
-            error instanceof UnauthorizedError
-          )
-            throw error;
+          if (error instanceof ForbiddenError || error instanceof UnauthorizedError){
+            next(error);
+          } 
           console.log(error?.message, "session expired");
+          
         }
       } else if (error instanceof ForbiddenError) {
-        throw error;
+        next(error); 
       }
 
       return next();
@@ -253,7 +252,7 @@ async function tokenVerify(token: string, role: UserRole, num: number): Promise<
 }
 
 const setRole = (role: string) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: CustomRequest, res: Response, next: NextFunction) => {
       req.body.role = role; // Attach role to the request body
       next();
   };

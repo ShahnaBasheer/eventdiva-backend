@@ -19,13 +19,14 @@ const customError_1 = require("../errors/customError");
 const helperFunctions_1 = require("../utils/helperFunctions");
 class CommonController {
     // Fetch All Event Planners
-    constructor(sharedService, venueVendorService, eventPlannerService) {
-        this.sharedService = sharedService;
+    constructor(venueVendorService, eventPlannerService, chatroomService, notificationService) {
         this.venueVendorService = venueVendorService;
         this.eventPlannerService = eventPlannerService;
+        this.chatroomService = chatroomService;
+        this.notificationService = notificationService;
         this.getVenue = (0, express_async_handler_1.default)((req, res) => __awaiter(this, void 0, void 0, function* () {
-            var _a;
-            const filter = (0, helperFunctions_1.generateServiceFilter)(req.user, (_a = req.params) === null || _a === void 0 ? void 0 : _a.slug);
+            var _a, _b;
+            const filter = (0, helperFunctions_1.generateServiceFilter)((_a = req.user) !== null && _a !== void 0 ? _a : { role: req.body.role }, (_b = req.params) === null || _b === void 0 ? void 0 : _b.slug);
             const venueData = yield this.venueVendorService.getVenue(filter);
             if (!venueData) {
                 throw new customError_1.NotFoundError("Venue not found");
@@ -33,14 +34,33 @@ class CommonController {
             (0, responseFormatter_1.default)(200, { venueData }, 'Successfull', res, req);
         }));
         this.getEventPlanner = (0, express_async_handler_1.default)((req, res) => __awaiter(this, void 0, void 0, function* () {
-            var _a;
-            const filter = (0, helperFunctions_1.generateServiceFilter)(req.user, (_a = req.params) === null || _a === void 0 ? void 0 : _a.slug);
+            var _a, _b;
+            const filter = (0, helperFunctions_1.generateServiceFilter)((_a = req.user) !== null && _a !== void 0 ? _a : { role: req.body.role }, (_b = req.params) === null || _b === void 0 ? void 0 : _b.slug);
             const eventPlannerData = yield this.eventPlannerService.getEventPlanner(filter);
             if (!eventPlannerData) {
                 throw new customError_1.NotFoundError("Event planner not found");
             }
             (0, responseFormatter_1.default)(200, { eventPlannerData }, "successfull", res, req);
         }));
+        this.markMessageRead = (0, express_async_handler_1.default)((req, res) => __awaiter(this, void 0, void 0, function* () {
+            const { messageIds, roomId } = req.body;
+            if (!Array.isArray(messageIds))
+                throw new customError_1.BadRequestError('Invalid request. Provide messageIds array');
+            const message = yield this.chatroomService.markMessagesAsRead(messageIds, roomId);
+            (0, responseFormatter_1.default)(200, { message }, `Message ${messageIds} in chatroom ${roomId} marked as read.`, res, req);
+        }));
+        this.notificationReadStatus = (0, express_async_handler_1.default)((req, res) => __awaiter(this, void 0, void 0, function* () {
+            const notification = yield this.notificationService.updateReadStatus(req.body.id);
+            (0, responseFormatter_1.default)(200, { notification }, 'Read status updated successfully', res, req);
+        }));
+        this.deleteNotification = (0, express_async_handler_1.default)((req, res) => __awaiter(this, void 0, void 0, function* () {
+            const notification = yield this.notificationService.deleteNotification(req.params.id);
+            (0, responseFormatter_1.default)(200, { notification }, 'Notification deleted successfully', res, req);
+        }));
+        this.getNotifications = (0, express_async_handler_1.default)((req, res) => __awaiter(this, void 0, void 0, function* () {
+            const data = yield this.notificationService.getNotifications(req.user.id, req.user.role);
+            (0, responseFormatter_1.default)(200, { notifications: data.notifications, readCount: data.readCount }, 'Successfully retrieved notifications', res, req);
+        }));
     }
 }
-exports.default = new CommonController(dependencyContainer_1.sharedService, dependencyContainer_1.venueVendorService, dependencyContainer_1.eventPlannerService);
+exports.default = new CommonController(dependencyContainer_1.venueVendorService, dependencyContainer_1.eventPlannerService, dependencyContainer_1.chatroomservice, dependencyContainer_1.notificationService);

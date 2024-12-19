@@ -23,7 +23,7 @@ class CommunicationController {
             const { vendorId } = req.body;
             const userId = req.user.id;
             const callRoomId = yield this.videoCallService.initiateCall(userId, vendorId);
-            (0, responseFormatter_1.default)(200, { roomId: callRoomId, vendorId }, "successful", res, req);
+            (0, responseFormatter_1.default)(200, { roomId: callRoomId, vendorId }, "successfull", res, req);
         }));
         this.getJoinCall = (0, express_async_handler_1.default)((req, res) => __awaiter(this, void 0, void 0, function* () {
             const { roomId } = req.body;
@@ -31,25 +31,25 @@ class CommunicationController {
             const success = yield this.videoCallService.joinCall(vendorId, roomId);
             console.log(success, "success video call result");
             if (success) {
-                (0, responseFormatter_1.default)(200, { roomId }, "successful", res, req);
+                (0, responseFormatter_1.default)(200, { roomId }, "successfull", res, req);
             }
         }));
         this.getOrCreateChatRoom = (0, express_async_handler_1.default)((req, res) => __awaiter(this, void 0, void 0, function* () {
             const { receiverId } = req.body;
             const roomId = yield this.chatRoomService.createRoomOrFind(req.user, receiverId);
             if (roomId) {
-                (0, responseFormatter_1.default)(200, { receiverId, room: roomId }, "successful", res, req);
+                (0, responseFormatter_1.default)(200, { receiverId, room: roomId }, "successfull", res, req);
             }
         }));
         this.getAllChatRooms = (0, express_async_handler_1.default)((req, res) => __awaiter(this, void 0, void 0, function* () {
             var _a;
-            const allChats = yield this.chatRoomService.getAllChats((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
-            (0, responseFormatter_1.default)(200, { allChats }, "successful", res, req);
+            const chats = yield this.chatRoomService.getAllChats((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
+            (0, responseFormatter_1.default)(200, { chats }, "successfull", res, req);
         }));
         this.getUnreadAllMessages = (0, express_async_handler_1.default)((req, res) => __awaiter(this, void 0, void 0, function* () {
             var _a;
             const unread = yield this.chatRoomService.getAllUreadMessage((_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.id);
-            (0, responseFormatter_1.default)(200, { count: unread }, "successful", res, req);
+            (0, responseFormatter_1.default)(200, { count: unread }, "successfull", res, req);
         }));
     }
 }

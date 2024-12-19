@@ -68,6 +68,9 @@ class NotificationService {
     updateReadStatus(id) {
         return __awaiter(this, void 0, void 0, function* () {
             const notification = yield this._notificationrepository.update({ _id: id }, { isRead: true });
+            if (!notification) {
+                throw new customError_1.NotFoundError('Notification is not found or could not be updated');
+            }
             return notification;
         });
     }

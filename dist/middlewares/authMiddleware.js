@@ -99,14 +99,14 @@ const authMiddleware = (0, express_async_handler_1.default)((req, res, next) => 
             }
             catch (error) {
                 res.clearCookie(tokenKey);
-                if (error instanceof customError_1.ForbiddenError ||
-                    error instanceof customError_1.UnauthorizedError)
-                    throw error;
+                if (error instanceof customError_1.ForbiddenError || error instanceof customError_1.UnauthorizedError) {
+                    next(error);
+                }
                 console.log(error === null || error === void 0 ? void 0 : error.message, "session expired");
             }
         }
         else if (error instanceof customError_1.ForbiddenError) {
-            throw error;
+            next(error);
         }
         return next();
     }

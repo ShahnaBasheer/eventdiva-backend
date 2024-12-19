@@ -158,7 +158,7 @@ const initializeSocket = (server) => {
                     vendorSocket.join(roomId);
                     vendorSocket.emit('incoming_call', { from: clientId, offer, roomId });
                     const ringingTimeout = setTimeout(() => __awaiter(void 0, void 0, void 0, function* () {
-                        const notification = yield (0, helperFunctions_1.handleNotification)(Object.assign(Object.assign({}, data), { userId: vendorId, role: 'vendor', type: eventsVariables_1.NotificationType.MISSED_CALL, name }));
+                        const notification = yield (0, helperFunctions_1.handleNotification)(Object.assign(Object.assign({}, data), { userId: vendorId, role: important_variables_1.UserRole.Vendor, type: eventsVariables_1.NotificationType.MISSED_CALL, name }));
                         vendorSocket.emit('loaded-notification', { notification });
                         socket.emit('call_failed', clientId);
                     }), 30000);
@@ -179,13 +179,13 @@ const initializeSocket = (server) => {
             try {
                 yield (0, authMiddleware_1.validateSocketUser)(socket);
                 if (socket.user) {
-                    const response = yield dependencyContainer_1.chatroomservice.createRoomOrFind(socket.user, data.receiverId);
-                    console.log("user is there", !!response, response.id);
-                    if (socket.rooms.has(response.id)) {
+                    const res = yield dependencyContainer_1.chatroomservice.createRoomOrFind(socket.user, data.receiverId);
+                    console.log("user is there", !!res, res.id);
+                    if (socket.rooms.has(res.id)) {
                         return;
                     }
-                    socket.join(response.id);
-                    socket.emit('user-joined', { receiverId: data.receiverId, response });
+                    socket.join(res.id);
+                    socket.emit('user-joined', { receiverId: data.receiverId, res });
                 }
             }
             catch (error) {
@@ -208,11 +208,11 @@ const initializeSocket = (server) => {
                         else {
                             let receiverSocket;
                             let receiverId = '';
-                            if (userRole === 'vendor') {
+                            if (userRole === important_variables_1.UserRole.Vendor) {
                                 receiverId = chat.customerId.toString();
                                 receiverSocket = customers[receiverId];
                             }
-                            else if (userRole === 'customer') {
+                            else if (userRole === important_variables_1.UserRole.Customer) {
                                 receiverId = chat.vendorId.toString();
                                 receiverSocket = vendors[receiverId];
                             }
@@ -232,7 +232,6 @@ const initializeSocket = (server) => {
         // Save notifications
         socket.on('save-notifications', (data) => __awaiter(void 0, void 0, void 0, function* () {
             try {
-                console.log("save notification is triggered", socket);
                 const notification = yield (0, helperFunctions_1.handleNotification)(data);
                 if (notification) {
                     const receiverSocket = data.role === important_variables_1.UserRole.Vendor ? vendors[data.userId] : customers[data.userId];
@@ -251,7 +250,8 @@ const initializeSocket = (server) => {
                 yield (0, authMiddleware_1.validateSocketUser)(socket);
                 if (socket.rooms.has(data.chatRoomId)) {
                     socket.leave(data.chatRoomId);
-                    socket.emit('user-left', { receiverId: data.receiverId });
+                    console.log(data.userRole);
+                    socket.emit('user-left', { roomId: data.chatRoomId, role: data.userRole });
                 }
             }
             catch (error) {

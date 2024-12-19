@@ -3,12 +3,10 @@ import asyncHandler from "express-async-handler";
 import { CustomRequest } from "../../interfaces/request.interface";
 import createSuccessResponse from "../../utils/responseFormatter";
 import { validationResult } from "express-validator";
-import { BadRequestError, NotFoundError, UnauthorizedError } from "../../errors/customError";
+import { BadRequestError, } from "../../errors/customError";
 import { venueVendorService } from "../../config/dependencyContainer";
 import VenueVendorService from "../../services/venueVendor.service";
-import { UserRole } from "utils/important-variables";
-import { Status } from "utils/status-options";
-import { generateServiceFilter } from "utils/helperFunctions";
+
 
 
 class VenueVendorController {

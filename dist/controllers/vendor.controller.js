@@ -19,20 +19,7 @@ class VendorController {
     constructor(vendorService, notificationService) {
         this.vendorService = vendorService;
         this.notificationService = notificationService;
-        this.getNotifications = (0, express_async_handler_1.default)((req, res) => __awaiter(this, void 0, void 0, function* () {
-            const data = yield this.notificationService.getNotifications(req.user.id, req.user.role);
-            (0, responseFormatter_1.default)(200, { notifications: data.notifications, readCount: data.readCount }, 'Successfully retrieved notifications', res, req);
-        }));
-        this.changeReadStatus = (0, express_async_handler_1.default)((req, res) => __awaiter(this, void 0, void 0, function* () {
-            const notification = yield this.notificationService.updateReadStatus(req.body.id);
-            (0, responseFormatter_1.default)(200, { notification }, 'Read status updated successfully', res, req);
-        }));
-        this.deleteNotification = (0, express_async_handler_1.default)((req, res) => __awaiter(this, void 0, void 0, function* () {
-            const notification = yield this.notificationService.deleteNotification(req.params.id);
-            (0, responseFormatter_1.default)(200, { notification }, 'Notification deleted successfully', res, req);
-        }));
         this.getVendorProfile = (0, express_async_handler_1.default)((req, res) => __awaiter(this, void 0, void 0, function* () {
-            console.log(req.user, "vendor");
             const vendorDetail = req.user;
             (0, responseFormatter_1.default)(200, { vendorDetail }, 'Vendor profile retrieved successfully', res, req);
         }));
