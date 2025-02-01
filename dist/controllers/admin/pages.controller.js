@@ -16,8 +16,14 @@ exports.plannerStatusApproval = exports.venueStatusApproval = exports.getEventPl
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const responseFormatter_1 = __importDefault(require("../../utils/responseFormatter"));
 const admin_service_1 = __importDefault(require("../../services/admin.service"));
-const important_variables_1 = require("../../utils/important-variables");
-const dependencyContainer_1 = require("../../config/dependencyContainer");
+const customer_service_1 = __importDefault(require("../../services/customer.service"));
+const vendor_service_1 = __importDefault(require("../../services/vendor.service"));
+const venueVendor_service_1 = __importDefault(require("../../services/venueVendor.service"));
+const eventPlanner_service_1 = __importDefault(require("../../services/eventPlanner.service"));
+const customerService = new customer_service_1.default();
+const vendorService = new vendor_service_1.default();
+const venueService = new venueVendor_service_1.default();
+const eventPlannerService = new eventPlanner_service_1.default();
 const adminService = new admin_service_1.default();
 const getAdminDashBoard = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const data = yield adminService.getDashboardData();
@@ -29,15 +35,15 @@ const getAllCustomers = (0, express_async_handler_1.default)((req, res) => __awa
     let { page = 1, limit = 10 } = req.query;
     page = parseInt(page);
     limit = parseInt(limit);
-    const customers = yield dependencyContainer_1.userService.getAllUsers(page, limit, important_variables_1.UserRole.Customer);
-    (0, responseFormatter_1.default)(200, Object.assign({ customers: customers.users }, customers), "successfull", res, req);
+    const customers = yield customerService.getCustomers(page, limit);
+    (0, responseFormatter_1.default)(200, Object.assign({}, customers), "successfull", res, req);
 }));
 exports.getAllCustomers = getAllCustomers;
 const getAllVendors = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     let { page = 1, limit = 10 } = req.query;
     page = parseInt(page);
     limit = parseInt(limit);
-    const vendors = yield dependencyContainer_1.userService.getAllUsers(page, limit, important_variables_1.UserRole.Vendor);
+    const vendors = yield vendorService.getAllVendors(page, limit);
     (0, responseFormatter_1.default)(200, Object.assign({}, vendors), "successfull", res, req);
 }));
 exports.getAllVendors = getAllVendors;
@@ -45,7 +51,7 @@ const getAllVenues = (0, express_async_handler_1.default)((req, res) => __awaite
     let { page = 1, limit = 10 } = req.query;
     page = parseInt(page);
     limit = parseInt(limit);
-    const venues = yield dependencyContainer_1.venueVendorService.getAllVenues(page, limit);
+    const venues = yield venueService.getAllVenues(page, limit);
     (0, responseFormatter_1.default)(200, Object.assign({}, venues), "successfull", res, req);
 }));
 exports.getAllVenues = getAllVenues;
@@ -53,7 +59,7 @@ const getAllPlanners = (0, express_async_handler_1.default)((req, res) => __awai
     let { page = 1, limit = 10 } = req.query;
     page = parseInt(page);
     limit = parseInt(limit);
-    const eventPlanners = yield dependencyContainer_1.eventPlannerService.getAllEventPlanners(page, limit);
+    const eventPlanners = yield eventPlannerService.getAllEventPlanners(page, limit);
     (0, responseFormatter_1.default)(200, Object.assign({}, eventPlanners), "successfull", res, req);
 }));
 exports.getAllPlanners = getAllPlanners;
@@ -61,7 +67,7 @@ const getAllVenuesBookings = (0, express_async_handler_1.default)((req, res) => 
     let { page = 1, limit = 10 } = req.query;
     page = parseInt(page);
     limit = parseInt(limit);
-    const bookings = yield dependencyContainer_1.venueVendorService.getAllvenueBookings({}, page, limit);
+    const bookings = yield venueService.getAllvenueBookings({}, page, limit);
     (0, responseFormatter_1.default)(200, Object.assign({}, bookings), "successfull", res, req);
 }));
 exports.getAllVenuesBookings = getAllVenuesBookings;
@@ -69,32 +75,32 @@ const getAllPlannersBookings = (0, express_async_handler_1.default)((req, res) =
     let { page = 1, limit = 10 } = req.query;
     page = parseInt(page);
     limit = parseInt(limit);
-    const bookings = yield dependencyContainer_1.eventPlannerService.getAllplannerBookings({}, page, limit);
+    const bookings = yield eventPlannerService.getAllplannerBookings({}, page, limit);
     (0, responseFormatter_1.default)(200, Object.assign({}, bookings), "successfull", res, req);
 }));
 exports.getAllPlannersBookings = getAllPlannersBookings;
 const getVenueDetail = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { slug } = req.params;
-    const venueData = yield dependencyContainer_1.venueVendorService.getVenue({ slug });
+    const venueData = yield venueService.getVenue({ slug });
     console.log(venueData);
     (0, responseFormatter_1.default)(200, { venueData }, "successfully fetch venue detail", res, req);
 }));
 exports.getVenueDetail = getVenueDetail;
 const getEventPlannerDetail = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { slug } = req.params;
-    const eventPlannerData = yield dependencyContainer_1.eventPlannerService.getEventPlanner({ slug });
+    const eventPlannerData = yield eventPlannerService.getEventPlanner({ slug });
     (0, responseFormatter_1.default)(200, { eventPlannerData }, "successfully fetch event planner detail", res, req);
 }));
 exports.getEventPlannerDetail = getEventPlannerDetail;
 const venueStatusApproval = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { slug, status } = req.params;
-    const venueData = yield dependencyContainer_1.venueVendorService.venueStatusChange(slug, status);
+    const venueData = yield venueService.venueStatusChange(slug, status);
     (0, responseFormatter_1.default)(200, { venueData }, "successfully Approved venue", res, req);
 }));
 exports.venueStatusApproval = venueStatusApproval;
 const plannerStatusApproval = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { slug, status } = req.params;
-    const plannerData = yield dependencyContainer_1.eventPlannerService.plannerStatusChange(slug, status);
+    const plannerData = yield eventPlannerService.plannerStatusChange(slug, status);
     (0, responseFormatter_1.default)(200, { plannerData }, "successfully Approved venue", res, req);
 }));
 exports.plannerStatusApproval = plannerStatusApproval;

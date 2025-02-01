@@ -15,18 +15,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getUnreadAllMessages = exports.getAllChatRooms = exports.getOrCreateChatRoom = exports.getJoinCall = exports.getStartCall = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const responseFormatter_1 = __importDefault(require("../../utils/responseFormatter"));
-const dependencyContainer_1 = require("../../config/dependencyContainer");
+const videoCall_service_1 = __importDefault(require("../../services/videoCall.service"));
+const chatRoom_service_1 = __importDefault(require("../../services/chatRoom.service"));
+const videocallservice = new videoCall_service_1.default();
+const chatroomservice = new chatRoom_service_1.default();
 const getStartCall = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { vendorId } = req.body;
     const userId = req.user.id;
-    const callRoomId = yield dependencyContainer_1.videocallservice.initiateCall(userId, vendorId);
+    const callRoomId = yield videocallservice.initiateCall(userId, vendorId);
     (0, responseFormatter_1.default)(200, { roomId: callRoomId, vendorId }, "successfull", res, req);
 }));
 exports.getStartCall = getStartCall;
 const getJoinCall = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { roomId } = req.body;
     const vendorId = req.user.id;
-    const success = yield dependencyContainer_1.videocallservice.joinCall(vendorId, roomId);
+    const success = yield videocallservice.joinCall(vendorId, roomId);
     console.log(success, "succccess video call result");
     if (success) {
         (0, responseFormatter_1.default)(200, { roomId }, "successfull", res, req);
@@ -35,7 +38,7 @@ const getJoinCall = (0, express_async_handler_1.default)((req, res) => __awaiter
 exports.getJoinCall = getJoinCall;
 const getOrCreateChatRoom = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { receiverId } = req.body;
-    const roomId = yield dependencyContainer_1.chatroomservice.createRoomOrFind(req.user, receiverId);
+    const roomId = yield chatroomservice.createRoomOrFind(req.user, receiverId);
     if (roomId) {
         (0, responseFormatter_1.default)(200, { receiverId, room: roomId }, "successfull", res, req);
     }
@@ -43,13 +46,13 @@ const getOrCreateChatRoom = (0, express_async_handler_1.default)((req, res) => _
 exports.getOrCreateChatRoom = getOrCreateChatRoom;
 const getAllChatRooms = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    const allchats = yield dependencyContainer_1.chatroomservice.getAllChats((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
+    const allchats = yield chatroomservice.getAllChats((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
     (0, responseFormatter_1.default)(200, { allchats }, "successfull", res, req);
 }));
 exports.getAllChatRooms = getAllChatRooms;
 const getUnreadAllMessages = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    const unread = yield dependencyContainer_1.chatroomservice.getAllUreadMessage((_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.id);
+    const unread = yield chatroomservice.getAllUreadMessage((_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.id);
     (0, responseFormatter_1.default)(200, { count: unread }, "successfull", res, req);
 }));
 exports.getUnreadAllMessages = getUnreadAllMessages;
