@@ -36,7 +36,6 @@ app.use(cors({
   credentials: true,
   origin: [
         process.env['LOCALHOST_URL'] || '',
-        process.env['FRONTEND_AMPLIFY_URL'] || '',
         process.env['FRONTEND_URL'] || '',
         process.env['FRONTEND_WWW_URL'] || '',
         process.env['FRONTEND_WWW_SLASH'] || '',
